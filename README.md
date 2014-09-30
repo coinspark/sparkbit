@@ -6,12 +6,12 @@ SparkBit relies on the following technologies:
 
 * Maven as the build system, so the usual Maven processes apply. If you're not familiar
 with Maven then [download it first](http://maven.apache.org) and follow their installation instructions.
-* A CoinSpark aware version of [Bitcoinj](https://github.com/coinspark/sparkbit-bitcoinj) for access to the Bitcoin network.  The [original Bitcoinj](https://code.google.com/p/bitcoinj/)) does not yet support CoinSpark.
+* A CoinSpark aware version of [Bitcoinj](https://github.com/coinspark/sparkbit-bitcoinj) for access to the Bitcoin network.  The [original Bitcoinj](https://code.google.com/p/bitcoinj/) does not yet support CoinSpark.
 * [Bitcoinj Enforcer Rules](https://github.com/gary-rowe/BitcoinjEnforcerRules) to prevent dependency chain attacks
 
 SparkBit uses [JWrapper](http://www.jwrapper.com/) to create binaries for Windows, Mac, Linux.
 
-SparkBit is based on a fork of MultiBit 0.5.18, which relies on other technologies which have been retained in the repository even though they are not actively being used.
+SparkBit is based on a fork of MultiBit 0.5.18, which relies on other technologies which have been retained in the repository even though they are not currently being used.
 * [ZXing ("Zebra Crossing")](https://code.google.com/p/zxing/) for QR codes
 * IzPack for creating installers for Windows, Mac, Linux
 * [XChange](https://github.com/timmolter/XChange) for access to several Bitcoin exchanges
@@ -67,7 +67,7 @@ mvn clean package -DskipTests
 which will package the MultiBit project into `sparkbit-x.y.z.jar` where `x.y.z` is the current version
 number. This is suitable for local development work.
 
-If you want to generate a final jar file, suitable for command-line execution, you use the following command
+If you want to generate a final jar file, use the following command:
 
 ```
 mvn clean install -DskipTests
@@ -92,7 +92,7 @@ is discussed in more detail in [configuration.md](configuration.md)
 
 ### Contributing
 
-If you would like to contribute please feel free to get in touch using [simon@coinsciences.com](mailto:simon@coinsciences.com).
+If you would like to contribute please feel free to get in touch using [this contact form](http://coinspark.org/contact-us/) or the usual Github tools.
 We are particularly looking for developers with the following skills to contribute:
 
 * Experienced Java programmers
