@@ -1,0 +1,14 @@
+build
+gu_version
+JRE-*
+jwrapper
+jwrapper-*.jar
+JWrapperLaunchTemp
+jwrapperlib
+LastExtractedJWrapperVersion
+lib
+utils
+wrappers
+
+sparkbit-codesigning
+

@@ -1,0 +1,48 @@
+<JWrapper>
+	
+	<!-- The name of the app bundle -->
+	<BundleName>SparkBit</BundleName>
+	
+	<!-- The specification for one app within the bundle -->
+	<App>
+	  <Name>SparkBit</Name>
+	  <LogoPNG>sparkbit/logo.png</LogoPNG>
+	  <MainClass>org.sparkbit.SparkBitInExecutableJar</MainClass>
+	  <Param>log=error</Param>
+	</App>
+	
+	<SupportedLanguages>en</SupportedLanguages>
+	
+	<!-- App is a per-user app, it won't elevate and install for all users and the shared config folder will be per-user -->
+	<InstallType>CurrentUser</InstallType>
+	
+	<!-- Splash and Logo -->
+	<SplashPNG>sparkbit/splash.png</SplashPNG>
+	<BundleLogoPNG>sparkbit/logo.png</BundleLogoPNG>
+
+	<!-- JVM options (e.g. extra memory) -->
+	<JvmOptions>
+	 <JvmOption>-Xmx256m</JvmOption>
+	</JvmOptions>
+
+	<!--
+	<SkipWindows>true</SkipWindows>
+	-->
+
+	<!-- The JREs JWrapper should use for Windows, Linux32, Linux64... -->
+	<Windows64JRE>JRE-1.7/win32/jre1.7.0_05</Windows64JRE>
+	<Windows32JRE>JRE-1.7/win32/jre1.7.0_05</Windows32JRE>
+	<Linux64JRE>JRE-1.7/linuxx64/jre1.7.0_13</Linux64JRE>
+	<Linux32JRE>JRE-1.7/linux/jre1.7.0_13</Linux32JRE>
+	<Mac64JRE>JRE-1.7/macos64/jre1.7.0_45.jre</Mac64JRE>
+
+	<!-- The files that the app wants to bundle, here we have just one which is a JAR file and we specify that it should be on the launch classpath -->
+	<!--<File classpath='yes'myapp/sparkbit-exe-full.jar</File>
+		 -->
+	<File classpath="yes" path="sparkbit-exe-full.jar">../target/sparkbit-exe-full.jar</File>
+	<Pack200Exceptions>
+		<Filename>sparkbit-exe-full.jar</Filename>
+	</Pack200Exceptions>
+	
+
+</JWrapper>
