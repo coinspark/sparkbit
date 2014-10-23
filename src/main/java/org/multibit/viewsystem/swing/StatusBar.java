@@ -62,6 +62,7 @@ import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Timer;
+import org.multibit.viewsystem.swing.view.components.MultiBitLabel;
 
 /**
  * StatusBar. <BR>
@@ -89,7 +90,7 @@ public class StatusBar extends JPanel implements MessageListener {
   public static final int ONLINE_LABEL_HEIGHT_DELTA = 8;
 
   private JLabel onlineLabel;
-  final private MultiBitButton statusLabel;
+  final private MultiBitLabel statusLabel;
   private StatusEnum statusEnum;
 
   public static final long TIMER_REPEAT_TIME = 5000; // millisecond
@@ -167,15 +168,15 @@ public class StatusBar extends JPanel implements MessageListener {
       }
     });
 
-    statusLabel = new MultiBitButton("");
+    statusLabel = new MultiBitLabel(""); //  Button("");
     statusLabel.setBackground(ColorAndFontConstants.MID_BACKGROUND_COLOR);
     statusLabel.setOpaque(true);
-    statusLabel.setBorderPainted(false);
+//    statusLabel.setBorderPainted(false);
     statusLabel.setForeground(Color.BLACK);
     //statusLabel.setBorder(BorderFactory.createLineBorder(Color.CYAN));
-    statusLabel.setFocusPainted(false);
+//    statusLabel.setFocusPainted(false);
 
-    statusLabel.setContentAreaFilled(false);
+//    statusLabel.setContentAreaFilled(false);
     statusLabel.applyComponentOrientation(ComponentOrientation.getOrientation(controller.getLocaliser().getLocale()));
 
     // show messages action
@@ -184,10 +185,11 @@ public class StatusBar extends JPanel implements MessageListener {
 // CoinSpark: Disable clicking on status label to show messages.
 //    statusLabel.setAction(showMessagesAction);
     statusLabel.setHorizontalAlignment(JButton.LEADING);
-    String tooltipText = HelpContentsPanel.createMultilineTooltipText(new String[]{
-            controller.getLocaliser().getString("multiBitFrame.statusBar.tooltip1"), "\n",
-            controller.getLocaliser().getString("multiBitFrame.statusBar.tooltip2")});
-    statusLabel.setToolTipText(tooltipText);
+//    String tooltipText = HelpContentsPanel.createMultilineTooltipText(new String[]{
+//            controller.getLocaliser().getString("multiBitFrame.statusBar.tooltip1"), "\n",
+//            controller.getLocaliser().getString("multiBitFrame.statusBar.tooltip2")});
+//    statusLabel.setToolTipText(tooltipText);
+    statusLabel.setToolTipText(null);
 
     int onlineWidth = Math.max(Math.max(
             getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).stringWidth(
@@ -772,11 +774,11 @@ class PercentLayout implements LayoutManager2 {
 }
 
 class StatusClearTask extends TimerTask {
-  JButton statusLabel;
+  JLabel statusLabel;
   private String previousStatusLabelText = null;
   private int previousLabelRepeats = 0;
 
-  StatusClearTask(JButton statusLabel) {
+  StatusClearTask(JLabel statusLabel) {
     this.statusLabel = statusLabel;
   }
 
