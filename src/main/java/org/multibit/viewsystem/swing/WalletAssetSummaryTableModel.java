@@ -81,8 +81,8 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 
     public static final String[] COLUMN_HEADER_KEYS = new String[]{
 	COLUMN_REFRESH,
-	COLUMN_DESCRIPTION,
-	COLUMN_ISSUER,
+//	COLUMN_DESCRIPTION,
+//	COLUMN_ISSUER,
 	COLUMN_CONTRACT,
 	COLUMN_CONFIRMATION, // Tooltip: date=xyz, block number, number of confirmations,
 	COLUMN_NAME, // try a panel with two buttons in grid or free flow.

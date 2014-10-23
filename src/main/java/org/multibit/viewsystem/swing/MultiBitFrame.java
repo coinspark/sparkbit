@@ -594,7 +594,7 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
 	column.setMaxWidth(BUTTON_ICON_COLUMN_WIDTH);
 	column.setWidth(BUTTON_ICON_COLUMN_WIDTH);
 	column.setPreferredWidth(BUTTON_ICON_COLUMN_WIDTH);
-	
+/*	
 	//
 	// DESCRIPTION COLUMN
 	//
@@ -620,7 +620,7 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
 	column.setMaxWidth(BUTTON_ICON_COLUMN_WIDTH);
 	column.setWidth(BUTTON_ICON_COLUMN_WIDTH);
 	column.setPreferredWidth(BUTTON_ICON_COLUMN_WIDTH);
-	
+*/	
 	//
 	// EXPIRY COLUMN
 	//
