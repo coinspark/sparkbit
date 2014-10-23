@@ -170,19 +170,25 @@ public final class SparkBit {
             if (userLanguageCode == null) {
                 // Initial install - no language info supplied - see if we can
                 // use the user default, else Localiser will set it to English.
-                localiser = new Localiser(Locale.getDefault());
-
-                userPreferences.setProperty(CoreModel.USER_LANGUAGE_CODE, localiser.getLocale().getLanguage());
+//                localiser = new Localiser(Locale.getDefault());
+//
+//                userPreferences.setProperty(CoreModel.USER_LANGUAGE_CODE, localiser.getLocale().getLanguage());
+		
+		// SparkBit currently only supports English, so ignore system locale
+		userPreferences.setProperty(CoreModel.USER_LANGUAGE_CODE, "en");
             } else {
-                if (CoreModel.USER_LANGUAGE_IS_DEFAULT.equals(userLanguageCode)) {
-                    localiser = new Localiser(Locale.getDefault());
-                } else {
-                    localiser = new Localiser(new Locale(userLanguageCode));
-                }
+//                if (CoreModel.USER_LANGUAGE_IS_DEFAULT.equals(userLanguageCode)) {
+//                    localiser = new Localiser(Locale.getDefault());
+//                } else {
+//                    localiser = new Localiser(new Locale(userLanguageCode));
+//                }
             }
+	    
+	    // SparkBit currently only supports English
+	    localiser = new Localiser(new Locale("en"));
             coreController.setLocaliser(localiser);
 
-            log.debug("MultiBit version = " + localiser.getVersionNumber());
+            log.debug("SparkBit version = " + localiser.getVersionNumber());
 
             log.debug("Creating model");
 
