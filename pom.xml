@@ -280,6 +280,35 @@
         </plugins>
     </build>
     <dependencies>
+         
+    <dependency>
+        <groupId>com.bitmechanic</groupId>
+        <artifactId>barrister</artifactId>
+        <version>0.1.13</version>
+    </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-server</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-servlet</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-security</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+<!--        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+        </dependency>-->
+        
+        
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
@@ -339,11 +368,13 @@
             <version>${bitcoinj.version}</version>
             <scope>compile</scope>
         </dependency>
+        
          <dependency>
             <groupId>com.xeiam.xchange</groupId>
             <artifactId>xchange-core</artifactId>
             <version>${xchange.version}</version>
         </dependency>
+        
         <!-- XChange VirtEx exchange support -->
         <dependency>
             <groupId>com.xeiam.xchange</groupId>
@@ -461,5 +492,7 @@
         <!-- Version of spongycastle to use -->
         <sc-light-jdk15on.version>1.47.0.2</sc-light-jdk15on.version>
         
+        <!-- Version of Jetty server to use -->
+        <jetty.version>9.2.3.v20140905</jetty.version>
     </properties>
 </project>
