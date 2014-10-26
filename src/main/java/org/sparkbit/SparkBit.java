@@ -570,8 +570,8 @@ public final class SparkBit {
             bitcoinController.handleOpenURI(rememberedRawBitcoinURI);
 
             // Check to see if there is a new version.
-            AlertManager.INSTANCE.initialise(bitcoinController, (MultiBitFrame) swingViewSystem);
-            AlertManager.INSTANCE.checkVersion();
+//            AlertManager.INSTANCE.initialise(bitcoinController, (MultiBitFrame) swingViewSystem);
+//            AlertManager.INSTANCE.checkVersion();
 
             log.debug("Downloading blockchain");
             if (useFastCatchup) {
