@@ -1,0 +1,16 @@
+struct StatusResponse {
+	connected bool
+	synced bool
+	blocks int
+}
+
+struct ListWalletsResponse { 
+	wallets []string
+}
+
+interface SparkBitJSONRPCService {
+	getstatus() StatusResponse
+	listwallets() ListWalletsResponse
+
+}
+

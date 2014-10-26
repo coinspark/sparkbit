@@ -57,6 +57,11 @@ import org.coinspark.wallet.CSTransactionOutput;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionOutput;
 
+// Apache license
+import java.util.List;
+import java.util.LinkedList;
+
+import org.sparkbit.jsonrpc.JSONRPCController;
 
 /**
  * The debug view.
@@ -70,7 +75,7 @@ public class CSDeveloperToolsPanel extends JPanel implements Viewable {
     private final MultiBitFrame mainFrame;
     
     private final JTextArea logTextArea;
-
+    
   /**
      * Creates a new {@link CSDebugPanel}.
      */
@@ -124,6 +129,26 @@ public class CSDeveloperToolsPanel extends JPanel implements Viewable {
 	});
 	buttonPanel.add(testButton);
 
+
+	
+	testButton = new JButton("Toggle JSONRPC Server");
+	testButton.addActionListener(new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent evt) {
+		jsonToggleButtonPressed();
+	    }
+	});
+	buttonPanel.add(testButton);
+
+	testButton = new JButton("Print JSONRPC Server");
+	testButton.addActionListener(new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent evt) {
+		jsonPrintButtonPressed();
+	    }
+	});
+	buttonPanel.add(testButton);
+	
 	
 	logTextArea = new JTextArea();
 	logTextArea.setEditable(false);	
@@ -134,6 +159,52 @@ public class CSDeveloperToolsPanel extends JPanel implements Viewable {
 	add(scrollPane, BorderLayout.CENTER);
 
 	mainFrame.pack();
+	
+	setupJSONRPC();
+    }
+
+    public void setupJSONRPC() {
+	// Create a new JSON-RPC 2.0 request dispatcher
+	//Dispatcher
+//	dispatcher =  new Dispatcher();
+//	// Register the "echo", "getDate" and "getTime" handlers with it
+//	dispatcher.register(new EchoHandler());
+	
+	JSONRPCController.INSTANCE.initialize(bitcoinController);
+    }
+
+    public void jsonPrintButtonPressed() {
+	logTextArea.append("=============================================================\n");
+	logTextArea.append("toggle jsonrpc server invoked at : " + new Date() + "\n");
+	logTextArea.append("=============================================================\n");
+
+	JSONRPCController jc = JSONRPCController.INSTANCE;
+	logTextArea.append(jc.toString());
+    }
+    
+    public void jsonToggleButtonPressed() {
+	logTextArea.append("=============================================================\n");
+	logTextArea.append("toggle jsonrpc server invoked at : " + new Date() + "\n");
+	logTextArea.append("=============================================================\n");
+
+	JSONRPCController jc = JSONRPCController.INSTANCE;
+	if (!jc.shouldRunServer()) {
+	    logTextArea.append("Not starting JSON server.\nConfig file jsonrpc.properties needs to have JSON RPC server enabled:\nrpcssl=true");
+	logTextArea.append("\n\n");
+	    return;
+	}
+	
+	if (jc.canStartServer()) {
+	    logTextArea.append("Attempting to start JSON server...\n");
+	    boolean b = jc.startServer();
+	    logTextArea.append(b ? "ok" : "failed");
+	} else if (jc.canStopServer()) {
+	    logTextArea.append("Attempting to stop JSON server...\n");
+	    boolean b = jc.stopServer();
+	    logTextArea.append(b ? "ok" : "failed");
+	}
+	
+	logTextArea.append("\n\n");
     }
 
     public void walletTestButtonPressed() {

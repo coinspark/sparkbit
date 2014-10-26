@@ -866,6 +866,32 @@ public class FileHandler {
 
         return userPreferences;
     }
+    
+    /*
+    Load jsonrpc.config file
+    */
+    public static final String JSON_RPC_CONFIG_FILE_NAME = "jsonrpc.properties";
+    public static Properties loadJSONRPCConfig(ApplicationDataDirectoryLocator applicationDataDirectoryLocator) {
+        Properties userPreferences = new Properties();
+        try {
+            String userPropertiesFilename;
+            if ("".equals(applicationDataDirectoryLocator.getApplicationDataDirectory())) {
+                userPropertiesFilename = JSON_RPC_CONFIG_FILE_NAME;
+            } else {
+                userPropertiesFilename = applicationDataDirectoryLocator.getApplicationDataDirectory() + File.separator
+                        + JSON_RPC_CONFIG_FILE_NAME;
+            }
+            InputStream inputStream = new FileInputStream(userPropertiesFilename);
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF8");
+            userPreferences.load(inputStreamReader);
+        } catch (FileNotFoundException e) {
+            // Ok - may not have been created yet.
+        } catch (IOException e) {
+            // Ok may not be written yet.
+        }
+
+        return userPreferences;
+    }
 
     /**
      * To support multiple users on the same machine, the checkpoints file is
