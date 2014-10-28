@@ -106,8 +106,10 @@
                 <excludes>
                     <exclude>**/*.properties</exclude>
                     <exclude>**/*.blockchain</exclude>
-                    <exclude>**/*.checkpoints</exclude>
                 </excludes>
+                <includes>
+                    <include>**/*.checkpoints</include>
+                </includes>
             </resource>
         </resources>
         <plugins>
@@ -254,7 +256,6 @@
                     <urn>org.joda:joda-money:0.8:jar:null:compile:29e5cdf8cb4af8fffb0b013b1dc63d493cb02115</urn>
                     <urn>org.simplericity.macify:macify:1.6:jar:null:compile:969fedd5d187e92bec18cf4a88cf82fa9668c8d3</urn>
                     <urn>org.slf4j:slf4j-api:1.6.2:jar:null:compile:8619e95939167fb37245b5670135e4feb0ec7d50</urn>
-           
 <urn>org.coinspark.library:coinspark-library:1.0.3:jar:null:compile:a9734ec62661d8458119aebc6d7170f01d4a5cc0</urn>
 <!--
 <urn>org.coinspark.library:coinspark-library:1.0-SNAPSHOT:jar:null:compile:9ec9c0ec306343f1efcada7a1b305a04f47cfd50</urn>
