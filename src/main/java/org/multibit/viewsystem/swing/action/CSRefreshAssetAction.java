@@ -70,6 +70,10 @@ public class CSRefreshAssetAction extends AbstractAction {
 	if (data != null) {
 	    CSAsset asset = data.getAsset();
 	    asset.setRefreshState();
+	    
+	    // Let's also ask the balances to be recalculated in case of updates/fixes to the tracking server.
+	    this.bitcoinController.getModel().getActiveWallet().CS.setNeedsCalculateBalances(asset.getAssetID());
+	    
 	    //JOptionPane.showMessageDialog(dataView, "Asset details will be verified, will take between 15 to 30 seconds.");
 	    
 	    // We want main asset panel to refresh, since there isn't an event fired on manual reset.
