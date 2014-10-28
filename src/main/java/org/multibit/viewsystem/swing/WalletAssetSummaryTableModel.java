@@ -454,6 +454,10 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		    } else {
 			if (domain == null) {
 			    s = "Locating new asset..";
+			    if (lastHeight < assetRef.getBlockNum()) {
+				s = "Awaiting network synchronization...";
+			    }
+			    
 			} else {
 			    s = "Loading new asset from " + domain + "...";
 			}
@@ -476,90 +480,12 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		ImageIcon icon = null;
 		String tip = null;
 
-		//CoinSparkAssetRef assetRef = asset.getAssetReference();
-		PeerGroup pg = this.bitcoinController.getMultiBitService().getPeerGroup();
-		//Wallet wallet = this.bitcoinController.getModel().getActiveWallet();
-
-		//int lastHeight = wallet.getLastBlockSeenHeight();
-		// FIXME: when resyncing, last seen height will be less than genesis block.
-		// Do we have another source of latest block height of testnet3 or production?
-
-		// txid could be null if user manually adds a bogus asset reference.
-		String txid = asset.getGenTxID();
-		Transaction tx = null;
-		if (txid != null) {
-		    tx = wallet.getTransaction(new Sha256Hash(txid));
-		}
-
-//		System.out.println("New? --- asset ref = " + asset.getAssetReference());
-//		System.out.println("     --- name = " + asset.getName());
-//		System.out.println("     --- transaction = " + tx);	
-//		System.out.println("     --- CSAsset has txid = " + txid);
-//		System.out.println("     --- CSAsset has genesis = " + asset.getGenesis());
-		// tx can be null.
-		// trying to find block, not found, 
-		// A regular CoinSpark transaction, where the wallet does not have the blockheader
-		// for genesis transaction, must get the block, and get the transaction at the
-		// index mentioned in asset ref.
-		if (assetRef != null && tx == null) {
-		    final int blockIndex = (int) assetRef.getBlockNum();
-		    final PeerGroup peerGroup = pg;
-		    final WalletAssetSummaryTableModel thisModel = this;
-
-		    Block block = blockCache.get(blockIndex);
-		    if (block == null) {
-			//System.out.println("FAILED, NEED TO GET BLOCK");
-			executorService.execute(new Runnable() {
-			    @Override
-			    public void run() {
-				Block block = peerGroup.getBlock(blockIndex);
-				if (block != null) {
-				    blockCache.put(blockIndex, block);
-				    SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-//					System.out.println("GOT THE BLOCK SO NOW INFORMING TABLE MODEL OF CHANGE");
-					    thisModel.fireTableDataChanged();
-					}
-				    });
-				}
-				if (block == null) {
-				    /*
-				     In a situation where the .spvchain and .fbhchain were deleted, and they need to be recreated, we can get, the following error:
-				     ERROR o.coinspark.core.CSBlockHeaderStore - Cannot read block hash, header file too small: block 266131, file size 3840032 
-				     */
-				}
-				//throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-			    }
-			});
-		    }
-		    //System.out.println("getBlock() for asset ref height " + n + " , returned: " + block);
-		    if (block != null) {
-			tx = block.getTransactionByOffset((int) assetRef.getTxOffset());
-			if (tx == null) {
-			    // FIXME: We have an asset ref, but cannot get a valid transaction using the asset-ref and checking the genesis block header datda, so this is most likely an invalid asset.
-//			    System.out.println("Asset: Cannot find transaction with offset " + (int) assetRef.getTxnOffset() + " in block " + block.getHashAsString());
-			}
-		    }
-		}
-
 		int txHeight = 0;
 		int numConfirmations = 0;
-		int numBroadcasts = 0;
 		String newAssetString = null;
 
-		if (tx != null && assetRef != null) {
-		    TransactionConfidence confidence = tx.getConfidence();
-		    numBroadcasts = confidence.getBroadcastByCount();
-//		    System.out.println("confidence.getDepthInBlocks() = " + confidence.getDepthInBlocks());
-
-		    if (confidence.getConfidenceType() == ConfidenceType.BUILDING) {
-			txHeight = confidence.getAppearedAtChainHeight();
-		    } else {
-			// Note: assetRef could be NULL causing exception.
-			txHeight = (int) assetRef.getBlockNum();
-		    }
-
+		if (assetRef != null) {
+		    txHeight = (int) assetRef.getBlockNum();
 		    numConfirmations = lastHeight - txHeight + 1; // 0 means no confirmation, 1 is yes for same block.
 		    String issueString = null;
 		    Date issueDate = asset.getIssueDate();
@@ -616,8 +542,23 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 			if (numConfirmsStillRequired<n) n = numConfirmsStillRequired;
 			tip = "Waiting for wallet to sync blocks, need " + n + " more confirmations"; // tip is usually null now. : " + tip;
 		    }
-		} else if (tx == null) {
+		} else if (assetState==CSAsset.CSAssetState.BLOCK_NOT_FOUND ||
+			assetState==CSAsset.CSAssetState.TX_NOT_FOUND) {
 		    // Example: manually add an asset-ref which is bogus.
+		    
+		    if (txHeight <= lastHeight) {
+			if (assetState==CSAsset.CSAssetState.TX_NOT_FOUND) {
+			    tip = "Searching for asset's genesis transaction...";
+			} else {
+			    tip = "Searching for asset's genesis block...";
+			}
+		    } else {
+			tip = "Awaiting network synchronization...";
+		    }
+		    
+		    
+		    // FIXME: See Gideon email about faucet test and genesis header not found.
+		    
 		    tip = "Searching for the asset's genesis transaction";
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.find);                   
 //                    if  (asset.getAssetSource() == CSAsset.CSAssetSource.GENESIS) { 
@@ -643,10 +584,10 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 //		    tip = "Refreshing...";
 //		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.hourglass);
 		}
-		else if (tx != null && asset.getName() != null && numConfirmations >= 1 && numConfirmations < 1008) {
+		else if (asset.getName() != null && numConfirmations >= 1 && numConfirmations < 1008) {
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.new_new);
 		    tip = newAssetString;
-		} else if (tx != null && numConfirmations >= 1008) {
+		} else if (numConfirmations >= 1008) {
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.tick_shield);
 		}
 		map.put("tooltip", tip);
