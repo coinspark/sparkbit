@@ -113,7 +113,19 @@ public class CSAssetDetailPanel extends javax.swing.JPanel {
 	}
 
 	s = CSMiscUtils.getHumanReadableAssetState(asset.getAssetState());
-//	s = asset.getAssetState().name();
+	
+	if (asset.getAssetState() == CSAsset.CSAssetState.BLOCK_NOT_FOUND) {
+	    long blockNum = asset.getAssetReference().getBlockNum();
+	    int lastHeight = 0;
+	    Wallet wallet = bitcoinController.getModel().getActiveWallet();
+	    if (wallet != null) {
+		lastHeight = wallet.getLastBlockSeenHeight();
+	    }
+	    if (lastHeight < blockNum) {
+		s = "Awaiting network synchronization... " + s;
+	    }
+	}
+	
 	visible = (s != null);
 	stateLabel.setVisible(visible);
 	stateKeyLabel.setVisible(visible);

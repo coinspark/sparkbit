@@ -224,6 +224,14 @@ public class WalletAssetTableModel extends AbstractTableModel {
 	    // TODO: Special case where the asset is valid, but we asset reference is nul.
 	    if (state==CSAsset.CSAssetState.VALID && asset.getAssetReference() == null) {
 		return "Awaiting new asset confirmation...";
+	    } else if (asset.getAssetState()==CSAsset.CSAssetState.BLOCK_NOT_FOUND) {
+		long blockNum = asset.getAssetReference().getBlockNum();
+		int lastHeight = 0;
+		Wallet wallet = bitcoinController.getModel().getActiveWallet();
+		if (wallet != null) lastHeight = wallet.getLastBlockSeenHeight();
+		if (lastHeight < blockNum) {
+		    return "Awaiting network synchronization...";
+		}
 	    }
 	    return CSMiscUtils.getHumanReadableAssetState(asset.getAssetState());
 	}
@@ -231,7 +239,7 @@ public class WalletAssetTableModel extends AbstractTableModel {
 	{
 	    if (asset.getAssetReference() == null) {
 		return "Awaiting new asset confirmation...";
-	    }
+		}
 	    return CSMiscUtils.getHumanReadableAssetRef(asset);
 	}
 	case "walletAssetTableColumn.quantity":
