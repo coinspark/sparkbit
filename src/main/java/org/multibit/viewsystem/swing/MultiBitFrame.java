@@ -120,6 +120,7 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
 
     public static final String EXAMPLE_LONG_FIELD_TEXT = "1JiM1UyTGqpLqgayxTPbWbcdVeoepmY6pK++++____________123456789012345678";
     public static final String EXAMPLE_MEDIUM_FIELD_TEXT = "Typical text 00.12345678 BTC (000.01 XYZ)";
+    public static final String EXAMPLE_COINSPARK_FIELD_TEXT = "sasFmMbxzTSMPmr4b3bDiWTm84kT3ALfFQ1rQ" + "padding";
 
     public static final int WALLET_WIDTH_DELTA = 25;
 

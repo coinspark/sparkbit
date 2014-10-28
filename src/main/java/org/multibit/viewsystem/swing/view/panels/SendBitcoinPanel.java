@@ -304,7 +304,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.fill = GridBagConstraints.HORIZONTAL;
 	constraints.gridx = 0;
 	constraints.gridy = 1;
-	constraints.weightx = 4.0;
+	constraints.weightx = 1.0;
 	constraints.weighty = 0.2;
 	constraints.gridwidth = 1;
 	constraints.gridheight = 1;
@@ -323,7 +323,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 //	int fontHeight = getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() + TEXTFIELD_VERTICAL_DELTA;
 	Dimension addressSize = new Dimension(new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() + TEXTFIELD_VERTICAL_DELTA));
 	addressTextField.setMinimumSize(addressSize);
-	addressTextField.setMaximumSize(addressSize);
+	//addressTextField.setMaximumSize(addressSize);
 	addressTextField.setPreferredSize(addressSize);
 	
 //	addressTextField.addKeyListener(new AddressFieldKeyListener());
@@ -376,6 +376,17 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.anchor = GridBagConstraints.LINE_START;
 	formPanel.add(pasteAddressButton, constraints);
 
+	JPanel pasteButtonStent = MultiBitTitledPanel.createStent((int)copyAddressButton.getPreferredSize().getWidth(), (int)copyAddressButton.getPreferredSize().getHeight());
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.gridx = 9;
+        constraints.gridy = 1;
+        constraints.weightx = 15; //10.0;
+        constraints.weighty = 0.2;
+        constraints.gridwidth = 1;
+        constraints.gridheight = 1;
+        constraints.anchor = GridBagConstraints.LINE_START;
+        formPanel.add(pasteButtonStent, constraints);
+	
 
 	MultiBitLabel assetTypeLabel = new MultiBitLabel(controller.getLocaliser().getString("sendBitcoinPanel.assetTypeLabel"));
 	assetTypeLabel.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinPanel.sparkAddressLabel.tooltip")));
@@ -384,7 +395,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.fill = GridBagConstraints.BOTH;
 	constraints.gridx = 0;
 	constraints.gridy = 2;
-	constraints.weightx = 4.0;
+	constraints.weightx = 1.0;
 	constraints.weighty = 0.2;
 	constraints.gridwidth = 1;
 	constraints.gridheight = 1;
@@ -451,7 +462,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.fill = GridBagConstraints.HORIZONTAL;
 	constraints.gridx = 2;
 	constraints.gridy = 2;
-	constraints.weightx = 0.1;
+	constraints.weightx = 1.0;
 	constraints.weighty = 1.0;
 	constraints.gridwidth = 3;
 	constraints.gridheight = 1;
@@ -465,7 +476,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.fill = GridBagConstraints.NONE;
 	constraints.gridx = 0;
 	constraints.gridy = 3;
-	constraints.weightx = 0.1;
+	constraints.weightx = 1.0;
 	constraints.weighty = 1.0;
 	constraints.gridwidth = 1;
 	constraints.gridheight = 1;
@@ -496,7 +507,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 //	labelScrollPane.setPreferredSize(new Dimension(longFieldWidth,80));
 	Dimension labelDimension = new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + 6);// + TEXTFIELD_VERTICAL_DELTA + 6);
 	labelScrollPane.setMinimumSize(labelDimension);
-	labelScrollPane.setMaximumSize(labelDimension);
+	//labelScrollPane.setMaximumSize(labelDimension);
 	labelScrollPane.setPreferredSize(labelDimension);
 	
 //	labelScrollPane.setMinimumSize(new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont())
@@ -509,7 +520,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.fill = GridBagConstraints.BOTH; //HORIZONTAL;
 	constraints.gridx = 2;
 	constraints.gridy = 3;
-	constraints.weightx = 0; //0.6;
+	constraints.weightx = 1; //0.6;
 	constraints.weighty = 1; //0.2; //1
 	constraints.gridwidth = 3;
 	constraints.gridheight = 1;

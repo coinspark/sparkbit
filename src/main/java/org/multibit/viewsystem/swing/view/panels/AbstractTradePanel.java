@@ -378,16 +378,6 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
         panel.add(MultiBitTitledPanel.createStent(fontMetrics.stringWidth(MultiBitFrame.EXAMPLE_LONG_FIELD_TEXT), separatorSize),
                 constraints);
 
-        constraints.fill = GridBagConstraints.BOTH;
-        constraints.gridx = 1;
-        constraints.gridy = 4;
-        constraints.weightx = 0.1;
-        constraints.weighty = 0.1;
-        constraints.gridwidth = 1;
-        constraints.gridheight = 1;
-        constraints.anchor = GridBagConstraints.CENTER;
-        panel.add(MultiBitTitledPanel.createStent(MultiBitTitledPanel.SEPARATION_BETWEEN_NAME_VALUE_PAIRS, separatorSize),
-                constraints);
 
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridx = 5;
@@ -424,6 +414,7 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
         panel.add(dashedStent, constraints);
 	*/
 
+	/*
         JPanel forcer1 = new JPanel();
         forcer1.setOpaque(false);
         //forcer1.setBorder(BorderFactory.createLineBorder(Color.BLUE));
@@ -458,6 +449,7 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
         constraints.gridheight = 1;
         constraints.anchor = GridBagConstraints.LINE_START;
         panel.add(forcer2, constraints);
+	*/
     }
 
     public void displaySidePanel() {

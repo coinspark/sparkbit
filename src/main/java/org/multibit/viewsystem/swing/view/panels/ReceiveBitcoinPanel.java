@@ -130,20 +130,20 @@ public class ReceiveBitcoinPanel extends AbstractTradePanel implements Viewable 
         formPanel.add(addressLabel, constraints);
 
         FontMetrics fontMetric = getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont());
-        int longFieldWidth = fontMetric.stringWidth(MultiBitFrame.EXAMPLE_LONG_FIELD_TEXT);
-        addressTextField = new MultiBitTextField("", MultiBitFrame.EXAMPLE_LONG_FIELD_TEXT.length(), controller);
-
+        int coinsparkFieldWidth = fontMetric.stringWidth(MultiBitFrame.EXAMPLE_COINSPARK_FIELD_TEXT);
+        addressTextField = new MultiBitTextField("", MultiBitFrame.EXAMPLE_COINSPARK_FIELD_TEXT.length(), controller);
         //addressTextField = new MultiBitTextArea("", 24, 1, controller);
         addressTextField.setEditable(false);
         addressTextField.setOpaque(false);
         Insets insets = addressTextField.getBorder().getBorderInsets(addressTextField);
         addressTextField.setBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
-        addressTextField.setMinimumSize(new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight()));
+	addressTextField.setMinimumSize(new Dimension(coinsparkFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight()));
+	addressTextField.setPreferredSize(new Dimension(coinsparkFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight()));
         
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 2;
         constraints.gridy = 1;
-        constraints.weightx = 1.0; //0.1;
+        constraints.weightx = 100;
         constraints.weighty = 0.2;
         constraints.gridwidth = 3;
         constraints.gridheight = 1;
@@ -165,7 +165,7 @@ public class ReceiveBitcoinPanel extends AbstractTradePanel implements Viewable 
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 8;
         constraints.gridy = 1;
-        constraints.weightx = 1.0; //10.0;
+        constraints.weightx = 10.0;
         constraints.weighty = 0.2;
         constraints.gridwidth = 1;
         constraints.gridheight = 1;
@@ -192,20 +192,19 @@ public class ReceiveBitcoinPanel extends AbstractTradePanel implements Viewable 
 
         //FontMetrics fontMetric = getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont());
         //int longFieldWidth = fontMetric.stringWidth(MultiBitFrame.EXAMPLE_LONG_FIELD_TEXT);
-        sparkAddressTextField = new MultiBitTextField("", 24, controller);
-       
-        //addressTextField = new MultiBitTextArea("", 24, 1, controller);
+        sparkAddressTextField = new MultiBitTextField("", MultiBitFrame.EXAMPLE_COINSPARK_FIELD_TEXT.length(), controller);
         sparkAddressTextField.setEditable(false);
         sparkAddressTextField.setOpaque(false);
         //Insets 
         insets = sparkAddressTextField.getBorder().getBorderInsets(sparkAddressTextField);
         sparkAddressTextField.setBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
-        sparkAddressTextField.setMinimumSize(new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight()));
-        
+        sparkAddressTextField.setMinimumSize(new Dimension(coinsparkFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight()));
+        sparkAddressTextField.setPreferredSize(new Dimension(coinsparkFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight()));
+	
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 2;
         constraints.gridy = 2;
-        constraints.weightx = 0.1;
+        constraints.weightx = 1;
         constraints.weighty = 0.2;
         constraints.gridwidth = 3;
         constraints.gridheight = 1;
@@ -223,16 +222,16 @@ public class ReceiveBitcoinPanel extends AbstractTradePanel implements Viewable 
         constraints.anchor = GridBagConstraints.LINE_START;
         formPanel.add(copySparkAddressButton, constraints);
         
-        pasteButtonStent = MultiBitTitledPanel.createStent((int)copySparkAddressButton.getPreferredSize().getWidth(), (int)copySparkAddressButton.getPreferredSize().getHeight());
-        constraints.fill = GridBagConstraints.BOTH;
-        constraints.gridx = 8;
-        constraints.gridy = 2;
-        constraints.weightx = 10.0;
-        constraints.weighty = 0.2;
-        constraints.gridwidth = 1;
-        constraints.gridheight = 1;
-        constraints.anchor = GridBagConstraints.LINE_START;
-        formPanel.add(pasteButtonStent, constraints);
+//        pasteButtonStent = MultiBitTitledPanel.createStent((int)copySparkAddressButton.getPreferredSize().getWidth(), (int)copySparkAddressButton.getPreferredSize().getHeight());
+//        constraints.fill = GridBagConstraints.BOTH;
+//        constraints.gridx = 8;
+//        constraints.gridy = 2;
+//        constraints.weightx = 100; //10.0;
+//        constraints.weighty = 0.2;
+//        constraints.gridwidth = 1;
+//        constraints.gridheight = 1;
+//        constraints.anchor = GridBagConstraints.LINE_START;
+//        formPanel.add(pasteButtonStent, constraints);
         
         /* CoinSpark End */
         
@@ -244,7 +243,7 @@ public class ReceiveBitcoinPanel extends AbstractTradePanel implements Viewable 
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 0;
         constraints.gridy = 3;
-        constraints.weightx = 0.1;
+        constraints.weightx = 1; //0.1;
         constraints.weighty = 1.0;
         constraints.gridwidth = 1;
         constraints.gridheight = 1;
@@ -273,20 +272,19 @@ public class ReceiveBitcoinPanel extends AbstractTradePanel implements Viewable 
         });
 //	labelScrollPane.setMinimumSize(new Dimension(longFieldWidth,40));
 //	labelScrollPane.setPreferredSize(new Dimension(longFieldWidth,80));
-	Dimension labelDimension = new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + 6);// + TEXTFIELD_VERTICAL_DELTA + 6);
+	Dimension labelDimension = new Dimension(coinsparkFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + 6);// + TEXTFIELD_VERTICAL_DELTA + 6);
+	labelScrollPane.setPreferredSize(labelDimension);
 	labelScrollPane.setMinimumSize(labelDimension);
-	labelScrollPane.setMaximumSize(labelDimension);
-//	labelScrollPane.setMinimumSize(new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont())
-//		.getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + TEXTFIELD_VERTICAL_DELTA + 6));
-//	labelScrollPane.setPreferredSize(new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont())
-//		.getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + TEXTFIELD_VERTICAL_DELTA + 6));
+//	labelScrollPane.setMaximumSize(labelDimension);
+//	labelScrollPane.setMinimumSize(new Dimension(coinsparkFieldWidth/4, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + TEXTFIELD_VERTICAL_DELTA + 6));
+//	labelScrollPane.setPreferredSize(new Dimension(coinsparkFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + TEXTFIELD_VERTICAL_DELTA + 6));
 	labelScrollPane.getHorizontalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
 	labelScrollPane.getVerticalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
 
 	constraints.fill = GridBagConstraints.BOTH;
 	constraints.gridx = 2;
 	constraints.gridy = 3;
-	constraints.weightx = 0; //0.6;
+	constraints.weightx = 1; //0; //0.6;
 	constraints.weighty = 0; //0.2; //1
 	constraints.gridwidth = 3;
 	constraints.gridheight = 1;
