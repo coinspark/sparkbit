@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.util.*;
+import java.net.URL;
 
 /**
  * Class consolidating the File IO in MultiBit for wallets and wallet infos.
@@ -912,12 +913,25 @@ public class FileHandler {
         if (!destinationCheckpoints.exists()) {
             // Work out the source checkpoints (put into the program
             // installation directory by the installer).
-            File directory = new File(".");
-            String currentWorkingDirectory = directory.getCanonicalPath();
+//            File directory = new File(".");
+//            String currentWorkingDirectory = directory.getCanonicalPath();
 
+	    // Load the checkpoints file which has been included in the resources folder of the app.
+	    
             String filePrefix = MultiBitService.getFilePrefix();
             String checkpointsFilename = filePrefix + MultiBitService.CHECKPOINTS_SUFFIX;
-            String sourceCheckpointsFilename = currentWorkingDirectory + File.separator + checkpointsFilename;
+	    String sourceCheckpointsFilename = "";
+	    URL checkpointURL = null;
+	    try {
+		checkpointURL = getClass().getResource("/" + checkpointsFilename);
+		if (checkpointURL!=null) {
+		    sourceCheckpointsFilename = checkpointURL.toURI().getPath();
+		}
+		log.debug(">>>> sourceCheckpointsFilename = " + sourceCheckpointsFilename);
+	    } catch (java.net.URISyntaxException e) {
+		log.error("Error getting file path for: " +  checkpointURL);
+	    }
+
             File sourceBlockcheckpoints = new File(sourceCheckpointsFilename);
             if (sourceBlockcheckpoints.exists() && !destinationCheckpointsFilename.equals(sourceCheckpointsFilename)) {
                 // It should exist since installer puts them in.
