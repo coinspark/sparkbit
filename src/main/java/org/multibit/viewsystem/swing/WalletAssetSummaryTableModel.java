@@ -494,9 +494,7 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		    map.put("tooltip", map.get("text"));
 		} // for upload, it's long so show url.
 		else if (asset.getName()!=null && domain!=null) {
-		    String tip = asset.getName() + "<br><br>Click <u><font color='navy'>" + asset.getNameShort() + "</font></u> to view the asset web page";
-		    tip = tip + "<br><br><hr/><br>";
-		    tip = tip + asset.getIssuer()+ "<br><br>Click <i><font color='gray'>(" + domain + ")</font></i> to view the issuer's home page";
+		    String tip = asset.getName() + "<br>Issuer: " + asset.getIssuer() + "<br><br>Click to view the asset web page or issuer home page.";
 		    map.put("tooltip", tip);
 		}
 		return map;
@@ -641,10 +639,10 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		if (assetState != CSAsset.CSAssetState.VALID && asset.getContractPath() != null) {
 		    //(asset.getName() == null &&
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.page_white_error);
-		    tip = tip + "Click to read the contract (local copy)...";
+		    tip = tip + "Click to read the cached copy of the contract";
 		} else if (assetState == CSAsset.CSAssetState.VALID) {
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.page_white_text);
-		    tip = tip + "Click to read the contract...";
+		    tip = tip + "Click to read the contract at the web site of the issuer";
 		}
 
 		if (tip != null && icon != null) {
