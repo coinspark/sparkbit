@@ -530,7 +530,12 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
 	column = columnModel.getColumn(WalletAssetSummaryTableModel.getIndexOfColumn(WalletAssetSummaryTableModel.COLUMN_QUANTITY));
 	DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer() {
 	    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-		Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+		Object obj = value;
+		if (value instanceof HashMap) {
+		    HashMap<String, Object> map = (HashMap<String, Object>) value;
+		    obj = map.get("text");
+		}
+		Component c = super.getTableCellRendererComponent(table, obj, isSelected, hasFocus, row, column);
 		c.setForeground(ColorAndFontConstants.TEXT_COLOR);
 		return c;
 	    }    

@@ -56,6 +56,7 @@ import org.multibit.viewsystem.swing.view.components.MultiBitLabel;
 
 import org.multibit.controller.bitcoin.BitcoinController;
 import com.google.bitcoin.core.Wallet.SendRequest;
+import org.joda.time.LocalDateTime;
 
 /*
  * Mixed bag of tools.
@@ -709,5 +710,11 @@ public class CSMiscUtils {
 	String string = bigDecimal.stripTrailingZeros().toPlainString();
 	int index = string.indexOf(".");
 	return index < 0 ? 0 : string.length() - index - 1;
+    }
+    
+    public static String prettyFormatDate(Date d) {
+	if (d == null) return "";
+	LocalDateTime dt = new DateTime(d).toLocalDateTime();
+	return dt.toString("d MMM y, HH:mm:ss z");
     }
 }

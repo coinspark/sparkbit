@@ -386,25 +386,37 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 
 		if (assetState == CSAsset.CSAssetState.REFRESH) {
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.hourglass);
-		    tip = "Refreshing...";
+		    tip = "Checking...";
 		} else {
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.arrow_refresh_small);
-		    tip = "Click to manually refresh the status of the asset";
+		    
+		    Date validationDate = asset.getValidChecked();
+		    tip = "Last checked: ";
+		    if (tip==null) {
+			tip = tip + "Never";
+		    } else {
+			tip = tip + CSMiscUtils.prettyFormatDate(validationDate);
+		    }
+		    tip = tip + "<br><br>Click to check the asset and balance now";
 		}
 		map.put("tooltip", tip);
 		map.put("icon", icon);
 		return map;
 	    }
 	    case COLUMN_QUANTITY: {
+		HashMap<String, Object> map = new HashMap<>();
 		if (isBitcoin) {
 		    String s = btcObj.balanceText;
 		    if (s == null) {
 			s = "";
 		    }
-		    return s;
+		    map.put("text",s);
+		    return map;
+//		    return s;
 		}
 		if (asset.getName() == null) {
-		    return ""; // TODO: Change to webPageJSON==null
+		    return map;
+//		    return ""; // TODO: Change to webPageJSON==null
 		}
 		
 		String displayString = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, assetBalance.total);
@@ -419,7 +431,17 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		// For debugging, round-trip to see if values match.
 //		BigInteger y = CSMiscUtils.getRawUnitsFromDisplayString(asset, displayString);
 //		System.out.println("DISPLAY: " + displayString + " ----> RAW: " + y);
-		return displayString;
+		
+		// tooltip
+		String units = asset.getUnits();    // mandatory field but we are getting null sometimes
+		if (units != null) {
+		    String tip = "1 unit = " + units;
+		    map.put("tooltip", tip);
+		}
+		
+		map.put("text", displayString);
+		return map;
+//		return displayString;
 	    }
 	    case COLUMN_NAME: {
 		HashMap map = new HashMap<>();
@@ -468,8 +490,15 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		    map.put("noaction", true); // disable action
 		}
 		
-		map.put("tooltip", "Click to visit the asset web page or the home page of the asset issuer.");
-		if (uploadFiles) map.put("tooltip", map.get("text")); // for upload, it's long so show url.
+		if (uploadFiles) {
+		    map.put("tooltip", map.get("text"));
+		} // for upload, it's long so show url.
+		else if (asset.getName()!=null && domain!=null) {
+		    String tip = asset.getName() + "<br><br>Click <u><font color='navy'>" + asset.getNameShort() + "</font></u> to view the asset web page";
+		    tip = tip + "<br><br><hr/><br>";
+		    tip = tip + asset.getIssuer()+ "<br><br>Click <i><font color='gray'>(" + domain + ")</font></i> to view the issuer's home page";
+		    map.put("tooltip", tip);
+		}
 		return map;
 	    }
 	    case COLUMN_CONFIRMATION: {
@@ -603,13 +632,19 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		ImageIcon icon = null;
 		//null; // TODO: Change to webPageJSON==null
 		String tip = null;
+		
+		String s = asset.getDescription();
+		if (s != null && !"".equals(s)) {
+		    tip = s + "<br><br>";
+		}
+		    
 		if (assetState != CSAsset.CSAssetState.VALID && asset.getContractPath() != null) {
 		    //(asset.getName() == null &&
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.page_white_error);
-		    tip = "Click to read the cached copy of the contract";
+		    tip = tip + "Click to read the contract (local copy)...";
 		} else if (assetState == CSAsset.CSAssetState.VALID) {
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.page_white_text);
-		    tip = "Click to read the contract at the web site of the issuer";
+		    tip = tip + "Click to read the contract...";
 		}
 
 		if (tip != null && icon != null) {
