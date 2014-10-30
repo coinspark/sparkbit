@@ -384,4 +384,12 @@ public enum ReplayManager {
   public int getActualLastChainHeight() {
     return actualLastChainHeight;
   }
+  
+  /**
+   * Is there a download in operation, without a replay task ?
+   * @return 
+   */
+  public static boolean isRegularDownloadRunning() {
+    return ReplayManager.regularDownloadIsRunning;
+  }
 }
