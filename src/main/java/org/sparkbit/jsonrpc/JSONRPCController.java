@@ -33,6 +33,7 @@ import org.eclipse.jetty.server.Server;
 import org.multibit.file.FileHandler;
 import org.sparkbit.ApplicationDataDirectoryLocator;
 import java.util.Enumeration;
+import org.multibit.viewsystem.swing.MultiBitFrame;
 
 //import org.eclipse.jetty.server.Server;
 
@@ -63,17 +64,23 @@ public enum JSONRPCController {
     public static final String RPC_SSL_ALLOW_TLS11 = "rpcsslallowtls11";
     public static final String RPC_SSL_KEYSTORE_FILENAME = "rpcsslkeystorefilename";
     
+    private MultiBitFrame mainFrame;
     private BitcoinController controller;
     private JettyEmbeddedServer jetty;
     private Properties config;
     
     // initialize this singleton
-    public void initialize(BitcoinController controller) {
+    public void initialize(BitcoinController controller, MultiBitFrame frame) {
+	this.mainFrame = frame;
         this.controller = controller;
 	this.config = FileHandler.loadJSONRPCConfig(new ApplicationDataDirectoryLocator());
 	this.jetty = new JettyEmbeddedServer(this);
     }
 
+    public MultiBitFrame getMultiBitFrame() {
+	return this.mainFrame;
+    }
+    
     public BitcoinController getBitcoinController() {
 	return this.controller;
     }

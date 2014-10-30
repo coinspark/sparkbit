@@ -22,6 +22,10 @@ import org.sparkbit.jsonrpc.autogen.*;
 import java.util.List;
 import java.util.ArrayList;
 import org.multibit.model.bitcoin.WalletData;
+import org.multibit.viewsystem.swing.MultiBitFrame;
+import org.multibit.model.core.StatusEnum;
+import org.multibit.network.ReplayManager;
+import com.google.bitcoin.core.*;
 
 /**
  *
@@ -30,17 +34,50 @@ import org.multibit.model.bitcoin.WalletData;
 public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
     
     private BitcoinController controller;
+    private MultiBitFrame mainFrame;
     
     public SparkBitJSONRPCServiceImpl() {
 	this.controller = JSONRPCController.INSTANCE.getBitcoinController();
+	this.mainFrame = JSONRPCController.INSTANCE.getMultiBitFrame();
     }
     
+    /*
+    getstatus
+	{
+		'connected': true/false,
+		'synchronized': true/false, [if we are up to do with netweork]
+		'blocks': <number of last block seen>,
+	}
+    */
     @Override
     public StatusResponse getstatus() throws com.bitmechanic.barrister.RpcException {
+	StatusEnum status = this.mainFrame.getOnlineStatus();
+	boolean connected = status == StatusEnum.ONLINE;
+//	int lastSeenBlock = controller.getModel().getActiveWallet().getLastBlockSeenHeight();
+	int lastSeenBlock = controller.getMultiBitService().getChain().getBestChainHeight();
+
+	boolean replayTaskRunning = ReplayManager.INSTANCE.getCurrentReplayTask()!=null ;
+	boolean regularDownloadRunning = ReplayManager.isRegularDownloadRunning();
+	boolean synced = !regularDownloadRunning && !replayTaskRunning;
+	
+	// A regular download can be running in the background, because there is a new block,
+	// and thus we are behind by one block, but the UI will still show that we synced.
+	// We will consider ourselves to be out of sync if we are two or more blocks behind our peers.
+	PeerGroup pg = controller.getMultiBitService().getPeerGroup();
+	if (pg!=null) {
+	    Peer peer = pg.getDownloadPeer();
+	    if (peer != null) {
+		int n = peer.getPeerBlockHeightDifference();
+		if (synced && n>=2) {
+		    synced = false;
+		}
+	    }
+	}
+	
 	StatusResponse resp = new StatusResponse();
-	resp.setBlocks(42L);
-	resp.setConnected(Boolean.TRUE);
-	resp.setSynced(Boolean.TRUE);
+	resp.setBlocks((long)lastSeenBlock);
+	resp.setConnected(connected);
+	resp.setSynced(synced);
 	return resp;
     }
     
