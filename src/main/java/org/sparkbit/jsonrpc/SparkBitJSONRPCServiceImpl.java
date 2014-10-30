@@ -17,13 +17,23 @@
  */
 package org.sparkbit.jsonrpc;
 
+import org.multibit.controller.bitcoin.BitcoinController;
 import org.sparkbit.jsonrpc.autogen.*;
+import java.util.List;
+import java.util.ArrayList;
+import org.multibit.model.bitcoin.WalletData;
 
 /**
  *
  * @author ruffnex
  */
 public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
+    
+    private BitcoinController controller;
+    
+    public SparkBitJSONRPCServiceImpl() {
+	this.controller = JSONRPCController.INSTANCE.getBitcoinController();
+    }
     
     @Override
     public StatusResponse getstatus() throws com.bitmechanic.barrister.RpcException {
@@ -36,8 +46,19 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
     
     @Override
     public ListWalletsResponse listwallets() throws com.bitmechanic.barrister.RpcException {
+
+	List<WalletData> perWalletModelDataList = controller.getModel().getPerWalletModelDataList();
+	List<String> names = new ArrayList<String>();
+	if (perWalletModelDataList != null) {
+	    for (WalletData loopPerWalletModelData : perWalletModelDataList) {
+		String name = loopPerWalletModelData.getWalletDescription();// Filename();
+		names.add(name);
+	    }
+	}
+
+	String[] nameArray = names.toArray(new String[0]);
 	ListWalletsResponse resp = new ListWalletsResponse();
-	resp.setWallets(new String[]{"default", "funstuff"});
+	resp.setWallets(nameArray);
 	return resp;
     }
     

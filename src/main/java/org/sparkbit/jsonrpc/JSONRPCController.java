@@ -74,6 +74,10 @@ public enum JSONRPCController {
 	this.jetty = new JettyEmbeddedServer(this);
     }
 
+    public BitcoinController getBitcoinController() {
+	return this.controller;
+    }
+    
     public boolean shouldRunServer() {
 	return this.jetty.runServer;
     }
