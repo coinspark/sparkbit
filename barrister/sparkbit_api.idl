@@ -4,13 +4,25 @@ struct StatusResponse {
 	blocks int
 }
 
-struct ListWalletsResponse { 
-	wallets []string
+struct ListWallet {
+	id string
+	description string
 }
+
+struct ListWalletsResponse { 
+	wallets []ListWallet
+}
+
+
 
 interface SparkBitJSONRPCService {
 	getstatus() StatusResponse
 	listwallets() ListWalletsResponse
+	deletewallet(walletID string) bool
+
+	setassetvisible(walletID string, assetRef string) bool
+	addasset(walletID string, assetRef string) bool
+	refreshasset(walletID string, assetRef string) bool
 
 }
 
