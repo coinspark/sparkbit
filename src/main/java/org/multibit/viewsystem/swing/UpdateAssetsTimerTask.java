@@ -41,7 +41,7 @@ import org.coinspark.wallet.CSBalanceDatabase;
 
 
 public class UpdateAssetsTimerTask extends TimerTask {
-    public static final int INTERVAL = 2000; // milliseconds
+    public static final int INTERVAL = 5000; // milliseconds
 
     private static Logger log = LoggerFactory.getLogger(UpdateAssetsTimerTask.class);
 
