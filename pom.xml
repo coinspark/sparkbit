@@ -256,7 +256,7 @@
                     <urn>org.slf4j:slf4j-api:1.6.2:jar:null:compile:8619e95939167fb37245b5670135e4feb0ec7d50</urn>
            
 <urn>org.coinspark.library:coinspark-library:1.0-SNAPSHOT:jar:null:compile:9ec9c0ec306343f1efcada7a1b305a04f47cfd50</urn>
-<urn>com.google:bitcoinj:0.1-CS-0.11.2-MB-ALICE:jar:null:compile:98a836221979c123c8990aae1b0a61ba8a491d16</urn>
+<urn>com.google:bitcoinj:0.1-CS-0.11.2-MB-ALICE:jar:null:compile:eb0ebd45667a348599b2d87a822c6fbd8383f18f</urn>
 
 					<!-- A check for the rules themselves -->
                     <urn>uk.co.froot.maven.enforcer:digest-enforcer-rules:0.0.1:jar:null:runtime:16a9e04f3fe4bb143c42782d07d5faf65b32106f</urn>
