@@ -23,7 +23,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.sparkbit</groupId>
     <artifactId>sparkbit</artifactId>
-    <version>0.9.1</version>
+    <version>0.9.2</version>
     <name>SparkBit</name>
     <description>A Java Swing client for Bitcoin and CoinSpark</description>
     <url>https://sparkbit.org</url>
@@ -255,8 +255,8 @@
                     <urn>org.simplericity.macify:macify:1.6:jar:null:compile:969fedd5d187e92bec18cf4a88cf82fa9668c8d3</urn>
                     <urn>org.slf4j:slf4j-api:1.6.2:jar:null:compile:8619e95939167fb37245b5670135e4feb0ec7d50</urn>
            
-<urn>org.coinspark.library:coinspark-library:1.0-SNAPSHOT:jar:null:compile:53920dfa89815893054e9b9bff3a5ac058f75e7a</urn>
-<urn>com.google:bitcoinj:0.1-CS-0.11.2-MB-ALICE:jar:null:compile:fcca7659f21b5d4b5c217eb65bc63a0cf4076078</urn>
+<urn>org.coinspark.library:coinspark-library:1.0-SNAPSHOT:jar:null:compile:9ec9c0ec306343f1efcada7a1b305a04f47cfd50</urn>
+<urn>com.google:bitcoinj:0.1-CS-0.11.2-MB-ALICE:jar:null:compile:98a836221979c123c8990aae1b0a61ba8a491d16</urn>
 
 					<!-- A check for the rules themselves -->
                     <urn>uk.co.froot.maven.enforcer:digest-enforcer-rules:0.0.1:jar:null:runtime:16a9e04f3fe4bb143c42782d07d5faf65b32106f</urn>
