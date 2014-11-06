@@ -20,7 +20,7 @@ interface SparkBitJSONRPCService {
 	listwallets() ListWalletsResponse
 	deletewallet(walletID string) bool
 
-	setassetvisible(walletID string, assetRef string) bool
+	setassetvisible(walletID string, assetRef string, visibility bool) bool
 	addasset(walletID string, assetRef string) bool
 	refreshasset(walletID string, assetRef string) bool
 

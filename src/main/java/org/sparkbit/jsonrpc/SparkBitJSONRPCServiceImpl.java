@@ -160,10 +160,34 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	return w;
     }
     
-    public Boolean setassetvisible(String walletID, String assetRef) throws com.bitmechanic.barrister.RpcException
+    private CSAsset getAssetForAssetRefString(Wallet w, String assetRef) {
+	CSAssetDatabase db = w.CS.getAssetDB();
+	int[] assetIDs = w.CS.getAssetIDs();
+	if (assetIDs != null) {
+	    for (int id : assetIDs) {
+		CSAsset asset = db.getAsset(id);
+		if (asset != null) {
+		    //CoinSparkAssetRef ref = asset.getAssetReference();
+		    String s = CSMiscUtils.getHumanReadableAssetRef(asset);
+		    if (s.equals(assetRef)) {
+			return asset;
+		    }
+		}
+	    }
+	}
+	return null;
+    }
+    
+    public Boolean setassetvisible(String walletID, String assetRef, Boolean visibility) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
-	return true;
+	CSAsset asset = getAssetForAssetRefString(w, assetRef);
+	if (asset != null) {
+	    asset.setVisibility(visibility);
+	    CSEventBus.INSTANCE.postAsyncEvent(CSEventType.ASSET_VISIBILITY_CHANGED, asset.getAssetID());
+	    return true;
+	}
+	throw new RpcException(200, "Asset ref not found");	    
     }
     
     public Boolean addasset(String walletID, String assetRefString) throws com.bitmechanic.barrister.RpcException {
@@ -195,25 +219,14 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
     
     public Boolean refreshasset(String walletID, String assetRef) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
-
-	CSAssetDatabase db = w.CS.getAssetDB();
-	int[] assetIDs = w.CS.getAssetIDs();
-	if (assetIDs != null) {
-	    for (int id : assetIDs) {
-		CSAsset asset = db.getAsset(id);
-		if (asset != null) {
-		    //CoinSparkAssetRef ref = asset.getAssetReference();
-		    String s = CSMiscUtils.getHumanReadableAssetRef(asset);
-		    if (s.equals(assetRef)) {
-//		System.out.println("asset id = " + id);
-			asset.setRefreshState();
+	CSAsset asset = getAssetForAssetRefString(w, assetRef);
+	if (asset != null) {
+	    asset.setRefreshState();
 			// Note: the event can be fired, but the listener can do nothing if in headless mode.
-			// We want main asset panel to refresh, since there isn't an event fired on manual reset.
-			CSEventBus.INSTANCE.postAsyncEvent(CSEventType.ASSET_UPDATED, asset.getAssetID());
-			break;
-		    }
-		}
-	    }
+	    // We want main asset panel to refresh, since there isn't an event fired on manual reset.
+	    CSEventBus.INSTANCE.postAsyncEvent(CSEventType.ASSET_UPDATED, asset.getAssetID());
+	} else {
+	    throw new RpcException(200, "Asset ref not found");
 	}
 
 	return true;
