@@ -41,6 +41,11 @@ import org.coinspark.protocol.CoinSparkAssetRef;
 import org.multibit.model.bitcoin.BitcoinModel;
 import org.multibit.model.bitcoin.WalletAddressBookData;
 import org.multibit.model.bitcoin.WalletInfoData;
+import com.google.bitcoin.crypto.KeyCrypter;
+import org.multibit.file.FileHandler;
+import java.io.*;
+import org.multibit.file.BackupManager;
+import com.google.bitcoin.crypto.KeyCrypterException;
 
 /**
  *
@@ -273,6 +278,83 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	return resultArray;
     }
     
-    
-    
+    // TODO: Should we remove limit of 100 addresses?
+    public AddressBookEntry[] createaddress(String walletID, Long quantity) throws com.bitmechanic.barrister.RpcException {
+	Wallet w = getWalletForWalletID(walletID);
+	if (w == null) {
+	    throw new RpcException(100, "Could not find a wallet with that ID");
+	}
+	String filename = getFilenameForWalletID(walletID);
+
+	int qty = quantity.intValue();
+	if (qty <= 0) {
+	    throw new RpcException(101, "Quantity must be at least 1");
+	}
+	if (qty > 100) {
+	    throw new RpcException(102, "Quantity can not be greater than 100");
+	}
+
+	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
+	if (wd.isBusy()) {
+	    throw new RpcException(300, "Wallet is busy");
+	} else {
+	    wd.setBusy(true);
+	    wd.setBusyTaskKey("createaddress_jsonrpc");
+	    this.controller.fireWalletBusyChange(true);
+	}
+
+	List<AddressBookEntry> addresses = new ArrayList<AddressBookEntry>();
+
+	try {
+	    List<ECKey> newKeys = new ArrayList<ECKey>();
+	    for (int i = 0; i < qty; i++) {
+		ECKey newKey = new ECKey();
+		newKeys.add(newKey);
+	    }
+
+	    FileHandler fileHandler = this.controller.getFileHandler();
+
+	    synchronized (wd.getWallet()) {
+		wd.getWallet().addKeys(newKeys);
+	    }
+
+	    // Recalculate the bloom filter.
+	    if (this.controller.getMultiBitService() != null) {
+		this.controller.getMultiBitService().recalculateFastCatchupAndFilter();
+	    }
+
+	    // Add keys to address book.
+	    for (ECKey newKey : newKeys) {
+		String lastAddressString = newKey.toAddress(this.controller.getModel().getNetworkParameters()).toString();
+		String label = "Created by JSONRPC";
+		wd.getWalletInfo().addReceivingAddress(new WalletAddressBookData(label, lastAddressString),
+			false);
+
+		// Coinspark address
+		String sparkAddress = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(lastAddressString);
+		if (sparkAddress != null) {
+		    AddressBookEntry entry = new AddressBookEntry(label, lastAddressString, sparkAddress);
+		    addresses.add(entry);
+		}
+	    }
+
+	    // Backup the wallet and wallet info.
+	    BackupManager.INSTANCE.backupPerWalletModelData(fileHandler, wd);
+	} catch (KeyCrypterException kce) {
+	    throw new RpcException(900, "Create addresses failed with KeyCrypterException: " + kce.toString());
+	} catch (Exception e) {
+	    throw new RpcException(902, "Create addresses failed with an Exception: " + e.toString());
+	} finally {
+	    // Declare that wallet is no longer busy with the task.
+	    wd.setBusyTaskKey(null);
+	    wd.setBusy(false);
+	    this.controller.fireWalletBusyChange(false);
+	}
+
+	AddressBookEntry[] resultArray = addresses.toArray(new AddressBookEntry[0]);
+	return resultArray;
+
+	// TODO: Fire an event to trigger receive panel to update addresses being displayed
+    }
+
 }

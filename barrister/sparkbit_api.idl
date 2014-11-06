@@ -30,6 +30,6 @@ interface SparkBitJSONRPCService {
 	refreshasset(walletID string, assetRef string) bool
 
 	listaddresses(walletID string) []AddressBookEntry
-
+	createaddress(walletID string, quantity int) []AddressBookEntry
 }
 
