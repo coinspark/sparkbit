@@ -21,6 +21,7 @@ package org.multibit.viewsystem.swing.view.panels;
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.uri.BitcoinURI;
 import com.google.bitcoin.uri.BitcoinURIParseException;
+import com.google.common.eventbus.Subscribe;
 import org.joda.money.Money;
 import org.multibit.controller.Controller;
 import org.multibit.controller.bitcoin.BitcoinController;
@@ -70,7 +71,12 @@ import java.util.List;
 import org.coinspark.protocol.CoinSparkAddress;
 import org.coinspark.protocol.CoinSparkAssetRef;
 import org.coinspark.wallet.CSAsset;
+import org.coinspark.wallet.CSEvent;
+import org.coinspark.wallet.CSEventBus;
+import org.coinspark.wallet.CSEventType;
 import org.multibit.utils.CSMiscUtils;
+import org.sparkbit.SBEventType;
+import org.sparkbit.SBEvent;
 
 
 /**
@@ -318,6 +324,29 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
         
 //        CurrencyConverter.INSTANCE.updateFormatters();
 //        updateFiatAmount();
+	
+	// Register ourselves as a listener the CSEventBus
+	if (isReceiveBitcoin()) CSEventBus.INSTANCE.registerAsyncSubscriber(this);
+    }
+    
+    @Subscribe
+    public void listen(SBEvent event) throws Exception {
+	// Ignore, don't update table etc. unless view is selected tab pane.
+	//if (!this.viewIsVisible) return;	
+//	Object o = event.getInfo();
+	log.debug(">>>> received event: " + event);
+	SBEventType t = event.getType();
+	if (t == SBEventType.ADDRESS_CREATED || t == SBEventType.ADDRESS_UPDATED)
+	{
+	    SwingUtilities.invokeLater(new Runnable() {
+		@Override
+		public void run() {
+		    addressesTableModel.fireTableDataChanged();
+		    //addressesTable.invalidate();
+		    //addressesTable.validate();
+		}
+	    });
+	}
     }
 
     protected void createFormPanelStentsAndForcers(JPanel panel, GridBagConstraints constraints) {

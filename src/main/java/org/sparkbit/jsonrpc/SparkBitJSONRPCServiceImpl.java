@@ -48,6 +48,8 @@ import org.multibit.file.BackupManager;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
+import org.sparkbit.SBEvent;
+import org.sparkbit.SBEventType;
 
 /**
  *
@@ -286,7 +288,6 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	if (w == null) {
 	    throw new RpcException(100, "Could not find a wallet with that ID");
 	}
-	String filename = getFilenameForWalletID(walletID);
 
 	int qty = quantity.intValue();
 	if (qty <= 0) {
@@ -296,6 +297,7 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	    throw new RpcException(102, "Quantity can not be greater than 100");
 	}
 
+	String filename = getFilenameForWalletID(walletID);
 	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 	if (wd.isBusy()) {
 	    throw new RpcException(300, "Wallet is busy");
@@ -355,6 +357,10 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	    this.controller.fireWalletBusyChange(false);
 	}
 
+	
+	CSEventBus.INSTANCE.postAsync(new SBEvent(SBEventType.ADDRESS_CREATED));
+	wd.setDirty(true);
+	
 	AddressBookEntry[] resultArray = addresses.toArray(new AddressBookEntry[0]);
 	return resultArray;
 
@@ -396,7 +402,12 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	    }
 	}
   
-	if (!success) {
+	if (success) {
+	    CSEventBus.INSTANCE.postAsync(new SBEvent(SBEventType.ADDRESS_UPDATED));
+	    String filename = getFilenameForWalletID(walletID);
+	    final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
+	    wd.setDirty(true);
+	} else {
 	    throw new RpcException(700, "Could not find the address");
 	}
 	
