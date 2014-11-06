@@ -28,7 +28,9 @@ import org.multibit.model.core.StatusEnum;
 import org.multibit.network.ReplayManager;
 import com.google.bitcoin.core.*;
 import java.util.HashMap;
+import java.util.Iterator;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.coinspark.protocol.CoinSparkAddress;
 import org.coinspark.protocol.CoinSparkAssetRef;
 import org.coinspark.wallet.CSAsset;
 import org.coinspark.wallet.CSAssetDatabase;
@@ -36,6 +38,9 @@ import org.coinspark.wallet.CSEventBus;
 import org.coinspark.wallet.CSEventType;
 import org.multibit.utils.CSMiscUtils;
 import org.coinspark.protocol.CoinSparkAssetRef;
+import org.multibit.model.bitcoin.BitcoinModel;
+import org.multibit.model.bitcoin.WalletAddressBookData;
+import org.multibit.model.bitcoin.WalletInfoData;
 
 /**
  *
@@ -181,6 +186,7 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
     public Boolean setassetvisible(String walletID, String assetRef, Boolean visibility) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
+	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
 	CSAsset asset = getAssetForAssetRefString(w, assetRef);
 	if (asset != null) {
 	    asset.setVisibility(visibility);
@@ -192,6 +198,7 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
     
     public Boolean addasset(String walletID, String assetRefString) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
+	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
 	
 	String s = assetRefString;
 	if ((s != null) && (s.length() > 0)) {
@@ -219,6 +226,7 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
     
     public Boolean refreshasset(String walletID, String assetRef) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
+	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
 	CSAsset asset = getAssetForAssetRefString(w, assetRef);
 	if (asset != null) {
 	    asset.setRefreshState();
@@ -232,4 +240,39 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	return true;
     }
 
+    public AddressBookEntry[] listaddresses(String walletID) throws com.bitmechanic.barrister.RpcException
+    {
+	Wallet w = getWalletForWalletID(walletID);
+	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
+
+	List<AddressBookEntry> addresses = new ArrayList<AddressBookEntry>();
+	
+	String address, sparkAddress, label;
+	    WalletInfoData addressBook = this.controller.getModel().getActiveWalletWalletInfo();
+            if (addressBook != null) {
+                ArrayList<WalletAddressBookData> receivingAddresses = addressBook.getReceivingAddresses();
+                if (receivingAddresses != null) {
+		    Iterator<WalletAddressBookData> iter = receivingAddresses.iterator();
+                    while (iter.hasNext()) {
+                        WalletAddressBookData addressBookData = iter.next();
+                        if (addressBookData != null) {
+                            address = addressBookData.getAddress();
+                            label = addressBookData.getLabel();
+
+			    sparkAddress = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(address);
+			    if (sparkAddress != null) {
+				AddressBookEntry entry = new AddressBookEntry(label, address, sparkAddress);
+				addresses.add(entry);
+			    }
+                        }
+                    }
+                }
+            }
+	
+	AddressBookEntry[] resultArray = addresses.toArray(new AddressBookEntry[0]);
+	return resultArray;
+    }
+    
+    
+    
 }

@@ -13,6 +13,11 @@ struct ListWalletsResponse {
 	wallets []ListWallet
 }
 
+struct AddressBookEntry {
+	label string
+	bitcoinAddress string
+	coinsparkAddress string
+	}
 
 
 interface SparkBitJSONRPCService {
@@ -23,6 +28,8 @@ interface SparkBitJSONRPCService {
 	setassetvisible(walletID string, assetRef string, visibility bool) bool
 	addasset(walletID string, assetRef string) bool
 	refreshasset(walletID string, assetRef string) bool
+
+	listaddresses(walletID string) []AddressBookEntry
 
 }
 
