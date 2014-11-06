@@ -24,6 +24,7 @@ interface SparkBitJSONRPCService {
 	getstatus() StatusResponse
 	listwallets() ListWalletsResponse
 	deletewallet(walletID string) bool
+//	createwallet(label string) bool
 
 	setassetvisible(walletID string, assetRef string, visibility bool) bool
 	addasset(walletID string, assetRef string) bool
@@ -31,5 +32,12 @@ interface SparkBitJSONRPCService {
 
 	listaddresses(walletID string) []AddressBookEntry
 	createaddress(walletID string, quantity int) []AddressBookEntry
+	setaddresslabel(walletID string, address string, label string) bool
+
+//	listbalances(walletID string, onlyvisible bool) 
+//  sendbitcoin(walletID string, address string, quantity int) bool
+//  sendasset(walletID string, address string, assetRef string, quantity int, rounding...
+//  listtransactions(walletID string, limit int) []ListTransaction
+
 }
 

@@ -46,6 +46,8 @@ import org.multibit.file.FileHandler;
 import java.io.*;
 import org.multibit.file.BackupManager;
 import com.google.bitcoin.crypto.KeyCrypterException;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 
 /**
  *
@@ -324,18 +326,20 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	    }
 
 	    // Add keys to address book.
+	    int n = 1, count = newKeys.size();
 	    for (ECKey newKey : newKeys) {
 		String lastAddressString = newKey.toAddress(this.controller.getModel().getNetworkParameters()).toString();
-		String label = "Created by JSONRPC";
+		LocalDateTime dt = new DateTime().toLocalDateTime();
+		String label = "Created on " + dt.toString("d MMM y, HH:mm:ss z") + " (" + n++ + " of " + count + ")";
+		// unlikely address is already present, we don't want to update the label
 		wd.getWalletInfo().addReceivingAddress(new WalletAddressBookData(label, lastAddressString),
 			false);
 
-		// Coinspark address
+		// Create structure for JSON response
 		String sparkAddress = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(lastAddressString);
-		if (sparkAddress != null) {
-		    AddressBookEntry entry = new AddressBookEntry(label, lastAddressString, sparkAddress);
-		    addresses.add(entry);
-		}
+		if (sparkAddress == null) sparkAddress = "Internal error creating CoinSparkAddress from this Bitcoin address";
+		AddressBookEntry entry = new AddressBookEntry(label, lastAddressString, sparkAddress);
+		addresses.add(entry);
 	    }
 
 	    // Backup the wallet and wallet info.
@@ -357,4 +361,47 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	// TODO: Fire an event to trigger receive panel to update addresses being displayed
     }
 
+    
+    public Boolean setaddresslabel(String walletID, String address, String label) throws com.bitmechanic.barrister.RpcException {
+	Wallet w = getWalletForWalletID(walletID);
+	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
+
+	if (address.startsWith("s")) {
+	    address = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(address);
+	    if (address==null) {
+		throw new RpcException(800, "CoinSpark address invalid");
+	    }
+	}
+	
+	if (label==null) label=""; // this shouldn't happen when invoked via barrister
+	
+	boolean success = false;
+	
+	WalletInfoData addressBook = this.controller.getModel().getActiveWalletWalletInfo();
+	if (addressBook != null) {
+	    ArrayList<WalletAddressBookData> receivingAddresses = addressBook.getReceivingAddresses();
+	    if (receivingAddresses != null) {
+		Iterator<WalletAddressBookData> iter = receivingAddresses.iterator();
+		while (iter.hasNext()) {
+		    WalletAddressBookData addressBookData = iter.next();
+		    if (addressBookData != null) {
+			String btcAddress = addressBookData.getAddress();
+			if (btcAddress.equals(address)) {
+			    addressBookData.setLabel(label);
+			    success = true;
+			    break;
+			}
+		    }
+		}
+	    }
+	}
+  
+	if (!success) {
+	    throw new RpcException(700, "Could not find the address");
+	}
+	
+	return success;
+    }
+    
+    
 }
