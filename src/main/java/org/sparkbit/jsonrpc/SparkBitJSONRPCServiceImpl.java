@@ -35,7 +35,7 @@ import org.coinspark.wallet.CSAssetDatabase;
 import org.coinspark.wallet.CSEventBus;
 import org.coinspark.wallet.CSEventType;
 import org.multibit.utils.CSMiscUtils;
-
+import org.coinspark.protocol.CoinSparkAssetRef;
 
 /**
  *
@@ -166,8 +166,30 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	return true;
     }
     
-    public Boolean addasset(String walletID, String assetRef) throws com.bitmechanic.barrister.RpcException {
+    public Boolean addasset(String walletID, String assetRefString) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
+	
+	String s = assetRefString;
+	if ((s != null) && (s.length() > 0)) {
+	    s  = s.trim();
+	    //System.out.println("asset ref detected! " + s);
+	    CoinSparkAssetRef assetRef = new CoinSparkAssetRef();
+	    if (assetRef.decode(s)) {
+		Wallet wallet = this.controller.getModel().getActiveWallet();
+		CSAssetDatabase assetDB = wallet.CS.getAssetDB();
+		if (assetDB != null) {
+		    CSAsset asset = new CSAsset(assetRef, CSAsset.CSAssetSource.MANUAL);
+		    if (assetDB.insertAsset(asset) != null) {
+			//System.out.println("Inserted new asset manually: " + asset);
+		    } else {
+		throw new RpcException(201, "Internal error, assetDB.insertAsset == null");
+		    }
+		}
+	    } else {
+		throw new RpcException(200, "Asset ref not valid");
+	    }
+	}
+	
 	return true;
     }
     
