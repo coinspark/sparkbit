@@ -144,7 +144,7 @@ public class ResetTransactionsSubmitAction extends MultiBitSubmitAction {
 	// asset ref is xxx-0-xxx.
 	
 	String walletFilename = activePerWalletModelData.getWalletFilename();
-	String csassets = walletFilename + ".casassets";
+	String csassets = walletFilename + ".csassets";
 	String csbalances = walletFilename + ".csbalances";
 	log.debug(">>>> csassets file = " + csassets);
 	log.debug(">>>> csbalances file = " + csbalances);
