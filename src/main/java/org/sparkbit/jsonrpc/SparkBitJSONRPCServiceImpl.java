@@ -46,12 +46,20 @@ import org.multibit.file.FileHandler;
 import java.io.*;
 import org.multibit.file.BackupManager;
 import com.google.bitcoin.crypto.KeyCrypterException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Collections;
+import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.coinspark.protocol.CoinSparkGenesis;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
+import org.multibit.exchange.CurrencyConverter;
 import org.sparkbit.SBEvent;
 import org.sparkbit.SBEventType;
 import org.multibit.network.MultiBitService;
 import org.multibit.store.MultiBitWalletVersion;
+import java.util.Date;
 
 /**
  *
@@ -531,5 +539,185 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return success;
     }
     
+    public AssetTransaction[] listtransactions(String walletID, Long limit) throws com.bitmechanic.barrister.RpcException
+    {
+	Wallet w = getWalletForWalletID(walletID);
+	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
+	if (limit>100) throw new RpcException(100, "Number of transactions cannot be greater than 100");
+	if (limit<=0) throw new RpcException(100, "Number of transactions must be at least 1");
+	List<AssetTransaction> resultList = new ArrayList<AssetTransaction>();
+	
+	
+	int lastSeenBlock = controller.getMultiBitService().getChain().getBestChainHeight();
+
+	List<Transaction> transactions = w.getRecentTransactions(limit.intValue(), false);
+	for (Transaction tx : transactions) {
+	    
+	    Date txDate = controller.getModel().getDateOfTransaction(controller, tx);
+	    long unixtime = txDate.getTime(); // unix epoch
+	    	    
+	    long confirmations = lastSeenBlock - tx.getConfidence().getAppearedAtChainHeight();
+	    boolean incoming = !tx.sent(w);
+	    BigInteger feeSatoshis = tx.calculateFee(w);
+	    Double fee = null;
+	    if (incoming) {
+		BigDecimal feeBTC = new BigDecimal(feeSatoshis).divide(new BigDecimal(Utils.COIN));
+		fee = new Double( feeBTC.doubleValue() );
+	    }
+	    String txid = tx.getHashAsString();
+	    ArrayList<AssetTransactionAmount> amounts = getAssetTransactionAmounts(w, tx);
+	    AssetTransactionAmount[] amountsArray = amounts.toArray(new AssetTransactionAmount[0]);
+
+//	    int size = amounts.size();
+//	    AssetTransactionAmountEntry[] entries = new AssetTransactionAmountEntry[size];
+//	    int index = 0;
+//	    for (AssetTransactionAmount ata : amounts) {
+//		entries[index++] = new AssetTransactionAmountEntry(ata.getAssetRef(), ata);
+//	    }
+	    AssetTransaction atx = new AssetTransaction(unixtime, confirmations, incoming, amountsArray, fee, txid);
+	    resultList.add(atx);
+	}
+	
+	AssetTransaction[] resultArray = resultList.toArray(new AssetTransaction[0]);
+	return resultArray;
+    }
     
+    
+    
+    
+    /*
+    * Return array of asset transaction objects.
+    * Original method is in CSMiscUtils, so any changes there, must be reflected here.
+    */
+    private ArrayList<AssetTransactionAmount> getAssetTransactionAmounts(Wallet wallet, Transaction tx) {
+	if (wallet==null || tx==null) return null;
+	
+	Map<Integer, BigInteger> receiveMap = wallet.CS.getAssetsSentToMe(tx);
+	Map<Integer, BigInteger> sendMap = wallet.CS.getAssetsSentFromMe(tx);
+
+//	System.out.println(">>>> tx = " + tx.getHashAsString());
+//	System.out.println(">>>>     receive map = " +  receiveMap);
+//	System.out.println(">>>>     send map = " +  sendMap);
+	
+	//Map<String, String> nameAmountMap = new TreeMap<>();
+	ArrayList<AssetTransactionAmount> resultList = new ArrayList<>();
+	
+	boolean isSentByMe = tx.sent(wallet);
+	Map<Integer, BigInteger> loopMap = (isSentByMe) ? sendMap : receiveMap;
+	
+//	Integer assetID = null;
+	BigInteger netAmount = null;
+	
+//	for (Map.Entry<Integer, BigInteger> entry : loopMap.entrySet()) {
+	for (Integer assetID : loopMap.keySet()) {
+//	    assetID = entry.getKey();
+	    if (assetID == null || assetID == 0) continue; // skip bitcoin
+
+	    BigInteger receivedAmount = receiveMap.get(assetID); // should be number of raw units
+	    BigInteger sentAmount = sendMap.get(assetID);
+	    boolean isReceivedAmountMissing = (receivedAmount==null);
+	    boolean isSentAmountMissing = (sentAmount==null);
+	    
+	    netAmount = BigInteger.ZERO;
+	    if (!isReceivedAmountMissing) netAmount = netAmount.add(receivedAmount);
+	    if (!isSentAmountMissing) netAmount = netAmount.subtract(sentAmount);
+	    
+	    if (isSentByMe && !isSentAmountMissing && sentAmount.equals(BigInteger.ZERO)) {
+		// Catch a case where for a send transaction, the send amount for an asset is 0,
+		// but the receive cmount is not 0.  Also the asset was not valid.
+		continue;
+	    }
+	    
+	    
+	    CSAsset asset = wallet.CS.getAsset(assetID);
+	    if (asset==null) {
+		// something went wrong, we have asset id but no asset, probably deleted.
+		// For now, we carry on, and we display what we know.
+	    }	    
+	    
+	    if (netAmount.equals(BigInteger.ZERO) && isSentByMe) {
+		// If net asset is 0 and this is our send transaction,
+		// we don't need to show anything, as this probably due to implicit transfer.
+		// So continue the loop.
+		continue;
+	    }
+	    
+	    if (netAmount.equals(BigInteger.ZERO) && !isSentByMe) {
+		// Receiving an asset, where the value is 0 because its not confirmed yet,
+		// or not known because asset files not uploaded so we dont know display format.
+		// Anyway, we don't do anything here as we do want to display this incoming
+		// transaction the best we can.
+	    }
+	    
+//	    System.out.println(">>>>     isSentAmountMissing = " + isSentAmountMissing);
+//	    System.out.println(">>>>     asset reference = " + asset.getAssetReference());
+//	    System.out.println(">>>>     asset name = " + asset.getName());
+	    
+	    String name = null;
+	    CoinSparkGenesis genesis = null;
+	    boolean isUnknown = false;
+	    if (asset!=null) {
+		genesis = asset.getGenesis();
+		name = asset.getNameShort(); // could return null?
+	    }
+	    if (name == null) {
+		isUnknown = true;
+		if (genesis!=null) {
+		    name = "Asset from " + genesis.getDomainName();
+		} else {
+		    // No genesis block found yet
+		    name = "Other Asset";
+		}
+	    }
+	    
+	    String s1 = null;
+	    if (asset == null ||
+		isUnknown==true ||
+		(netAmount.equals(BigInteger.ZERO) && !isSentByMe)
+		    ) {
+		// We don't have formatting details since asset is unknown or deleted
+		// If there is a quantity, we don't display it since we don't have display format info
+		// Of if incoming asset transfer, unconfirmed, it will be zero, so show ... instead
+		s1 = "...";
+	    } else {
+		BigDecimal displayUnits = CSMiscUtils.getDisplayUnitsForRawUnits(asset, netAmount);
+		s1 = CSMiscUtils.getFormattedDisplayString(asset, displayUnits);
+	    }
+	    
+	    //
+	    // Create AssetTransactionAmount and add it to list
+	    // 
+	    String fullName = "";
+	    String assetRef = "null";
+	    if (asset!=null) {
+		fullName = asset.getName();
+		assetRef = CSMiscUtils.getHumanReadableAssetRef(asset);
+	    }
+	    BigDecimal displayQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, netAmount);
+	    AssetTransactionAmount amount = new AssetTransactionAmount();
+	    amount.setAssetRef(assetRef);
+	    amount.setDisplay(s1);
+	    amount.setName(fullName);
+	    amount.setName_short(name);
+	    amount.setQty(displayQty.doubleValue());
+	    amount.setRaw(netAmount.longValue());
+	    resultList.add(amount);
+	}
+	
+
+	BigInteger satoshiAmount = receiveMap.get(0);
+	satoshiAmount = satoshiAmount.subtract(sendMap.get(0));
+	String btcAmount = Utils.bitcoinValueToFriendlyString(satoshiAmount) + " BTC";
+	BigDecimal satoshiAmountBTC = new BigDecimal(satoshiAmount).divide(new BigDecimal(Utils.COIN));
+	AssetTransactionAmount amount = new AssetTransactionAmount();
+	    amount.setAssetRef("bitcoin");
+	    amount.setDisplay(btcAmount);
+	    amount.setName("Bitcoin");
+	    amount.setName_short("Bitcoin");
+	    amount.setQty(satoshiAmountBTC.doubleValue());
+	    amount.setRaw(satoshiAmount.longValue());
+	    resultList.add(amount);
+	
+	return resultList;
+    }
 }

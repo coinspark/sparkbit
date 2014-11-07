@@ -19,6 +19,29 @@ struct AddressBookEntry {
 	coinsparkAddress string
 	}
 
+struct AssetTransactionAmount {
+	assetRef string [optional]
+	raw int
+	qty float
+	display string
+	name string
+	name_short string
+}
+
+// Barrister does not have a hashmap or dictionary type structure
+//struct AssetTransactionAmountEntry {
+//	key string
+//	value AssetTransactionAmount
+//}
+
+struct AssetTransaction {
+	unixtime int
+	confirmations int
+	incoming bool
+	amounts []AssetTransactionAmount
+	fee float [optional]
+	txid string
+	}
 
 interface SparkBitJSONRPCService {
 	getstatus() StatusResponse
@@ -38,7 +61,7 @@ interface SparkBitJSONRPCService {
 //	listbalances(walletID string, onlyvisible bool) 
 //  sendbitcoin(walletID string, address string, quantity int) bool
 //  sendasset(walletID string, address string, assetRef string, quantity int, rounding...
-//  listtransactions(walletID string, limit int) []ListTransaction
+  listtransactions(walletID string, limit int) []AssetTransaction
 
 }
 
