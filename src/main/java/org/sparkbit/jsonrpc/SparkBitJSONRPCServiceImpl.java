@@ -50,6 +50,8 @@ import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
 import org.sparkbit.SBEvent;
 import org.sparkbit.SBEventType;
+import org.multibit.network.MultiBitService;
+import org.multibit.store.MultiBitWalletVersion;
 
 /**
  *
@@ -133,15 +135,129 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
     }
     
     @Override
+    public Boolean createwallet(String description) throws com.bitmechanic.barrister.RpcException {
+	LocalDateTime dt = new DateTime().toLocalDateTime();
+	String name = "jsonrpc_" + dt.toString("MMDDYYYY") + "_" + dt.toString("HHmmss.SSS");
+	
+	String newWalletFilename = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator + name + MultiBitService.WALLET_SUFFIX;
+	File newWalletFile = new File(newWalletFilename);
+	if (newWalletFile.exists()) {
+	    throw new RpcException(555, "Could not create new wallet, filename already used, try again");
+	}
+	
+	// Create a new wallet - protobuf.2 initially for backwards compatibility.
+	try {
+                Wallet newWallet = new Wallet(this.controller.getModel().getNetworkParameters());
+
+                ECKey newKey = new ECKey();
+                newWallet.addKey(newKey);
+                WalletData perWalletModelData = new WalletData();
+		/* CoinSpark START */
+		// set default address label for first key
+		WalletInfoData walletInfo = new WalletInfoData(newWalletFilename, newWallet, MultiBitWalletVersion.PROTOBUF);
+		NetworkParameters networkParams = this.controller.getModel().getNetworkParameters();
+		Address defaultReceivingAddress = newKey.toAddress(networkParams);
+		walletInfo.getReceivingAddresses().add(new WalletAddressBookData("Default Address", defaultReceivingAddress.toString()));
+	         perWalletModelData.setWalletInfo(walletInfo);
+		/* CoinSpark END */
+	
+                perWalletModelData.setWallet(newWallet);
+                perWalletModelData.setWalletFilename(newWalletFilename);
+                perWalletModelData.setWalletDescription(description);
+                this.controller.getFileHandler().savePerWalletModelData(perWalletModelData, true);
+
+                // Start using the new file as the wallet.
+                this.controller.addWalletFromFilename(newWalletFile.getAbsolutePath());
+                this.controller.getModel().setActiveWalletByFilename(newWalletFilename);
+                //controller.getModel().setUserPreference(BitcoinModel.GRAB_FOCUS_FOR_ACTIVE_WALLET, "true");
+
+                // Save the user properties to disk.
+                //FileHandler.writeUserPreferences(this.controller);
+                //log.debug("User preferences with new wallet written successfully");
+
+                // Backup the wallet and wallet info.
+                BackupManager.INSTANCE.backupPerWalletModelData(controller.getFileHandler(), perWalletModelData);
+                
+                controller.fireRecreateAllViews(true);
+                controller.fireDataChangedUpdateNow();
+	} catch (Exception e) {
+	    throw new RpcException(555, "Could not create new wallet, error: " + e.toString());	    
+	}
+      
+	return true;
+    }
+	
+    @Override
     public Boolean deletewallet(String walletID) throws com.bitmechanic.barrister.RpcException {
 	String filename = getFilenameForWalletID(walletID);
 	if (filename==null) {
 	    // TODO: setup and declare error codes
 	    throw new RpcException(100, "Could not find a wallet with that ID");
 	}
+
+	Wallet w = getWalletForWalletID(walletID);
+	if (w == null) {
+	    throw new RpcException(100, "Could not find a wallet with that ID");
+	}
 	
+
+//	String filename = getFilenameForWalletID(walletID);
+	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
+WalletInfoData winfo = wd.getWalletInfo();
+	if (wd.isBusy()) {
+	    throw new RpcException(300, "Wallet is busy");
+	}
+	
+	// Unhook it from the PeerGroup.
+	this.controller.getMultiBitService().getPeerGroup().removeWallet(w);
+
+	// Remove it from the model.
+      this.controller.getModel().remove(wd);
+
+      // Set the new Wallet to be the active wallet.
+      if (!this.controller.getModel().getPerWalletModelDataList().isEmpty()) {
+        WalletData firstPerWalletModelData = this.controller.getModel().getPerWalletModelDataList().get(0);
+        this.controller.getModel().setActiveWalletByFilename(firstPerWalletModelData.getWalletFilename());
+      }
+	controller.fireRecreateAllViews(true);
+
 	// Perform delete if possible etc.
+	FileHandler fileHandler = this.controller.getFileHandler();
+	try {
+	    fileHandler.deleteWalletAndWalletInfo(wd);
+	    
+	    // Delete .cs
+	    String csassets = filename + ".csassets";
+	    String csbalances = filename + ".csbalances";
+	    File f = new File(csassets);
+	    if (f.exists()) {
+		if (!f.delete()) {
+		    //log.error(">>>> Asset DB: Cannot delete");
+		}
+	    }
+	    f = new File(csbalances);
+	    if (f.exists()) {
+		if (!f.delete()) {
+		    //log.error(">>>> Balances DB: Cannot delete");
+		}
+	    }
+	    String cslog = filename + ".cslog";
+	    f = new File(cslog);
+	    if (f.exists()) {
+		if (!f.delete()) {
+//                log.error(">>>> CS Log File: Cannot delete");
+		}
+	    }
+
+	    
+	    
+	} catch (Exception e) {
+	    throw new RpcException(444, "Error deleting wallet files: " + e.toString());
+	}
 	
+	if (!winfo.isDeleted()) {
+	    throw new RpcException(445, "Wallet was not deleted. Reason unknown.");
+	}
 	return true;
     }
 
@@ -153,6 +269,7 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 		String filename = loopPerWalletModelData.getWalletFilename();
 		String digest = DigestUtils.md5Hex(filename);
 		walletFilenameMap.put(digest, filename);
+		// TODO: Synchronized, make thread safe.
 	    }
 	}
 	
