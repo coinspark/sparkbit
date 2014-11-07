@@ -560,7 +560,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    boolean incoming = !tx.sent(w);
 	    BigInteger feeSatoshis = tx.calculateFee(w);
 	    Double fee = null;
-	    if (incoming) {
+	    if (!incoming) {
 		BigDecimal feeBTC = new BigDecimal(feeSatoshis).divide(new BigDecimal(Utils.COIN));
 		fee = new Double( feeBTC.doubleValue() );
 	    }
