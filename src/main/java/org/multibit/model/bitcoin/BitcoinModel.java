@@ -774,5 +774,9 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
     public ModelEnum getModelEnum() {
         return ModelEnum.BITCOIN;
     }
+    
+    public Date getDateOfTransaction(BitcoinController controller, Transaction t) {
+	return createDate(controller, t);
+    }
 
 }
