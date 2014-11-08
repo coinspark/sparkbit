@@ -201,13 +201,12 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
     public Boolean deletewallet(String walletID) throws com.bitmechanic.barrister.RpcException {
 	String filename = getFilenameForWalletID(walletID);
 	if (filename==null) {
-	    // TODO: setup and declare error codes
-	    throw new RpcException(100, "Could not find a wallet with that ID");
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
 
 	Wallet w = getWalletForWalletID(walletID);
 	if (w == null) {
-	    throw new RpcException(100, "Could not find a wallet with that ID");
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
 	
 
