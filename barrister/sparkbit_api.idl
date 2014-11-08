@@ -1,85 +1,76 @@
-struct StatusResponse {
+// JSON-RPC 2.0
+// Parameters are passed by position, parameter names are capitalized for Java generated code
+// Barrister IDL does not have dictionary/map type structure
+// Method names are all lowercase so easier to type
+// Java class names and methods follow Java convention
+
+// Syncing and last seen block is actually on a per wallet basis rather than system-wide
+struct JSONRPCStatusResponse {
 	connected bool
 	synced bool
 	blocks int
 }
 
-struct ListWallet {
+struct JSONRPCWallet {
 	id string
 	description string
 }
 
-struct ListWalletsResponse { 
-	wallets []ListWallet
-}
-
-struct AddressBookEntry {
+struct JSONRPCAddressBookEntry {
 	label string
 	bitcoinAddress string
 	coinsparkAddress string
-	}
+}
 
-struct AssetTransactionAmount {
+struct JSONRPCTransactionAmount {
 	assetRef string
 	raw int
 	qty float
 	display string
 	name string
-	name_short string
+	nameShort string
 }
 
-// Barrister does not have a hashmap or dictionary type structure
-//struct AssetTransactionAmountEntry {
-//	key string
-//	value AssetTransactionAmount
-//}
-
-struct AssetTransaction {
+struct JSONRPCTransaction {
 	unixtime int
 	confirmations int
 	incoming bool
-	amounts []AssetTransactionAmount
+	amounts []JSONRPCTransactionAmount
 	fee float [optional]
 	txid string
 	}
 
-struct AssetBalanceAmount {
+struct JSONRPCBalanceAmount {
 	raw int
 	qty float
 	display string
 	}
 
-struct AssetBalance {
+struct JSONRPCBalance {
 	assetRef string
-	balance AssetBalanceAmount
-	spendable AssetBalanceAmount
+	balance JSONRPCBalanceAmount
+	spendable JSONRPCBalanceAmount
 	name string
 	name_short string
 }
 
 interface SparkBitJSONRPCService {
-	getstatus() StatusResponse
-	listwallets() ListWalletsResponse
-	deletewallet(walletID string) bool
 	createwallet(description string) bool
 	// or return ListWallet instead of bool so caller has walletID straight away?
+  	sendasset(walletID string, address string, assetRef string, quantity float, senderPays bool) bool
+  	// rounding mode could be a parameter? but we currently ROUND DOWN in our code.
 
+	getstatus() JSONRPCStatusResponse
+	listwallets() []JSONRPCWallet
+	deletewallet(walletID string) bool
 	setassetvisible(walletID string, assetRef string, visibility bool) bool
 	addasset(walletID string, assetRef string) bool
 	refreshasset(walletID string, assetRef string) bool
-
-	listaddresses(walletID string) []AddressBookEntry
-	createaddress(walletID string, quantity int) []AddressBookEntry
+	listaddresses(walletID string) []JSONRPCAddressBookEntry
+	createaddress(walletID string, quantity int) []JSONRPCAddressBookEntry
 	setaddresslabel(walletID string, address string, label string) bool
-
-	listbalances(walletID string, onlyvisible bool) []AssetBalance
-  
+  	listtransactions(walletID string, limit int) []JSONRPCTransaction
+	listbalances(walletID string, onlyVisible bool) []JSONRPCBalance
   	sendbitcoin(walletID string, address string, amount float) bool
-  	
-  	sendasset(walletID string, address string, assetRef string, quantity float, senderPays bool) bool
-  	// rounding mode could be a parameter
-
-  	listtransactions(walletID string, limit int) []AssetTransaction
-
 }
 

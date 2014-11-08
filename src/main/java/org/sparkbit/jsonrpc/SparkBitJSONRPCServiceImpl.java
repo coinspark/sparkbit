@@ -89,7 +89,7 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	}
     */
     @Override
-    public StatusResponse getstatus() throws com.bitmechanic.barrister.RpcException {
+    public JSONRPCStatusResponse getstatus() throws com.bitmechanic.barrister.RpcException {
 	StatusEnum status = this.mainFrame.getOnlineStatus();
 	boolean connected = status == StatusEnum.ONLINE;
 //	int lastSeenBlock = controller.getModel().getActiveWallet().getLastBlockSeenHeight();
@@ -113,7 +113,7 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	    }
 	}
 	
-	StatusResponse resp = new StatusResponse();
+	JSONRPCStatusResponse resp = new JSONRPCStatusResponse();
 	resp.setBlocks((long)lastSeenBlock);
 	resp.setConnected(connected);
 	resp.setSynced(synced);
@@ -121,16 +121,16 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
     }
     
     @Override
-    public ListWalletsResponse listwallets() throws com.bitmechanic.barrister.RpcException {
+    public JSONRPCWallet[] listwallets() throws com.bitmechanic.barrister.RpcException {
 
 	List<WalletData> perWalletModelDataList = controller.getModel().getPerWalletModelDataList();
-	List<ListWallet> wallets = new ArrayList<ListWallet>();
+	List<JSONRPCWallet> wallets = new ArrayList<JSONRPCWallet>();
 	if (perWalletModelDataList != null) {
 	    for (WalletData loopPerWalletModelData : perWalletModelDataList) {
 		String filename = loopPerWalletModelData.getWalletFilename();
 		String digest = DigestUtils.md5Hex(filename);
 		String description = loopPerWalletModelData.getWalletDescription();
-		ListWallet lw = new ListWallet(digest, description);
+		JSONRPCWallet lw = new JSONRPCWallet(digest, description);
 		wallets.add(lw);
 		
 		// store/update local cache
@@ -138,10 +138,8 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	    }
 	}
 
-	ListWallet[] resultArray = wallets.toArray(new ListWallet[0]);
-	ListWalletsResponse resp = new ListWalletsResponse();
-	resp.setWallets(resultArray);
-	return resp;
+	JSONRPCWallet[] resultArray = wallets.toArray(new JSONRPCWallet[0]);
+	return resultArray;
     }
     
     @Override
@@ -395,12 +393,12 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return true;
     }
 
-    public AddressBookEntry[] listaddresses(String walletID) throws com.bitmechanic.barrister.RpcException
+    public JSONRPCAddressBookEntry[] listaddresses(String walletID) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
 	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
 
-	List<AddressBookEntry> addresses = new ArrayList<AddressBookEntry>();
+	List<JSONRPCAddressBookEntry> addresses = new ArrayList<JSONRPCAddressBookEntry>();
 	
 	String address, sparkAddress, label;
 	    WalletInfoData addressBook = this.controller.getModel().getActiveWalletWalletInfo();
@@ -416,7 +414,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 			    sparkAddress = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(address);
 			    if (sparkAddress != null) {
-				AddressBookEntry entry = new AddressBookEntry(label, address, sparkAddress);
+				JSONRPCAddressBookEntry entry = new JSONRPCAddressBookEntry(label, address, sparkAddress);
 				addresses.add(entry);
 			    }
                         }
@@ -424,12 +422,12 @@ WalletInfoData winfo = wd.getWalletInfo();
                 }
             }
 	
-	AddressBookEntry[] resultArray = addresses.toArray(new AddressBookEntry[0]);
+	JSONRPCAddressBookEntry[] resultArray = addresses.toArray(new JSONRPCAddressBookEntry[0]);
 	return resultArray;
     }
     
     // TODO: Should we remove limit of 100 addresses?
-    public synchronized AddressBookEntry[] createaddress(String walletID, Long quantity) throws com.bitmechanic.barrister.RpcException {
+    public synchronized JSONRPCAddressBookEntry[] createaddress(String walletID, Long quantity) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
 	if (w == null) {
 	    throw new RpcException(100, "Could not find a wallet with that ID");
@@ -453,7 +451,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    this.controller.fireWalletBusyChange(true);
 	}
 
-	List<AddressBookEntry> addresses = new ArrayList<AddressBookEntry>();
+	List<JSONRPCAddressBookEntry> addresses = new ArrayList<JSONRPCAddressBookEntry>();
 
 	try {
 	    List<ECKey> newKeys = new ArrayList<ECKey>();
@@ -486,7 +484,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		// Create structure for JSON response
 		String sparkAddress = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(lastAddressString);
 		if (sparkAddress == null) sparkAddress = "Internal error creating CoinSparkAddress from this Bitcoin address";
-		AddressBookEntry entry = new AddressBookEntry(label, lastAddressString, sparkAddress);
+		JSONRPCAddressBookEntry entry = new JSONRPCAddressBookEntry(label, lastAddressString, sparkAddress);
 		addresses.add(entry);
 	    }
 
@@ -507,7 +505,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	CSEventBus.INSTANCE.postAsync(new SBEvent(SBEventType.ADDRESS_CREATED));
 	wd.setDirty(true);
 	
-	AddressBookEntry[] resultArray = addresses.toArray(new AddressBookEntry[0]);
+	JSONRPCAddressBookEntry[] resultArray = addresses.toArray(new JSONRPCAddressBookEntry[0]);
 	return resultArray;
     }
 
@@ -558,13 +556,13 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return success;
     }
     
-    public AssetTransaction[] listtransactions(String walletID, Long limit) throws com.bitmechanic.barrister.RpcException
+    public JSONRPCTransaction[] listtransactions(String walletID, Long limit) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
 	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
 	if (limit>100) throw new RpcException(100, "Number of transactions cannot be greater than 100");
 	if (limit<=0) throw new RpcException(100, "Number of transactions must be at least 1");
-	List<AssetTransaction> resultList = new ArrayList<AssetTransaction>();
+	List<JSONRPCTransaction> resultList = new ArrayList<JSONRPCTransaction>();
 	
 	
 	int lastSeenBlock = controller.getMultiBitService().getChain().getBestChainHeight();
@@ -587,20 +585,20 @@ WalletInfoData winfo = wd.getWalletInfo();
 		fee = new Double( feeBTC.doubleValue() );
 	    }
 	    String txid = tx.getHashAsString();
-	    ArrayList<AssetTransactionAmount> amounts = getAssetTransactionAmounts(w, tx);
-	    AssetTransactionAmount[] amountsArray = amounts.toArray(new AssetTransactionAmount[0]);
+	    ArrayList<JSONRPCTransactionAmount> amounts = getAssetTransactionAmounts(w, tx);
+	    JSONRPCTransactionAmount[] amountsArray = amounts.toArray(new JSONRPCTransactionAmount[0]);
 
 //	    int size = amounts.size();
 //	    AssetTransactionAmountEntry[] entries = new AssetTransactionAmountEntry[size];
 //	    int index = 0;
-//	    for (AssetTransactionAmount ata : amounts) {
+//	    for (JSONRPCTransactionAmount ata : amounts) {
 //		entries[index++] = new AssetTransactionAmountEntry(ata.getAssetRef(), ata);
 //	    }
-	    AssetTransaction atx = new AssetTransaction(unixtime, confirmations, incoming, amountsArray, fee, txid);
+	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, incoming, amountsArray, fee, txid);
 	    resultList.add(atx);
 	}
 	
-	AssetTransaction[] resultArray = resultList.toArray(new AssetTransaction[0]);
+	JSONRPCTransaction[] resultArray = resultList.toArray(new JSONRPCTransaction[0]);
 	return resultArray;
     }
     
@@ -611,7 +609,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     * Return array of asset transaction objects.
     * Original method is in CSMiscUtils, so any changes there, must be reflected here.
     */
-    private ArrayList<AssetTransactionAmount> getAssetTransactionAmounts(Wallet wallet, Transaction tx) {
+    private ArrayList<JSONRPCTransactionAmount> getAssetTransactionAmounts(Wallet wallet, Transaction tx) {
 	if (wallet==null || tx==null) return null;
 	
 	Map<Integer, BigInteger> receiveMap = wallet.CS.getAssetsSentToMe(tx);
@@ -622,7 +620,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 //	System.out.println(">>>>     send map = " +  sendMap);
 	
 	//Map<String, String> nameAmountMap = new TreeMap<>();
-	ArrayList<AssetTransactionAmount> resultList = new ArrayList<>();
+	ArrayList<JSONRPCTransactionAmount> resultList = new ArrayList<>();
 	
 	boolean isSentByMe = tx.sent(wallet);
 	Map<Integer, BigInteger> loopMap = (isSentByMe) ? sendMap : receiveMap;
@@ -707,7 +705,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    }
 	    
 	    //
-	    // Create AssetTransactionAmount and add it to list
+	    // Create JSONRPCTransactionAmount and add it to list
 	    // 
 	    String fullName = "";
 	    String assetRef = "";
@@ -716,11 +714,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 		assetRef = CSMiscUtils.getHumanReadableAssetRef(asset);
 	    }
 	    BigDecimal displayQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, netAmount);
-	    AssetTransactionAmount amount = new AssetTransactionAmount();
+	    JSONRPCTransactionAmount amount = new JSONRPCTransactionAmount();
 	    amount.setAssetRef(assetRef);
 	    amount.setDisplay(s1);
 	    amount.setName(fullName);
-	    amount.setName_short(name);
+	    amount.setNameShort(name);
 	    amount.setQty(displayQty.doubleValue());
 	    amount.setRaw(netAmount.longValue());
 	    resultList.add(amount);
@@ -731,11 +729,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 	satoshiAmount = satoshiAmount.subtract(sendMap.get(0));
 	String btcAmount = Utils.bitcoinValueToFriendlyString(satoshiAmount) + " BTC";
 	BigDecimal satoshiAmountBTC = new BigDecimal(satoshiAmount).divide(new BigDecimal(Utils.COIN));
-	AssetTransactionAmount amount = new AssetTransactionAmount();
+	JSONRPCTransactionAmount amount = new JSONRPCTransactionAmount();
 	    amount.setAssetRef("bitcoin");
 	    amount.setDisplay(btcAmount);
 	    amount.setName("Bitcoin");
-	    amount.setName_short("Bitcoin");
+	    amount.setNameShort("Bitcoin");
 	    amount.setQty(satoshiAmountBTC.doubleValue());
 	    amount.setRaw(satoshiAmount.longValue());
 	    resultList.add(amount);
@@ -743,7 +741,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return resultList;
     }
     
-    public AssetBalance[] listbalances(String walletID, Boolean onlyvisible) throws com.bitmechanic.barrister.RpcException
+    public JSONRPCBalance[] listbalances(String walletID, Boolean onlyVisible) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
 	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
@@ -751,7 +749,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	int[] assetIDs = w.CS.getAssetIDs();
 	if (assetIDs==null) throw new RpcException(999, "Internal error, getAssetIDs returned null");
 	
-	ArrayList<AssetBalance> resultList = new ArrayList<>();
+	ArrayList<JSONRPCBalance> resultList = new ArrayList<>();
 
 	// Add entry for BTC balances
 	BigInteger rawBalanceSatoshi = w.getBalance(Wallet.BalanceType.ESTIMATED);
@@ -761,9 +759,9 @@ WalletInfoData winfo = wd.getWalletInfo();
 	String rawBalanceDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
 	String rawSpendableDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
 
-	AssetBalanceAmount bitcoinBalanceAmount = new AssetBalanceAmount(rawBalanceSatoshi.longValue(), rawBalanceBTC.doubleValue(), rawBalanceDisplay);
-	AssetBalanceAmount bitcoinSpendableAmount = new AssetBalanceAmount(rawSpendableSatoshi.longValue(), rawSpendableBTC.doubleValue(), rawSpendableDisplay);	
-	AssetBalance btcAssetBalance = new AssetBalance("bitcoin", bitcoinBalanceAmount, bitcoinSpendableAmount, "Bitcoin", "Bitcoin");
+	JSONRPCBalanceAmount bitcoinBalanceAmount = new JSONRPCBalanceAmount(rawBalanceSatoshi.longValue(), rawBalanceBTC.doubleValue(), rawBalanceDisplay);
+	JSONRPCBalanceAmount bitcoinSpendableAmount = new JSONRPCBalanceAmount(rawSpendableSatoshi.longValue(), rawSpendableBTC.doubleValue(), rawSpendableDisplay);	
+	JSONRPCBalance btcAssetBalance = new JSONRPCBalance("bitcoin", bitcoinBalanceAmount, bitcoinSpendableAmount, "Bitcoin", "Bitcoin");
 	resultList.add(btcAssetBalance);
 
 	
@@ -774,7 +772,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    if (id==0) continue;
 	    CSAsset asset = w.CS.getAsset(id);
 	    if (asset==null) continue;	    
-	    if (onlyvisible && !asset.isVisible()) continue;
+	    if (onlyVisible && !asset.isVisible()) continue;
 	    
 	    String name=asset.getName();;
 	    String nameShort=asset.getNameShort();;
@@ -796,16 +794,16 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    Long spendableRaw = assetBalance.spendable.longValue();
 	    Double spendableQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, assetBalance.spendable).doubleValue();
 	    String spendableDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, assetBalance.spendable);
-	    AssetBalanceAmount spendableAmount = new AssetBalanceAmount(spendableRaw, spendableQty, spendableDisplay);
+	    JSONRPCBalanceAmount spendableAmount = new JSONRPCBalanceAmount(spendableRaw, spendableQty, spendableDisplay);
 	    Long balanceRaw = assetBalance.total.longValue();
 	    Double balanceQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, assetBalance.total).doubleValue();
 	    String balanceDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, assetBalance.total);
-	    AssetBalanceAmount balanceAmount = new AssetBalanceAmount(balanceRaw, balanceQty, balanceDisplay);
-	    AssetBalance ab = new AssetBalance(assetRef, balanceAmount, spendableAmount, name, nameShort);
+	    JSONRPCBalanceAmount balanceAmount = new JSONRPCBalanceAmount(balanceRaw, balanceQty, balanceDisplay);
+	    JSONRPCBalance ab = new JSONRPCBalance(assetRef, balanceAmount, spendableAmount, name, nameShort);
 	    resultList.add(ab);
 	}
 	
-	AssetBalance[] resultArray = resultList.toArray(new AssetBalance[0]);
+	JSONRPCBalance[] resultArray = resultList.toArray(new JSONRPCBalance[0]);
 	return resultArray;
     }
     
