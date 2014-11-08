@@ -28,6 +28,8 @@ public enum JSONRPCError {
   WALLET_NOT_FOUND(1, "Wallet ID not found."),
   WALLET_ID_ALREADY_EXISTS(2, "Wallet ID already exists."), // should not happen
   
+  DELETE_WALLET_NOT_EMPTY(3, "Cannot delete wallet as it is not empty"),
+  
   THROW_EXCEPTION(99999, "Internal error detected: "); // Code reserved for throwing a general exception
   
 

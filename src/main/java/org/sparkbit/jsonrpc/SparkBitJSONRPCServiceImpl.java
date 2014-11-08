@@ -209,6 +209,13 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
 	
+	// Are there any asset or btc balances?  Do not allow deleting wallet if any balance exists?
+	Map<Integer, Wallet.CoinSpark.AssetBalance> map = w.CS.getAllAssetBalances();
+	for (Wallet.CoinSpark.AssetBalance ab : map.values()) {
+	    if (ab.total.compareTo(BigInteger.ZERO)>0) {
+		JSONRPCError.DELETE_WALLET_NOT_EMPTY.raiseRpcException();		
+	    }
+	}
 
 //	String filename = getFilenameForWalletID(walletID);
 	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
