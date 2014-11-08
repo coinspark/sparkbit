@@ -555,8 +555,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    
 	    Date txDate = controller.getModel().getDateOfTransaction(controller, tx);
 	    long unixtime = txDate.getTime(); // unix epoch
-	    	    
-	    long confirmations = lastSeenBlock - tx.getConfidence().getAppearedAtChainHeight();
+	    long confirmations = 0;
+	    try {
+		confirmations = lastSeenBlock - tx.getConfidence().getAppearedAtChainHeight();
+	    } catch (IllegalStateException e) {
+	    }
 	    boolean incoming = !tx.sent(w);
 	    BigInteger feeSatoshis = tx.calculateFee(w);
 	    Double fee = null;
