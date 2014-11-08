@@ -43,6 +43,20 @@ struct AssetTransaction {
 	txid string
 	}
 
+struct AssetBalanceAmount {
+	raw int
+	qty float
+	display string
+	}
+
+struct AssetBalance {
+	assetRef string
+	balance AssetBalanceAmount
+	spendable AssetBalanceAmount
+	name string
+	name_short string
+}
+
 interface SparkBitJSONRPCService {
 	getstatus() StatusResponse
 	listwallets() ListWalletsResponse
@@ -58,7 +72,7 @@ interface SparkBitJSONRPCService {
 	createaddress(walletID string, quantity int) []AddressBookEntry
 	setaddresslabel(walletID string, address string, label string) bool
 
-//	listbalances(walletID string, onlyvisible bool) 
+	listbalances(walletID string, onlyvisible bool) []AssetBalance
 //  sendbitcoin(walletID string, address string, quantity int) bool
 //  sendasset(walletID string, address string, assetRef string, quantity int, rounding...
   listtransactions(walletID string, limit int) []AssetTransaction

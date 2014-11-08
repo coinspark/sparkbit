@@ -720,4 +720,70 @@ WalletInfoData winfo = wd.getWalletInfo();
 	
 	return resultList;
     }
+    
+    public AssetBalance[] listbalances(String walletID, Boolean onlyvisible) throws com.bitmechanic.barrister.RpcException
+    {
+	Wallet w = getWalletForWalletID(walletID);
+	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
+	
+	int[] assetIDs = w.CS.getAssetIDs();
+	if (assetIDs==null) throw new RpcException(999, "Internal error, getAssetIDs returned null");
+	
+	ArrayList<AssetBalance> resultList = new ArrayList<>();
+
+	// Add entry for BTC balances
+	BigInteger rawBalanceSatoshi = w.getBalance(Wallet.BalanceType.ESTIMATED);
+	BigInteger rawSpendableSatoshi = w.getBalance(Wallet.BalanceType.AVAILABLE);
+	BigDecimal rawBalanceBTC = new BigDecimal(rawBalanceSatoshi).divide(new BigDecimal(Utils.COIN));
+	BigDecimal rawSpendableBTC = new BigDecimal(rawSpendableSatoshi).divide(new BigDecimal(Utils.COIN));
+	String rawBalanceDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
+	String rawSpendableDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
+
+	AssetBalanceAmount bitcoinBalanceAmount = new AssetBalanceAmount(rawBalanceSatoshi.longValue(), rawBalanceBTC.doubleValue(), rawBalanceDisplay);
+	AssetBalanceAmount bitcoinSpendableAmount = new AssetBalanceAmount(rawSpendableSatoshi.longValue(), rawSpendableBTC.doubleValue(), rawSpendableDisplay);	
+	AssetBalance btcAssetBalance = new AssetBalance("bitcoin", bitcoinBalanceAmount, bitcoinSpendableAmount, "Bitcoin", "Bitcoin");
+	resultList.add(btcAssetBalance);
+
+	
+	int n = assetIDs.length;
+	Wallet.CoinSpark.AssetBalance assetBalance = null;
+	for (int i=0; i<n; i++) {
+	    int id = assetIDs[i];
+	    if (id==0) continue;
+	    CSAsset asset = w.CS.getAsset(id);
+	    if (asset==null) continue;	    
+	    if (onlyvisible && !asset.isVisible()) continue;
+	    
+	    String name=asset.getName();;
+	    String nameShort=asset.getNameShort();;
+
+	    if (name == null && asset != null) {
+	    	CoinSparkGenesis genesis = asset.getGenesis();
+		if (genesis!=null) {
+		    name = "Asset from " + genesis.getDomainName();
+		    nameShort = name;
+		} else {
+		    // No genesis block found yet
+		    name = "Other Asset";
+		    nameShort = "Other Asset";
+		}
+	    }
+	    
+	    String assetRef = CSMiscUtils.getHumanReadableAssetRef(asset);
+	    assetBalance = w.CS.getAssetBalance(id);
+	    Long spendableRaw = assetBalance.spendable.longValue();
+	    Double spendableQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, assetBalance.spendable).doubleValue();
+	    String spendableDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, assetBalance.spendable);
+	    AssetBalanceAmount spendableAmount = new AssetBalanceAmount(spendableRaw, spendableQty, spendableDisplay);
+	    Long balanceRaw = assetBalance.total.longValue();
+	    Double balanceQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, assetBalance.total).doubleValue();
+	    String balanceDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, assetBalance.total);
+	    AssetBalanceAmount balanceAmount = new AssetBalanceAmount(balanceRaw, balanceQty, balanceDisplay);
+	    AssetBalance ab = new AssetBalance(assetRef, balanceAmount, spendableAmount, name, nameShort);
+	    resultList.add(ab);
+	}
+	
+	AssetBalance[] resultArray = resultList.toArray(new AssetBalance[0]);
+	return resultArray;
+    }
 }
