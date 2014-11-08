@@ -69,6 +69,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
     
+    // Limit on the number of addresses you can create in one call
+    public static final int CREATE_ADDRESSES_LIMIT = 100;
+    
+    
     private BitcoinController controller;
     private MultiBitFrame mainFrame;
     private ConcurrentHashMap<String,String> walletFilenameMap;
@@ -150,7 +154,7 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	String newWalletFilename = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator + name + MultiBitService.WALLET_SUFFIX;
 	File newWalletFile = new File(newWalletFilename);
 	if (newWalletFile.exists()) {
-	    throw new RpcException(555, "Could not create new wallet, filename already used, try again");
+	    JSONRPCError.WALLET_ID_ALREADY_EXISTS.raiseRpcException();
 	}
 	
 	// Create a new wallet - protobuf.2 initially for backwards compatibility.
@@ -189,7 +193,8 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
                 controller.fireRecreateAllViews(true);
                 controller.fireDataChangedUpdateNow();
 	} catch (Exception e) {
-	    throw new RpcException(555, "Could not create new wallet, error: " + e.toString());	    
+	    JSONRPCError.CREATE_WALLET_FAILED.raiseRpcException();
+	    //JSONRPCError.throwAsRpcException("Could not create wallet", e);
 	}
 
 	updateWalletFilenameMap();
@@ -220,7 +225,7 @@ public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
 	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 WalletInfoData winfo = wd.getWalletInfo();
 	if (wd.isBusy()) {
-	    throw new RpcException(300, "Wallet is busy");
+	    JSONRPCError.WALLEY_IS_BUSY.raiseRpcException();
 	}
 	
 	// Unhook it from the PeerGroup.
@@ -267,11 +272,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    
 	    
 	} catch (Exception e) {
-	    throw new RpcException(444, "Error deleting wallet files: " + e.toString());
+	    JSONRPCError.throwAsRpcException("Error deleting wallet files", e);
 	}
 	
 	if (!winfo.isDeleted()) {
-	    throw new RpcException(445, "Wallet was not deleted. Reason unknown.");
+	    JSONRPCError.throwAsRpcException("Wallet was not deleted. Reason unknown.");
 	}
 	
 	updateWalletFilenameMap();
@@ -339,19 +344,23 @@ WalletInfoData winfo = wd.getWalletInfo();
     public synchronized Boolean setassetvisible(String walletID, String assetRef, Boolean visibility) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
-	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
-	CSAsset asset = getAssetForAssetRefString(w, assetRef);
-	if (asset != null) {
-	    asset.setVisibility(visibility);
-	    CSEventBus.INSTANCE.postAsyncEvent(CSEventType.ASSET_VISIBILITY_CHANGED, asset.getAssetID());
-	    return true;
+	if (w==null) {
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
-	throw new RpcException(200, "Asset ref not found");	    
+	CSAsset asset = getAssetForAssetRefString(w, assetRef);
+	if (asset == null) {
+	    JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
+	}
+	asset.setVisibility(visibility);
+	CSEventBus.INSTANCE.postAsyncEvent(CSEventType.ASSET_VISIBILITY_CHANGED, asset.getAssetID());
+	return true;
     }
     
     public synchronized Boolean addasset(String walletID, String assetRefString) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
-	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
+	if (w==null) {
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
+	}
 	
 	String s = assetRefString;
 	if ((s != null) && (s.length() > 0)) {
@@ -366,11 +375,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 		    if (assetDB.insertAsset(asset) != null) {
 			//System.out.println("Inserted new asset manually: " + asset);
 		    } else {
-		throw new RpcException(201, "Internal error, assetDB.insertAsset == null");
+			JSONRPCError.throwAsRpcException("Internal error, assetDB.insertAsset == null");
 		    }
 		}
 	    } else {
-		throw new RpcException(200, "Asset ref not valid");
+		JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
 	    }
 	}
 	
@@ -379,7 +388,10 @@ WalletInfoData winfo = wd.getWalletInfo();
     
     public synchronized Boolean refreshasset(String walletID, String assetRef) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
-	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
+	if (w==null) {
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
+	}
+	
 	CSAsset asset = getAssetForAssetRefString(w, assetRef);
 	if (asset != null) {
 	    asset.setRefreshState();
@@ -387,7 +399,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    // We want main asset panel to refresh, since there isn't an event fired on manual reset.
 	    CSEventBus.INSTANCE.postAsyncEvent(CSEventType.ASSET_UPDATED, asset.getAssetID());
 	} else {
-	    throw new RpcException(200, "Asset ref not found");
+	    JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
 	}
 
 	return true;
@@ -396,8 +408,10 @@ WalletInfoData winfo = wd.getWalletInfo();
     public JSONRPCAddressBookEntry[] listaddresses(String walletID) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
-	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
-
+	if (w==null) {
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
+	}
+	
 	List<JSONRPCAddressBookEntry> addresses = new ArrayList<JSONRPCAddressBookEntry>();
 	
 	String address, sparkAddress, label;
@@ -429,22 +443,22 @@ WalletInfoData winfo = wd.getWalletInfo();
     // TODO: Should we remove limit of 100 addresses?
     public synchronized JSONRPCAddressBookEntry[] createaddress(String walletID, Long quantity) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
-	if (w == null) {
-	    throw new RpcException(100, "Could not find a wallet with that ID");
+	if (w==null) {
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
 
 	int qty = quantity.intValue();
 	if (qty <= 0) {
-	    throw new RpcException(101, "Quantity must be at least 1");
+	    JSONRPCError.CREATE_ADDRESS_TOO_FEW.raiseRpcException();
 	}
-	if (qty > 100) {
-	    throw new RpcException(102, "Quantity can not be greater than 100");
+	if (qty > CREATE_ADDRESSES_LIMIT) {
+	    JSONRPCError.CREATE_ADDRESS_TOO_MANY.raiseRpcException();
 	}
 
 	String filename = getFilenameForWalletID(walletID);
 	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 	if (wd.isBusy()) {
-	    throw new RpcException(300, "Wallet is busy");
+	    JSONRPCError.WALLEY_IS_BUSY.raiseRpcException();
 	} else {
 	    wd.setBusy(true);
 	    wd.setBusyTaskKey("createaddress_jsonrpc");
@@ -490,10 +504,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 	    // Backup the wallet and wallet info.
 	    BackupManager.INSTANCE.backupPerWalletModelData(fileHandler, wd);
-	} catch (KeyCrypterException kce) {
-	    throw new RpcException(900, "Create addresses failed with KeyCrypterException: " + kce.toString());
+	} catch (KeyCrypterException e) {
+	    JSONRPCError.throwAsRpcException("Create addresses failed with KeyCrypterException", e);
 	} catch (Exception e) {
-	    throw new RpcException(902, "Create addresses failed with an Exception: " + e.toString());
+	    JSONRPCError.throwAsRpcException("Create addresses failed", e);
 	} finally {
 	    // Declare that wallet is no longer busy with the task.
 	    wd.setBusyTaskKey(null);
@@ -512,12 +526,14 @@ WalletInfoData winfo = wd.getWalletInfo();
     
     public synchronized Boolean setaddresslabel(String walletID, String address, String label) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
-	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
-
+	if (w==null) {
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
+	}
+	
 	if (address.startsWith("s")) {
 	    address = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(address);
 	    if (address==null) {
-		throw new RpcException(800, "CoinSpark address invalid");
+		JSONRPCError.COINSPARK_ADDRESS_INVALID.raiseRpcException();
 	    }
 	}
 	
@@ -550,7 +566,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 	    wd.setDirty(true);
 	} else {
-	    throw new RpcException(700, "Could not find the address");
+	    JSONRPCError.ADDRESS_NOT_FOUND.raiseRpcException();
 	}
 	
 	return success;
@@ -559,9 +575,16 @@ WalletInfoData winfo = wd.getWalletInfo();
     public JSONRPCTransaction[] listtransactions(String walletID, Long limit) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
-	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
-	if (limit>100) throw new RpcException(100, "Number of transactions cannot be greater than 100");
-	if (limit<=0) throw new RpcException(100, "Number of transactions must be at least 1");
+	if (w==null) {
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
+	}
+	
+	if (limit>100) {
+	    JSONRPCError.LIST_TRANSACTIONS_TOO_MANY.raiseRpcException();
+	} else if (limit<=0) {
+	    JSONRPCError.LIST_TRANSACTIONS_TOO_FEW.raiseRpcException();
+	}
+	
 	List<JSONRPCTransaction> resultList = new ArrayList<JSONRPCTransaction>();
 	
 	
@@ -744,10 +767,14 @@ WalletInfoData winfo = wd.getWalletInfo();
     public JSONRPCBalance[] listbalances(String walletID, Boolean onlyVisible) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
-	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
+	if (w==null) {
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
+	}
 	
 	int[] assetIDs = w.CS.getAssetIDs();
-	if (assetIDs==null) throw new RpcException(999, "Internal error, getAssetIDs returned null");
+	if (assetIDs==null) {
+	    JSONRPCError.throwAsRpcException("Internal error, getAssetIDs returned null");
+	}
 	
 	ArrayList<JSONRPCBalance> resultList = new ArrayList<>();
 
@@ -811,21 +838,29 @@ WalletInfoData winfo = wd.getWalletInfo();
     public synchronized Boolean sendbitcoin(String walletID, String address, Double amount) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
-	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
-	if (amount<=0.0) throw new RpcException(105, "Amount of BTC must be greater than zero");
+	if (w==null) {
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
+	}
+	if (amount<=0.0) {
+	    JSONRPCError.SEND_BITCOIN_AMOUNT_TOO_LOW.raiseRpcException();
+	}
 	
 	String bitcoinAddress = address;
 	if (address.startsWith("s")) {
 	    bitcoinAddress = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(address);
-	    if (bitcoinAddress==null) throw new RpcException(105, "Invalid coinspark address");
+	    if (bitcoinAddress==null) {
+		JSONRPCError.COINSPARK_ADDRESS_INVALID.raiseRpcException();
+	    }
 	}
 	boolean isValid = CSMiscUtils.validateBitcoinAddress(bitcoinAddress, controller);
-	if (!isValid) throw new RpcException(105, "Invalid bitcoin address");
+	if (!isValid) {
+	    JSONRPCError.BITCOIN_ADDRESS_INVALID.raiseRpcException();
+	}
 	
 	String filename = getFilenameForWalletID(walletID);
 	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 	if (wd.isBusy()) {
-	    throw new RpcException(300, "Wallet is busy");
+	    JSONRPCError.WALLEY_IS_BUSY.raiseRpcException();
 	} else {
 	    wd.setBusy(true);
 	    wd.setBusyTaskKey("sendbitcoin_jsonrpc");
@@ -861,8 +896,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    if (sendTransaction == null) {
 		    // a null transaction returned indicates there was not
 		// enough money (in spite of our validation)
-		throw new RpcException(500, "Insufficient funds to complete sending bitcoin");
-
+		JSONRPCError.SEND_BITCOIN_INSUFFICIENT_MONEY.raiseRpcException();
 	    } else {
 		sendSuccessful = true;
 		System.out.println(">>>> Sent transaction was:\n" + sendTransaction.toString());
@@ -877,9 +911,9 @@ WalletInfoData winfo = wd.getWalletInfo();
 //      } catch (AddressFormatException e1) {
 //      } catch (KeyCrypterException e1) {
 	} catch (InsufficientMoneyException e) {
-	    throw new RpcException(500, "Insufficient money: " + e.toString());
-	} catch (Exception e1) {
-	    throw new RpcException(500, "Could not send bitcoin due to error: " + e1.toString());
+	    JSONRPCError.SEND_BITCOIN_INSUFFICIENT_MONEY.raiseRpcException();
+	} catch (Exception e) {
+	    JSONRPCError.throwAsRpcException("Could not send bitcoin due to error", e);
 	} finally {
 	    // Save the wallet.
 	    try {
@@ -905,28 +939,37 @@ WalletInfoData winfo = wd.getWalletInfo();
 	boolean sendSuccessful = false;
 	
 		Wallet w = getWalletForWalletID(walletID);
-	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
-	if (quantity<=0.0) throw new RpcException(105, "Quantity of asset must be greater than zero");
+	if (w==null) {
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
+	}
+	
+	if (quantity<=0.0) {
+	    JSONRPCError.SEND_ASSET_AMOUNT_TOO_LOW.raiseRpcException();
+	}
 	
 	String bitcoinAddress = address;
 	if (!address.startsWith("s")) {
-	    throw new RpcException(105, "Must be coinspark address");
+	    JSONRPCError.ADDRESS_NOT_COINSPARK_ADDRESS.raiseRpcException();
 	} else {
 	    bitcoinAddress = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(address);
-	    if (bitcoinAddress==null) throw new RpcException(105, "Invalid coinspark address");
+	    if (bitcoinAddress==null) {
+		JSONRPCError.COINSPARK_ADDRESS_INVALID.raiseRpcException();
+	    }
 	    
 	    CoinSparkAddress csa = CSMiscUtils.decodeCoinSparkAddress(address);
 	    if (!CSMiscUtils.canSendAssetsToCoinSparkAddress(csa)) {
-		throw new RpcException(300, "CoinSpark address does not have asset flag set");
+		JSONRPCError.COINSPARK_ADDRESS_MISSING_ASSET_FLAG.raiseRpcException();
 	    }
 	}
 	boolean isValid = CSMiscUtils.validateBitcoinAddress(bitcoinAddress, controller);
-	if (!isValid) throw new RpcException(105, "Invalid bitcoin address");
+	if (!isValid) {
+	    JSONRPCError.BITCOIN_ADDRESS_INVALID.raiseRpcException();
+	}
 	
 	String filename = getFilenameForWalletID(walletID);
 	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 	if (wd.isBusy()) {
-	    throw new RpcException(300, "Wallet is busy");
+	    JSONRPCError.WALLEY_IS_BUSY.raiseRpcException();
 	} else {
 	    wd.setBusy(true);
 	    wd.setBusyTaskKey("sendasset_jsonrpc");
@@ -938,11 +981,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 	    CSAsset asset = getAssetForAssetRefString(w, assetRef);
 	    if (asset==null) {
-		throw new RpcException(500, "Asset ref not found");
+		JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
 	    }
 	    
 	    if (asset.getAssetState()!=CSAsset.CSAssetState.VALID) {
-		throw new RpcException(500, "Asset not currently in valid state");
+		JSONRPCError.ASSET_STATE_INVALID.raiseRpcException();
 	    }
 	    
 	    // Check number of confirms
@@ -959,7 +1002,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		}
 		//System.out.println(">>>> " + CSMiscUtils.getHumanReadableAssetRef(asset) + " num confirmations " + numConfirmations + ", threshold = " + threshold);
 		if (numConfirmations < threshold) {
-		    throw new RpcException(500, "Asset is not ready to be sent, need more confirmations, currently only have: " + numConfirmations);
+		    JSONRPCError.ASSET_NOT_CONFIRMED.raiseRpcException();
 		}
 	    }
 	    
@@ -989,7 +1032,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    
 	    
 	    if (assetAmountRawUnits.compareTo(spendableAmount) > 0) {
-		throw new RpcException(500, "Insufficient quantity of the asset");
+		JSONRPCError.ASSET_INSUFFICIENT_BALANCE.raiseRpcException();
 	    }
 	    
 
@@ -1023,8 +1066,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    if (sendTransaction == null) {
 		    // a null transaction returned indicates there was not
 		// enough money (in spite of our validation)
-		throw new RpcException(500, "Insufficient funds to complete sending bitcoin");
-
+		JSONRPCError.ASSET_INSUFFICIENT_BALANCE.raiseRpcException();
 	    } else {
 		sendSuccessful = true;
 		System.out.println(">>>> Sent transaction was:\n" + sendTransaction.toString());
@@ -1043,9 +1085,9 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    
 	    //--- bolilerplate begins...
 	} catch (InsufficientMoneyException ime) {
-		throw new RpcException(500, "Insufficient funds to complete sending: " + ime.toString() );	    
-	} catch (Exception e1) {
-	    throw new RpcException(500, "Could not send asset due to error: " + e1.toString());
+	    JSONRPCError.ASSET_INSUFFICIENT_BALANCE.raiseRpcException();
+	} catch (Exception e) {
+	    JSONRPCError.throwAsRpcException("Could not send asset due to error: " , e);
 	} finally {
 	    // Save the wallet.
 	    try {
