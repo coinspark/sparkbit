@@ -61,6 +61,7 @@ import org.multibit.network.MultiBitService;
 import org.multibit.store.MultiBitWalletVersion;
 import java.util.Date;
 import org.multibit.file.WalletSaveException;
+import static org.multibit.model.bitcoin.WalletAssetComboBoxModel.NUMBER_OF_CONFIRMATIONS_TO_SEND_ASSET_THRESHOLD;
 
 /**
  *
@@ -864,6 +865,172 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    throw new RpcException(500, "Insufficient money: " + e.toString());
 	} catch (Exception e1) {
 	    throw new RpcException(500, "Could not send bitcoin due to error: " + e1.toString());
+	} finally {
+	    // Save the wallet.
+	    try {
+		this.controller.getFileHandler().savePerWalletModelData(wd, false);
+	    } catch (WalletSaveException e) {
+//        log.error(e.getMessage(), e);
+	    }
+	    // Declare that wallet is no longer busy with the task.
+	    wd.setBusyTaskKey(null);
+	    wd.setBusy(false);
+	    this.controller.fireWalletBusyChange(false);
+	}
+
+	if (sendSuccessful) {
+	    controller.fireRecreateAllViews(false);
+	}
+	return sendSuccessful;
+    }
+
+    public Boolean sendasset(String walletID, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
+    {
+	boolean sendValidated = false;
+	boolean sendSuccessful = false;
+	
+		Wallet w = getWalletForWalletID(walletID);
+	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
+	if (quantity<=0.0) throw new RpcException(105, "Quantity of asset must be greater than zero");
+	
+	String bitcoinAddress = address;
+	if (!address.startsWith("s")) {
+	    throw new RpcException(105, "Must be coinspark address");
+	} else {
+	    bitcoinAddress = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(address);
+	    if (bitcoinAddress==null) throw new RpcException(105, "Invalid coinspark address");
+	    
+	    CoinSparkAddress csa = CSMiscUtils.decodeCoinSparkAddress(address);
+	    if (!CSMiscUtils.canSendAssetsToCoinSparkAddress(csa)) {
+		throw new RpcException(300, "CoinSpark address does not have asset flag set");
+	    }
+	}
+	boolean isValid = CSMiscUtils.validateBitcoinAddress(bitcoinAddress, controller);
+	if (!isValid) throw new RpcException(105, "Invalid bitcoin address");
+	
+	String filename = getFilenameForWalletID(walletID);
+	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
+	if (wd.isBusy()) {
+	    throw new RpcException(300, "Wallet is busy");
+	} else {
+	    wd.setBusy(true);
+	    wd.setBusyTaskKey("sendasset_jsonrpc");
+	    this.controller.fireWalletBusyChange(true);
+	}
+	
+	try {
+	    // -- boilerplate ends here....
+
+	    CSAsset asset = getAssetForAssetRefString(w, assetRef);
+	    if (asset==null) {
+		throw new RpcException(500, "Asset ref not found");
+	    }
+	    
+	    if (asset.getAssetState()!=CSAsset.CSAssetState.VALID) {
+		throw new RpcException(500, "Asset not currently in valid state");
+	    }
+	    
+	    // Check number of confirms
+	    int lastHeight = w.getLastBlockSeenHeight();
+	    CoinSparkAssetRef assetReference = asset.getAssetReference();
+	    if (assetReference != null) {
+		final int blockIndex = (int) assetReference.getBlockNum();
+		final int numConfirmations = lastHeight - blockIndex + 1; // 0 means no confirmation, 1 is yes for sa
+		int threshold = NUMBER_OF_CONFIRMATIONS_TO_SEND_ASSET_THRESHOLD;
+		// FIXME: REMOVE/COMMENT OUT BEFORE RELEASE?
+		String sendAssetWithJustOneConfirmation = controller.getModel().getUserPreference("sendAssetWithJustOneConfirmation");
+		if (Boolean.TRUE.toString().equals(sendAssetWithJustOneConfirmation)) {
+		    threshold = 1;
+		}
+		//System.out.println(">>>> " + CSMiscUtils.getHumanReadableAssetRef(asset) + " num confirmations " + numConfirmations + ", threshold = " + threshold);
+		if (numConfirmations < threshold) {
+		    throw new RpcException(500, "Asset is not ready to be sent, need more confirmations, currently only have: " + numConfirmations);
+		}
+	    }
+	    
+	    
+
+	    String displayQtyString = new BigDecimal(quantity).toPlainString();
+	    BigInteger assetAmountRawUnits = CSMiscUtils.getRawUnitsFromDisplayString(asset, displayQtyString);
+	    int assetID = asset.getAssetID();
+	    BigInteger spendableAmount =  w.CS.getAssetBalance(assetID).spendable; 
+	    
+            String sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);	    
+	    	    CoinSparkGenesis genesis = asset.getGenesis();
+
+	    	    long desiredRawUnits = assetAmountRawUnits.longValue();
+	    short chargeBasisPoints = genesis.getChargeBasisPoints();
+	    long rawFlatChargeAmount = genesis.getChargeFlat();
+	    boolean chargeExists = ( rawFlatChargeAmount>0 || chargeBasisPoints>0 );
+	    if (chargeExists) {
+		if (senderPays) {
+		    long x = genesis.calcGross(desiredRawUnits);
+		    assetAmountRawUnits = new BigInteger(String.valueOf(x));
+		} else {
+		    // We don't have to do anything if recipient pays, just send gross amount.
+		    // calcNet() returns what the recipient will receive, but it's not what we send. 
+		}
+	    }
+	    
+	    
+	    if (assetAmountRawUnits.compareTo(spendableAmount) > 0) {
+		throw new RpcException(500, "Insufficient quantity of the asset");
+	    }
+	    
+
+	    // Create a SendRequest.
+                Address sendAddressObject;
+		String sendAddress = bitcoinAddress;
+                sendAddressObject = new Address(controller.getModel().getNetworkParameters(), sendAddress);
+                //SendRequest sendRequest = SendRequest.to(sendAddressObject, Utils.toNanoCoins(sendAmount));
+
+		//public static SendRequest to(Address destination,BigInteger value,int assetID, BigInteger assetValue,int split) {
+		//BigInteger assetAmountRawUnits = new BigInteger(assetAmount);
+		BigInteger bitcoinAmountSatoshis = Utils.toNanoCoins(sendAmount);
+		
+		Wallet.SendRequest sendRequest = Wallet.SendRequest.to(sendAddressObject, bitcoinAmountSatoshis, assetID, assetAmountRawUnits, 1);
+                sendRequest.ensureMinRequiredFee = true;
+                sendRequest.fee = BigInteger.ZERO;
+                sendRequest.feePerKb = BitcoinModel.SEND_FEE_PER_KB_DEFAULT;
+
+                // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
+
+                // Complete it (which works out the fee) but do not sign it yet.
+                System.out.println("Just about to complete the tx (and calculate the fee)...");
+
+		// there is enough money, so let's do it for real now
+		    w.completeTx(sendRequest, false);
+	    sendValidated = true;
+	    System.out.println(">>>> The fee after completing the transaction was " + sendRequest.fee);
+	    // Let's do it for real now.
+
+	    Transaction sendTransaction = this.controller.getMultiBitService().sendCoins(wd, sendRequest, null);
+	    if (sendTransaction == null) {
+		    // a null transaction returned indicates there was not
+		// enough money (in spite of our validation)
+		throw new RpcException(500, "Insufficient funds to complete sending bitcoin");
+
+	    } else {
+		sendSuccessful = true;
+		System.out.println(">>>> Sent transaction was:\n" + sendTransaction.toString());
+	    }
+
+	    if (sendSuccessful) {
+		// There is enough money.
+	    } else {
+		// There is not enough money
+	    }
+
+	    
+	    
+	    
+	    
+	    
+	    //--- bolilerplate begins...
+	} catch (InsufficientMoneyException ime) {
+		throw new RpcException(500, "Insufficient funds to complete sending: " + ime.toString() );	    
+	} catch (Exception e1) {
+	    throw new RpcException(500, "Could not send asset due to error: " + e1.toString());
 	} finally {
 	    // Save the wallet.
 	    try {
