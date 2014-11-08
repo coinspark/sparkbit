@@ -60,6 +60,7 @@ import org.sparkbit.SBEventType;
 import org.multibit.network.MultiBitService;
 import org.multibit.store.MultiBitWalletVersion;
 import java.util.Date;
+import org.multibit.file.WalletSaveException;
 
 /**
  *
@@ -691,7 +692,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    // Create AssetTransactionAmount and add it to list
 	    // 
 	    String fullName = "";
-	    String assetRef = "null";
+	    String assetRef = "";
 	    if (asset!=null) {
 		fullName = asset.getName();
 		assetRef = CSMiscUtils.getHumanReadableAssetRef(asset);
@@ -788,5 +789,97 @@ WalletInfoData winfo = wd.getWalletInfo();
 	
 	AssetBalance[] resultArray = resultList.toArray(new AssetBalance[0]);
 	return resultArray;
+    }
+    
+    
+    public Boolean sendbitcoin(String walletID, String address, Double amount) throws com.bitmechanic.barrister.RpcException
+    {
+	Wallet w = getWalletForWalletID(walletID);
+	if (w==null) throw new RpcException(100, "Could not find a wallet with that ID");
+	if (amount<=0.0) throw new RpcException(105, "Amount of BTC must be greater than zero");
+	
+	String bitcoinAddress = address;
+	if (address.startsWith("s")) {
+	    bitcoinAddress = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(address);
+	    if (bitcoinAddress==null) throw new RpcException(105, "Invalid coinspark address");
+	}
+	boolean isValid = CSMiscUtils.validateBitcoinAddress(bitcoinAddress, controller);
+	if (!isValid) throw new RpcException(105, "Invalid bitcoin address");
+	
+	String filename = getFilenameForWalletID(walletID);
+	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
+	if (wd.isBusy()) {
+	    throw new RpcException(300, "Wallet is busy");
+	} else {
+	    wd.setBusy(true);
+	    wd.setBusyTaskKey("sendbitcoin_jsonrpc");
+	    this.controller.fireWalletBusyChange(true);
+	}
+
+	
+	
+	boolean sendValidated = false;
+	boolean sendSuccessful = false;
+	try {
+	    String sendAmount = amount.toString();
+	    // Create a SendRequest.
+	    Address sendAddressObject;
+
+	    sendAddressObject = new Address(controller.getModel().getNetworkParameters(), bitcoinAddress);
+	    Wallet.SendRequest sendRequest = Wallet.SendRequest.to(sendAddressObject, Utils.toNanoCoins(sendAmount));
+//                SendRequest sendRequest = SendRequest.to(sendAddressObject, Utils.toNanoCoins(sendAmount), 6, new BigInteger("10000"),1);
+	    sendRequest.ensureMinRequiredFee = true;
+	    sendRequest.fee = BigInteger.ZERO;
+	    sendRequest.feePerKb = BitcoinModel.SEND_FEE_PER_KB_DEFAULT;
+
+	    // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
+	    // Complete it (which works out the fee) but do not sign it yet.
+	    System.out.println(">>>> Just about to complete the tx (and calculate the fee)...");
+
+	    w.completeTx(sendRequest, false);
+	    sendValidated = true;
+	    System.out.println(">>>> The fee after completing the transaction was " + sendRequest.fee);
+	    // Let's do it for real now.
+
+	    Transaction sendTransaction = this.controller.getMultiBitService().sendCoins(wd, sendRequest, null);
+	    if (sendTransaction == null) {
+		    // a null transaction returned indicates there was not
+		// enough money (in spite of our validation)
+		throw new RpcException(500, "Insufficient funds to complete sending bitcoin");
+
+	    } else {
+		sendSuccessful = true;
+		System.out.println(">>>> Sent transaction was:\n" + sendTransaction.toString());
+	    }
+
+	    if (sendSuccessful) {
+		// There is enough money.
+	    } else {
+		// There is not enough money
+	    }
+//      } catch (WrongNetworkException e1) {
+//      } catch (AddressFormatException e1) {
+//      } catch (KeyCrypterException e1) {
+	} catch (InsufficientMoneyException e) {
+	    throw new RpcException(500, "Insufficient money: " + e.toString());
+	} catch (Exception e1) {
+	    throw new RpcException(500, "Could not send bitcoin due to error: " + e1.toString());
+	} finally {
+	    // Save the wallet.
+	    try {
+		this.controller.getFileHandler().savePerWalletModelData(wd, false);
+	    } catch (WalletSaveException e) {
+//        log.error(e.getMessage(), e);
+	    }
+	    // Declare that wallet is no longer busy with the task.
+	    wd.setBusyTaskKey(null);
+	    wd.setBusy(false);
+	    this.controller.fireWalletBusyChange(false);
+	}
+
+	if (sendSuccessful) {
+	    controller.fireRecreateAllViews(false);
+	}
+	return sendSuccessful;
     }
 }

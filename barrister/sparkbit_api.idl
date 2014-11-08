@@ -73,7 +73,7 @@ interface SparkBitJSONRPCService {
 	setaddresslabel(walletID string, address string, label string) bool
 
 	listbalances(walletID string, onlyvisible bool) []AssetBalance
-//  sendbitcoin(walletID string, address string, quantity int) bool
+  sendbitcoin(walletID string, address string, amount float) bool
 //  sendasset(walletID string, address string, assetRef string, quantity int, rounding...
   listtransactions(walletID string, limit int) []AssetTransaction
 
