@@ -67,7 +67,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * For now, synchronized access to commands which mutate
  */
-public class SparkBitJSONRPCServiceImpl implements SparkBitJSONRPCService {
+public class SparkBitJSONRPCServiceImpl implements sparkbit {
     
     // Limit on the number of addresses you can create in one call
     public static final int CREATE_ADDRESSES_LIMIT = 100;

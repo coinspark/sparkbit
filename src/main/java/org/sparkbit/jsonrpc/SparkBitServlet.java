@@ -52,7 +52,7 @@ public class SparkBitServlet extends HttpServlet {
 
 	    // SIMON: EDIT NAME OF CLASS
             // Register our service implementation
-            server.addHandler(SparkBitJSONRPCService.class, new SparkBitJSONRPCServiceImpl());
+            server.addHandler(sparkbit.class, new SparkBitJSONRPCServiceImpl());
         }
         catch (Exception e) {
             throw new ServletException(e);
