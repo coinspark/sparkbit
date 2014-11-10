@@ -54,7 +54,7 @@ struct JSONRPCBalance {
 	name_short string
 }
 
-interface SparkBitJSONRPCService {
+interface sparkbit {
 	createwallet(description string) bool
 	// or return ListWallet instead of bool so caller has walletID straight away?
   	sendasset(walletID string, address string, assetRef string, quantity float, senderPays bool) bool
