@@ -133,14 +133,16 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 	List<JSONRPCWallet> wallets = new ArrayList<JSONRPCWallet>();
 	if (perWalletModelDataList != null) {
 	    for (WalletData loopPerWalletModelData : perWalletModelDataList) {
-		String filename = loopPerWalletModelData.getWalletFilename();
-		String digest = DigestUtils.md5Hex(filename);
-		String description = loopPerWalletModelData.getWalletDescription();
-		JSONRPCWallet lw = new JSONRPCWallet(digest, description);
+//		String filename = loopPerWalletModelData.getWalletFilename();
+//		String digest = DigestUtils.md5Hex(filename);
+//		String description = loopPerWalletModelData.getWalletDescription();
+//		JSONRPCWallet lw = new JSONRPCWallet(digest, description);
+		String id = loopPerWalletModelData.getWalletDescription();
+		JSONRPCWallet lw = new JSONRPCWallet(id);
 		wallets.add(lw);
 		
 		// store/update local cache
-		walletFilenameMap.put(digest, filename);
+		//walletFilenameMap.put(digest, filename);
 	    }
 	}
 
@@ -157,6 +159,10 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 	File newWalletFile = new File(newWalletFilename);
 	if (newWalletFile.exists()) {
 	    JSONRPCError.WALLET_ID_ALREADY_EXISTS.raiseRpcException();
+	}
+	
+	if (getFilenameForWalletID(description)!=null) {
+	    JSONRPCError.WALLET_ID_ALREADY_EXISTS.raiseRpcException();	    
 	}
 	
 	// Create a new wallet - protobuf.2 initially for backwards compatibility.
@@ -294,8 +300,12 @@ WalletInfoData winfo = wd.getWalletInfo();
 	if (perWalletModelDataList != null) {
 	    for (WalletData loopPerWalletModelData : perWalletModelDataList) {
 		String filename = loopPerWalletModelData.getWalletFilename();
-		String digest = DigestUtils.md5Hex(filename);
-		walletFilenameMap. put(digest, filename);
+		String id = loopPerWalletModelData.getWalletDescription();
+		walletFilenameMap. put(id, filename);
+//
+//		String filename = loopPerWalletModelData.getWalletFilename();
+//		String digest = DigestUtils.md5Hex(filename);
+//		walletFilenameMap. put(digest, filename);
 	    }
 	}
 	

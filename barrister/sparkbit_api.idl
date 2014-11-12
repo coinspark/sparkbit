@@ -12,8 +12,7 @@ struct JSONRPCStatusResponse {
 }
 
 struct JSONRPCWallet {
-	id string
-	description string
+	walletID string
 }
 
 struct JSONRPCAddressBookEntry {
@@ -79,7 +78,7 @@ struct JSONRPCBalance {
 }
 
 interface sparkbit {
-	createwallet(description string) bool
+	createwallet(walletID string) bool
 	// or return ListWallet instead of bool so caller has walletID straight away?
   	sendasset(walletID string, address string, assetRef string, quantity float, senderPays bool) bool
   	// rounding mode could be a parameter? but we currently ROUND DOWN in our code.
