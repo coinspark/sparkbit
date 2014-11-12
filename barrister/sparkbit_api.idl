@@ -46,12 +46,36 @@ struct JSONRPCBalanceAmount {
 	display string
 	}
 
+// If we subclass with JSONRPCAssetBalance, the returned json is treated as parent class so fields are missing
 struct JSONRPCBalance {
 	assetRef string
 	balance JSONRPCBalanceAmount
 	spendable JSONRPCBalanceAmount
-	name string
-	name_short string
+	name string [optional]
+	name_short string [optional]
+	domain string [optional]
+	url string [optional]
+	issuer string [optional]
+	description string [optional]
+	units string [optional]
+	multiple float [optional]
+	status string [optional]
+	valid bool [optional]
+	checked_unixtime int [optional]
+	contract_url string [optional]
+	contract_file string [optional]
+	genesis_txid string [optional]
+	added_unixtime int [optional]
+	issue_date string [optional]
+	issue_unixtime int [optional]
+	expiry_date string [optional]
+	expiry_unixtime int [optional]
+	tracker_urls []string [optional]
+	icon_url string [optional]
+	image_url string [optional]
+	feed_url string [optional]
+	redemption_url string [optional]
+	visible bool [optional]
 }
 
 interface sparkbit {

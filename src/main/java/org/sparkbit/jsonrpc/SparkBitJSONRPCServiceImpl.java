@@ -63,6 +63,8 @@ import java.util.Date;
 import org.multibit.file.WalletSaveException;
 import static org.multibit.model.bitcoin.WalletAssetComboBoxModel.NUMBER_OF_CONFIRMATIONS_TO_SEND_ASSET_THRESHOLD;
 import java.util.concurrent.ConcurrentHashMap;
+import org.coinspark.core.CSUtils;
+import java.text.SimpleDateFormat;
 
 /**
  * For now, synchronized access to commands which mutate
@@ -796,7 +798,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 	JSONRPCBalanceAmount bitcoinBalanceAmount = new JSONRPCBalanceAmount(rawBalanceSatoshi.longValue(), rawBalanceBTC.doubleValue(), rawBalanceDisplay);
 	JSONRPCBalanceAmount bitcoinSpendableAmount = new JSONRPCBalanceAmount(rawSpendableSatoshi.longValue(), rawSpendableBTC.doubleValue(), rawSpendableDisplay);	
-	JSONRPCBalance btcAssetBalance = new JSONRPCBalance("bitcoin", bitcoinBalanceAmount, bitcoinSpendableAmount, "Bitcoin", "Bitcoin");
+	JSONRPCBalance btcAssetBalance = new JSONRPCBalance();
+	btcAssetBalance.setAssetRef("bitcoin");
+	btcAssetBalance.setBalance(bitcoinBalanceAmount);
+	btcAssetBalance.setSpendable(bitcoinSpendableAmount);
+//	btcAssetBalance.setName("Bitcoin")
 	resultList.add(btcAssetBalance);
 
 	
@@ -834,7 +840,53 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    Double balanceQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, assetBalance.total).doubleValue();
 	    String balanceDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, assetBalance.total);
 	    JSONRPCBalanceAmount balanceAmount = new JSONRPCBalanceAmount(balanceRaw, balanceQty, balanceDisplay);
-	    JSONRPCBalance ab = new JSONRPCBalance(assetRef, balanceAmount, spendableAmount, name, nameShort);
+	    JSONRPCBalance ab = new JSONRPCBalance();
+	    ab.setAssetRef(assetRef);
+	    ab.setBalance(balanceAmount);
+	    ab.setSpendable(spendableAmount);
+	    
+	    ab.setName(name);
+	    ab.setName_short(nameShort);
+	    ab.setDomain(asset.getDomainURL());
+	    ab.setUrl(asset.getAssetWebPageURL());
+	    ab.setIssuer(asset.getIssuer());
+	    ab.setDescription(asset.getDescription());
+	    ab.setUnits(asset.getUnits());
+	    ab.setMultiple(asset.getMultiple());
+	    ab.setStatus(CSMiscUtils.getHumanReadableAssetState(asset.getAssetState()));
+	    boolean isValid = (asset.getAssetState()!=CSAsset.CSAssetState.VALID);
+	// FIXME: Check num confirms too?
+	    ab.setValid(isValid);
+	    ab.setChecked_unixtime(asset.getValidChecked().getTime());
+	    ab.setContract_url(asset.getContractUrl());
+	    ab.setContract_file(asset.getContractPath());
+	    ab.setGenesis_txid(asset.getGenTxID());
+	    ab.setAdded_unixtime(asset.getDateCreation().getTime());
+
+	    // 3 October 2014, 1:47 am
+	    SimpleDateFormat sdf = new SimpleDateFormat("d MMMM yyyy, h:mm");
+	    SimpleDateFormat ampmdf = new SimpleDateFormat(" a");  // by default is uppercase and we need lower to match website
+	    Date issueDate = asset.getIssueDate();
+	    if (issueDate != null) {
+		ab.setIssue_date(sdf.format(issueDate) + ampmdf.format(issueDate).toLowerCase());
+		ab.setIssue_unixtime(issueDate.getTime());
+	    }
+
+	    // Never expires
+	    Date expiryDate = asset.getExpiryDate();
+	    if (expiryDate != null) {
+		ab.setExpiry_date(sdf.format(expiryDate) + ampmdf.format(expiryDate).toLowerCase() );
+		ab.setExpiry_unixtime(expiryDate.getTime());
+	    } else {
+		ab.setExpiry_date("Never expires");
+	    }
+	    ab.setTracker_urls(new String[]{asset.getCoinsparkTrackerUrl()});
+	    // FIXME: Split this string into an array
+	    ab.setIcon_url(asset.getIconUrl());
+	    ab.setImage_url(asset.getImageUrl());
+	    ab.setFeed_url(asset.getFeedUrl());
+	    ab.setRedemption_url(asset.getRedemptionUrl());
+	    ab.setVisible(asset.isVisible());
 	    resultList.add(ab);
 	}
 	
