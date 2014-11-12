@@ -341,6 +341,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return null;
     }
     
+    @Override
     public synchronized Boolean setassetvisible(String walletID, String assetRef, Boolean visibility) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
@@ -356,6 +357,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return true;
     }
     
+    @Override
     public synchronized Boolean addasset(String walletID, String assetRefString) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
 	if (w==null) {
@@ -386,6 +388,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return true;
     }
     
+    @Override
     public synchronized Boolean refreshasset(String walletID, String assetRef) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
 	if (w==null) {
@@ -405,7 +408,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return true;
     }
 
-    public JSONRPCAddressBookEntry[] listaddresses(String walletID) throws com.bitmechanic.barrister.RpcException
+     @Override
+   public JSONRPCAddressBookEntry[] listaddresses(String walletID) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
 	if (w==null) {
@@ -441,6 +445,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     }
     
     // TODO: Should we remove limit of 100 addresses?
+    @Override
     public synchronized JSONRPCAddressBookEntry[] createaddress(String walletID, Long quantity) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
 	if (w==null) {
@@ -524,6 +529,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     }
 
     
+    @Override
     public synchronized Boolean setaddresslabel(String walletID, String address, String label) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletID(walletID);
 	if (w==null) {
@@ -572,6 +578,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return success;
     }
     
+    @Override
     public JSONRPCTransaction[] listtransactions(String walletID, Long limit) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
@@ -764,6 +771,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return resultList;
     }
     
+    @Override
     public JSONRPCBalance[] listbalances(String walletID, Boolean onlyVisible) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
@@ -835,6 +843,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     }
     
     
+    @Override
     public synchronized Boolean sendbitcoin(String walletID, String address, Double amount) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletID(walletID);
@@ -933,6 +942,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return sendSuccessful;
     }
 
+    @Override
     public synchronized Boolean sendasset(String walletID, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
     {
 	boolean sendValidated = false;
