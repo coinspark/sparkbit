@@ -158,8 +158,8 @@ public class JettyEmbeddedServer {
 	    if (s!=null) {
 		allowIP = s;
 		whiteListAllowedIP = s.split(",");
-		System.out.println( ">>>> allowIP = " + allowIP);
-		System.out.println( ">>>> whiteListAllowedIP = " + whiteListAllowedIP);
+//		System.out.println( ">>>> allowIP = " + allowIP);
+		//System.out.println( ">>>> whiteListAllowedIP = " + whiteListAllowedIP);
 		for (int i=0; i<whiteListAllowedIP.length; i++) {
 		    whiteListAllowedIP[i] = whiteListAllowedIP[i].trim();
 		}
@@ -193,7 +193,13 @@ public class JettyEmbeddedServer {
 	    ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(http_config));
 	    http.setPort(this.port);
 	    http.setIdleTimeout(this.timeout);
-	    http.setHost("localhost"); // restrict to local
+	    
+	    if (useSSL) {
+		http.setHost("0.0.0.0");    // bind to IP address
+	    } else {
+		http.setHost("localhost"); // restrict to local, just accept 127.0.0.1
+	    }
+	    
 	    http.setAcceptQueueSize(10);
 	    
 	    return http;
@@ -276,7 +282,11 @@ public class JettyEmbeddedServer {
 	    https.setPort(this.port);
 	    https.setIdleTimeout(this.timeout);
 
-	    https.setHost("localhost"); // restrict to local
+	    if (useSSL) {
+		https.setHost("0.0.0.0");    // bind to IP address
+	    } else {
+		https.setHost("localhost"); // restrict to local, just accept 127.0.0.1
+	    }
 	    https.setAcceptQueueSize(10);
 	    
 	    return https;
@@ -386,10 +396,11 @@ public class JettyEmbeddedServer {
 	    ipaccess.addWhite("127.0.0.1|/*");
 	    if (whiteListAllowedIP != null) {
 		for (String ip : whiteListAllowedIP) {
-		    ipaccess.addWhite(ip + "|/*");
+		    String filter = ip + "|/*";
+//		    System.out.println(">>>> IP FILTER: " + filter);
+		    ipaccess.addWhite(filter);
 		}
 	    }
-	    System.out.println(">>>> IP Filter: " + ipaccess);
 	    // examples:
 	 //ipaccess.addWhite("192.168.1.1-255|/*");
 	    // ipaccess.addBlack("192.168.1.132|/home/*");
