@@ -69,6 +69,7 @@ import static org.multibit.network.MultiBitService.WALLET_SUFFIX;
 import static org.multibit.network.MultiBitService.getFilePrefix;
 import org.sparkbit.utils.FileNameCleaner;
 import org.apache.commons.io.FilenameUtils;
+import java.util.TimeZone;
 
 /**
  * For now, synchronized access to commands which mutate
@@ -631,7 +632,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	for (Transaction tx : transactions) {
 	    
 	    Date txDate = controller.getModel().getDateOfTransaction(controller, tx);
-	    long unixtime = txDate.getTime(); // unix epoch
+	    long unixtime = txDate.getTime()/1000L; // unix epoch in seconds
 	    long confirmations = 0;
 	    try {
 		confirmations = lastSeenBlock - tx.getConfidence().getAppearedAtChainHeight();
@@ -885,28 +886,29 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    boolean isValid = (asset.getAssetState()!=CSAsset.CSAssetState.VALID);
 	// FIXME: Check num confirms too?
 	    ab.setValid(isValid);
-	    ab.setChecked_unixtime(asset.getValidChecked().getTime());
+	    ab.setChecked_unixtime(asset.getValidChecked().getTime()/1000L);
 	    ab.setContract_url(asset.getContractUrl());
 	    ab.setContract_file(asset.getContractPath());
 	    ab.setGenesis_txid(asset.getGenTxID());
-	    ab.setAdded_unixtime(asset.getDateCreation().getTime());
+	    ab.setAdded_unixtime(asset.getDateCreation().getTime()/1000L);
 
 	    // 3 October 2014, 1:47 am
 	    SimpleDateFormat sdf = new SimpleDateFormat("d MMMM yyyy, h:mm");
+	    sdf.setTimeZone(TimeZone.getTimeZone("UTC")); // CoinSpark asset web page shows GMT/UTC.
 	    SimpleDateFormat ampmdf = new SimpleDateFormat(" a");  // by default is uppercase and we need lower to match website
 	    Date issueDate = asset.getIssueDate();
 	    if (issueDate != null) {
 		ab.setIssue_date(sdf.format(issueDate) + ampmdf.format(issueDate).toLowerCase());
-		ab.setIssue_unixtime(issueDate.getTime());
+		ab.setIssue_unixtime(issueDate.getTime()/1000L);
 	    }
 
 	    // Never expires
 	    Date expiryDate = asset.getExpiryDate();
 	    if (expiryDate != null) {
 		ab.setExpiry_date(sdf.format(expiryDate) + ampmdf.format(expiryDate).toLowerCase() );
-		ab.setExpiry_unixtime(expiryDate.getTime());
+		ab.setExpiry_unixtime(expiryDate.getTime()/1000L);
 	    } else {
-		ab.setExpiry_date("Never expires");
+		//ab.setExpiry_date("Never expires");
 	    }
 	    ab.setTracker_urls(new String[]{asset.getCoinsparkTrackerUrl()});
 	    // FIXME: Split this string into an array
