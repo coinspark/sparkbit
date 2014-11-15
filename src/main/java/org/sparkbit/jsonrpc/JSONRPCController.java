@@ -86,15 +86,18 @@ public enum JSONRPCController {
     }
     
     public boolean shouldRunServer() {
+	if (this.jetty==null) return false;
 	return this.jetty.runServer;
     }
     
     public boolean canStartServer() {
+	if (this.jetty==null) return false;
 	Server server = this.jetty.getServer();
 	return server==null || server.isStopped();
     }
     
     public boolean canStopServer() {
+	if (this.jetty==null) return false;
 	Server server = this.jetty.getServer();
 	return server!=null;
     }

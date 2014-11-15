@@ -150,9 +150,8 @@ public class ExitAction extends AbstractExitAction {
 	// Shut down the JSON-RPC server
 	JSONRPCController jc = JSONRPCController.INSTANCE;
 	if (jc.canStopServer()) {
-	    log.debug("Attempting to stop JSON-RPC server...");
 	    boolean b = jc.stopServer();
-	    log.debug("..." + (b ? "OK" : "Failed, there was some error"));
+	    log.debug(b ? "Stopped JSON-RPC server" : "Failed to stop JSON-RPC server");
 	}
 	// End JSON-RPC server
 	

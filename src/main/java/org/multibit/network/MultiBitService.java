@@ -173,20 +173,6 @@ public class MultiBitService {
       
 /* CoinSpark END */
       
-      /* Launch JSON-RPC Service START */
-	JSONRPCController jc = JSONRPCController.INSTANCE;
-	if (!jc.shouldRunServer()) {
-	    log.debug("Not starting JSON-RPC server.\nConfig file jsonrpc.properties needs to have proprety 'rpcserver' set to true");
-	} else {
-	    if (jc.canStartServer()) {
-		log.debug("Attempting to start JSON-RPC server...");
-		boolean b = jc.startServer();
-		log.debug("..." + (b ? "OK" : "Failed"));
-	    }
-	}
-      /* Launch JSON-RPC Service END */
-
-      
       log.debug("Creating peergroup ...");
       createNewPeerGroup();
       log.debug("Created peergroup '" + peerGroup + "'");
@@ -217,6 +203,18 @@ public class MultiBitService {
         }
       }
     }
+
+      /* Launch JSON-RPC Service START */
+      JSONRPCController jc = JSONRPCController.INSTANCE;
+      if (!jc.shouldRunServer()) {
+	  log.debug("Not starting JSON-RPC server because jsonrpc.properties does not have property 'rpcserver' set to true");
+      } else {
+	  if (jc.canStartServer()) {
+	      boolean b = jc.startServer();
+	      log.debug(b ? "Started JSON-RPC server" : "Tried but failed to start JSON-RPC server");
+	  }
+      }
+      /* Launch JSON-RPC Service END */
   }
 
   private void handleError(Exception e) {
