@@ -17,17 +17,17 @@ struct JSONRPCStatusResponse {
 
 struct JSONRPCAddressBookEntry {
 	label string
-	bitcoinAddress string
-	coinsparkAddress string
+	bitcoin_address string
+	coinspark_address string
 }
 
 struct JSONRPCTransactionAmount {
-	assetRef string
+	assetref string
 	raw int
 	qty float
 	display string
 	name string
-	nameShort string
+	name_short string
 }
 
 struct JSONRPCTransaction {
@@ -47,7 +47,7 @@ struct JSONRPCBalanceAmount {
 
 // If we subclass with JSONRPCAssetBalance, the returned json is treated as parent class so fields are missing
 struct JSONRPCBalance {
-	assetRef string
+	assetref string
 	balance JSONRPCBalanceAmount
 	spendable JSONRPCBalanceAmount
 	name string [optional]
@@ -78,22 +78,22 @@ struct JSONRPCBalance {
 }
 
 interface sparkbit {
-	createwallet(walletID string) bool
-  	sendasset(walletID string, address string, assetRef string, quantity float, senderPays bool) string
+	createwallet(walletname string) bool
+  	sendasset(walletname string, address string, assetref string, quantity float, senderpays bool) string
   	// string is the hash of successful transaction
   	// rounding mode could be a parameter? but we currently ROUND DOWN in our code.
 
 	getstatus() JSONRPCStatusResponse
 	listwallets() []string
-	deletewallet(walletID string) bool
-	setassetvisible(walletID string, assetRef string, visibility bool) bool
-	addasset(walletID string, assetRef string) bool
-	refreshasset(walletID string, assetRef string) bool
-	listaddresses(walletID string) []JSONRPCAddressBookEntry
-	createaddress(walletID string, quantity int) []JSONRPCAddressBookEntry
-	setaddresslabel(walletID string, address string, label string) bool
-  	listtransactions(walletID string, limit int) []JSONRPCTransaction
-	listbalances(walletID string, onlyVisible bool) []JSONRPCBalance
-  	sendbitcoin(walletID string, address string, amount float) string
+	deletewallet(walletname string) bool
+	setassetvisible(walletname string, assetref string, visibility bool) bool
+	addasset(walletname string, assetref string) bool
+	refreshasset(walletname string, assetref string) bool
+	listaddresses(walletname string) []JSONRPCAddressBookEntry
+	createaddress(walletname string, quantity int) []JSONRPCAddressBookEntry
+	setaddresslabel(walletname string, address string, label string) bool
+  	listtransactions(walletname string, limit int) []JSONRPCTransaction
+	listbalances(walletname string, onlyvisible bool) []JSONRPCBalance
+  	sendbitcoin(walletname string, address string, amount float) string
 }
 
