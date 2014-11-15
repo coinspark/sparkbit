@@ -11,10 +11,6 @@ struct JSONRPCStatusResponse {
 	blocks int
 }
 
-struct JSONRPCWallet {
-	walletID string
-}
-
 struct JSONRPCAddressBookEntry {
 	label string
 	bitcoinAddress string
@@ -84,7 +80,7 @@ interface sparkbit {
   	// rounding mode could be a parameter? but we currently ROUND DOWN in our code.
 
 	getstatus() JSONRPCStatusResponse
-	listwallets() []JSONRPCWallet
+	listwallets() []string
 	deletewallet(walletID string) bool
 	setassetvisible(walletID string, assetRef string, visibility bool) bool
 	addasset(walletID string, assetRef string) bool

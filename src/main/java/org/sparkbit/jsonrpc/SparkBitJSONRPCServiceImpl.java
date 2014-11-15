@@ -131,23 +131,22 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
     }
     
     @Override
-    public JSONRPCWallet[] listwallets() throws com.bitmechanic.barrister.RpcException {
+    public String[] listwallets() throws com.bitmechanic.barrister.RpcException {
 
 	List<WalletData> perWalletModelDataList = controller.getModel().getPerWalletModelDataList();
-	List<JSONRPCWallet> wallets = new ArrayList<JSONRPCWallet>();
+	List<String> names = new ArrayList<String>();
 	if (perWalletModelDataList != null) {
 	    for (WalletData loopPerWalletModelData : perWalletModelDataList) {
 		String filename = loopPerWalletModelData.getWalletFilename();
 		String base = FilenameUtils.getBaseName(filename);
-		JSONRPCWallet lw = new JSONRPCWallet(base);
-		wallets.add(lw);
+		names.add(base);
 		
 		// store/update local cache
 		//walletFilenameMap.put(digest, filename);
 	    }
 	}
 
-	JSONRPCWallet[] resultArray = wallets.toArray(new JSONRPCWallet[0]);
+	String[] resultArray = names.toArray(new String[0]);
 	return resultArray;
     }
     
