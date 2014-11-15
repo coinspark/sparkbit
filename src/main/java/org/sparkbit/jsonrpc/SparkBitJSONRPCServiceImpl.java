@@ -876,7 +876,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    
 	    ab.setName(name);
 	    ab.setName_short(nameShort);
-	    ab.setDomain(asset.getDomainURL());
+	    String domain = CSMiscUtils.getDomainHost(asset.getDomainURL());
+	    ab.setDomain(domain);
 	    ab.setUrl(asset.getAssetWebPageURL());
 	    ab.setIssuer(asset.getIssuer());
 	    ab.setDescription(asset.getDescription());
