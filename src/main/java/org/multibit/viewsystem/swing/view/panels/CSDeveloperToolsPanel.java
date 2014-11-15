@@ -170,7 +170,7 @@ public class CSDeveloperToolsPanel extends JPanel implements Viewable {
 //	// Register the "echo", "getDate" and "getTime" handlers with it
 //	dispatcher.register(new EchoHandler());
 	
-	JSONRPCController.INSTANCE.initialize(bitcoinController, this.mainFrame);
+	JSONRPCController.INSTANCE.initialize(bitcoinController);
     }
 
     public void jsonPrintButtonPressed() {

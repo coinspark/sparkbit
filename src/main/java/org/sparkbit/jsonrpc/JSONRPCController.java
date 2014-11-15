@@ -64,21 +64,15 @@ public enum JSONRPCController {
     public static final String RPC_SSL_ALLOW_TLS11 = "rpcsslallowtls11";
     public static final String RPC_SSL_KEYSTORE_FILENAME = "rpcsslkeystorefilename";
     
-    private MultiBitFrame mainFrame;
     private BitcoinController controller;
     private JettyEmbeddedServer jetty;
     private Properties config;
     
     // initialize this singleton
-    public void initialize(BitcoinController controller, MultiBitFrame frame) {
-	this.mainFrame = frame;
+    public void initialize(BitcoinController controller) {
         this.controller = controller;
 	this.config = FileHandler.loadJSONRPCConfig(new ApplicationDataDirectoryLocator());
 	this.jetty = new JettyEmbeddedServer(this);
-    }
-
-    public MultiBitFrame getMultiBitFrame() {
-	return this.mainFrame;
     }
     
     public BitcoinController getBitcoinController() {
@@ -166,6 +160,7 @@ public enum JSONRPCController {
     }
     
     public String toString() {
+	if (config==null) return "Empty configuration";
 	StringBuilder sb = new StringBuilder();
 	sb.append("JSON-RPC User Configuration:\n");
 	Enumeration e = config.propertyNames();

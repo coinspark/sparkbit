@@ -206,6 +206,7 @@ public class MultiBitService {
 
       /* Launch JSON-RPC Service START */
       JSONRPCController jc = JSONRPCController.INSTANCE;
+      JSONRPCController.INSTANCE.initialize(bitcoinController);
       if (!jc.shouldRunServer()) {
 	  log.debug("Not starting JSON-RPC server because jsonrpc.properties does not have property 'rpcserver' set to true");
       } else {

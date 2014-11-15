@@ -81,12 +81,12 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
     
     
     private BitcoinController controller;
-    private MultiBitFrame mainFrame;
+//    private MultiBitFrame mainFrame;
 //    private ConcurrentHashMap<String,String> walletFilenameMap;
     
     public SparkBitJSONRPCServiceImpl() {
 	this.controller = JSONRPCController.INSTANCE.getBitcoinController();
-	this.mainFrame = JSONRPCController.INSTANCE.getMultiBitFrame();
+//	this.mainFrame = JSONRPCController.INSTANCE.getMultiBitFrame();
 //	walletFilenameMap = new ConcurrentHashMap<>();
 //	updateWalletFilenameMap();
     }
@@ -101,8 +101,9 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
     */
     @Override
     public JSONRPCStatusResponse getstatus() throws com.bitmechanic.barrister.RpcException {
-	StatusEnum status = this.mainFrame.getOnlineStatus();
-	boolean connected = status == StatusEnum.ONLINE;
+//	StatusEnum status = this.mainFrame.getOnlineStatus();
+	// FIXME: this is a fudge for now, we will fix this method soon.
+	boolean connected = true;
 //	int lastSeenBlock = controller.getModel().getActiveWallet().getLastBlockSeenHeight();
 	int lastSeenBlock = controller.getMultiBitService().getChain().getBestChainHeight();
 
@@ -382,9 +383,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	CSAsset asset = getAssetForAssetRefString(w, assetRef);
 	if (asset == null) {
 	    JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
+	} else {
+	    asset.setVisibility(visibility);
+	    CSEventBus.INSTANCE.postAsyncEvent(CSEventType.ASSET_VISIBILITY_CHANGED, asset.getAssetID());
 	}
-	asset.setVisibility(visibility);
-	CSEventBus.INSTANCE.postAsyncEvent(CSEventType.ASSET_VISIBILITY_CHANGED, asset.getAssetID());
 	return true;
     }
     
