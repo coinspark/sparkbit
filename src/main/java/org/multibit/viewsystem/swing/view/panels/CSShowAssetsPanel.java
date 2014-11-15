@@ -214,6 +214,7 @@ public class CSShowAssetsPanel extends JPanel implements Viewable {
 	if (t == CSEventType.ASSET_VALIDATION_STARTED
 		|| t == CSEventType.ASSET_VALIDATION_COMPLETED
 		|| t == CSEventType.ASSET_UPDATED
+		|| t == CSEventType.ASSET_VISIBILITY_CHANGED
 		|| t == CSEventType.BALANCE_VALID) {
 	    
 	    
