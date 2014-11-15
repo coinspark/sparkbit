@@ -113,7 +113,8 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 //		}
 //	    }
 //	}
-	int bestChainHeight = controller.getMultiBitService().getChain().getBestChainHeight();
+	int mostCommonChainHeight = controller.getMultiBitService().getPeerGroup().getMostCommonChainHeight();
+	//int bestChainHeight = controller.getMultiBitService().getChain().getBestChainHeight();
 
 	List<WalletData> perWalletModelDataList = controller.getModel().getPerWalletModelDataList();
 	List<JSONRPCWalletStatus> wallets = new ArrayList<JSONRPCWalletStatus>();
@@ -121,11 +122,16 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 	    for (WalletData wd : perWalletModelDataList) {
 		Wallet w = wd.getWallet();
 		long lastSeenBlock = w.getLastBlockSeenHeight();
-		boolean synced = (lastSeenBlock == bestChainHeight);
-		if (wd.isBusy()) {
+		boolean synced = (lastSeenBlock == mostCommonChainHeight);
+//		System.out.println(">>>> last block = " + lastSeenBlock);
+//		System.out.println(">>>> mostCommonChainHeight = " + mostCommonChainHeight);
+//		System.out.println(">>>> replay UUID = " + wd.getReplayTaskUUID());
+//		System.out.println(">>>> busy key = " + wd.getBusyTaskKey());
+		if (wd.getReplayTaskUUID() != null) {
+		    synced = false;
+		} else if (wd.isBusy()) {
 		    String key = wd.getBusyTaskKey();
-		    if (key.equals("multiBitDownloadListener.downloadingText") ||
-			    key.equals("singleWalletPanel.waiting.text")) {
+		    if (key.equals("multiBitDownloadListener.downloadingText") || key.equals("singleWalletPanel.waiting.text")) {
 			synced = false;
 		    }
 		}
