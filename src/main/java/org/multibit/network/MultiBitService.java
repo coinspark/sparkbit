@@ -62,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import org.multibit.model.bitcoin.WalletAddressBookData;
+import org.sparkbit.jsonrpc.JSONRPCController;
 
 /**
  * <p>
@@ -171,6 +172,20 @@ public class MultiBitService {
       log.debug("Headerstore is '" + headerStoreFile + "'");
       
 /* CoinSpark END */
+      
+      /* Launch JSON-RPC Service START */
+	JSONRPCController jc = JSONRPCController.INSTANCE;
+	if (!jc.shouldRunServer()) {
+	    log.debug("Not starting JSON-RPC server.\nConfig file jsonrpc.properties needs to have proprety 'rpcserver' set to true");
+	} else {
+	    if (jc.canStartServer()) {
+		log.debug("Attempting to start JSON-RPC server...");
+		boolean b = jc.startServer();
+		log.debug("..." + (b ? "OK" : "Failed"));
+	    }
+	}
+      /* Launch JSON-RPC Service END */
+
       
       log.debug("Creating peergroup ...");
       createNewPeerGroup();

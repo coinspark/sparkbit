@@ -41,6 +41,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import org.multibit.viewsystem.swing.UpdateAssetsTimerTask;
+import org.sparkbit.jsonrpc.JSONRPCController;
 
 /**
  * Exit the application.
@@ -146,6 +147,16 @@ public class ExitAction extends AbstractExitAction {
             }
         }
 
+	// Shut down the JSON-RPC server
+	JSONRPCController jc = JSONRPCController.INSTANCE;
+	if (jc.canStopServer()) {
+	    log.debug("Attempting to stop JSON-RPC server...");
+	    boolean b = jc.stopServer();
+	    log.debug("..." + (b ? "OK" : "Failed, there was some error"));
+	}
+	// End JSON-RPC server
+	
+	
         if (bitcoinController != null) {
             // Save all the wallets and put their filenames in the user preferences.
             List<WalletData> perWalletModelDataList = bitcoinController.getModel().getPerWalletModelDataList();
