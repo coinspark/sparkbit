@@ -924,7 +924,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     
     
     @Override
-    public synchronized Boolean sendbitcoin(String walletID, String address, Double amount) throws com.bitmechanic.barrister.RpcException
+    public synchronized String sendbitcoin(String walletID, String address, Double amount) throws com.bitmechanic.barrister.RpcException
     {
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
@@ -960,6 +960,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	
 	boolean sendValidated = false;
 	boolean sendSuccessful = false;
+	String sendTxHash = null;
 	try {
 	    String sendAmount = amount.toString();
 	    // Create a SendRequest.
@@ -988,6 +989,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		JSONRPCError.SEND_BITCOIN_INSUFFICIENT_MONEY.raiseRpcException();
 	    } else {
 		sendSuccessful = true;
+		sendTxHash = sendTransaction.getHashAsString();
 		System.out.println(">>>> Sent transaction was:\n" + sendTransaction.toString());
 	    }
 
@@ -1019,12 +1021,13 @@ WalletInfoData winfo = wd.getWalletInfo();
 	if (sendSuccessful) {
 	    controller.fireRecreateAllViews(false);
 	}
-	return sendSuccessful;
+	return sendTxHash;
     }
 
     @Override
-    public synchronized Boolean sendasset(String walletID, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
+    public synchronized String sendasset(String walletID, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
     {
+	String sendTxHash = null;
 	boolean sendValidated = false;
 	boolean sendSuccessful = false;
 	
@@ -1159,6 +1162,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		JSONRPCError.ASSET_INSUFFICIENT_BALANCE.raiseRpcException();
 	    } else {
 		sendSuccessful = true;
+		sendTxHash = sendTransaction.getHashAsString();
 		System.out.println(">>>> Sent transaction was:\n" + sendTransaction.toString());
 	    }
 
@@ -1167,11 +1171,6 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    } else {
 		// There is not enough money
 	    }
-
-	    
-	    
-	    
-	    
 	    
 	    //--- bolilerplate begins...
 	} catch (InsufficientMoneyException ime) {
@@ -1194,6 +1193,6 @@ WalletInfoData winfo = wd.getWalletInfo();
 	if (sendSuccessful) {
 	    controller.fireRecreateAllViews(false);
 	}
-	return sendSuccessful;
+	return sendTxHash;
     }
 }
