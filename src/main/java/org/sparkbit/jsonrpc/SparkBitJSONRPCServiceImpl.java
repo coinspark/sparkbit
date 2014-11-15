@@ -188,7 +188,8 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 
                 // Start using the new file as the wallet.
                 this.controller.addWalletFromFilename(newWalletFile.getAbsolutePath());
-                this.controller.getModel().setActiveWalletByFilename(newWalletFilename);
+		// We could select the new wallet if we wanted to.
+		//this.controller.getModel().setActiveWalletByFilename(newWalletFilename);
                 //controller.getModel().setUserPreference(BitcoinModel.GRAB_FOCUS_FOR_ACTIVE_WALLET, "true");
 
                 // Save the user properties to disk.
@@ -236,18 +237,19 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.WALLEY_IS_BUSY.raiseRpcException();
 	}
 	
+	// Deleting a wallet even if not currently active, causes list of wallets to be unselected
+        // so we need to keep track of what was active befor eremoval
+	String activeFilename = this.controller.getModel().getActiveWalletFilename();
+	if (wd.getWalletFilename().equals(activeFilename)) {
+	    activeFilename = null;
+	}
+	
 	// Unhook it from the PeerGroup.
 	this.controller.getMultiBitService().getPeerGroup().removeWallet(w);
 
 	// Remove it from the model.
       this.controller.getModel().remove(wd);
 
-      // Set the new Wallet to be the active wallet.
-      if (!this.controller.getModel().getPerWalletModelDataList().isEmpty()) {
-        WalletData firstPerWalletModelData = this.controller.getModel().getPerWalletModelDataList().get(0);
-        this.controller.getModel().setActiveWalletByFilename(firstPerWalletModelData.getWalletFilename());
-      }
-	controller.fireRecreateAllViews(true);
 
 	// Perform delete if possible etc.
 	FileHandler fileHandler = this.controller.getFileHandler();
@@ -286,6 +288,16 @@ WalletInfoData winfo = wd.getWalletInfo();
 	if (!winfo.isDeleted()) {
 	    JSONRPCError.throwAsRpcException("Wallet was not deleted. Reason unknown.");
 	}
+	
+    // Set the new Wallet to be the old active wallet, or the first wallet
+      if (activeFilename!=null) {
+	  this.controller.getModel().setActiveWalletByFilename(activeFilename);
+      } else if (!this.controller.getModel().getPerWalletModelDataList().isEmpty()) {
+        WalletData firstPerWalletModelData = this.controller.getModel().getPerWalletModelDataList().get(0);
+        this.controller.getModel().setActiveWalletByFilename(firstPerWalletModelData.getWalletFilename());
+      }
+      controller.fireRecreateAllViews(true);
+
 	
 	updateWalletFilenameMap();
 	return true;
