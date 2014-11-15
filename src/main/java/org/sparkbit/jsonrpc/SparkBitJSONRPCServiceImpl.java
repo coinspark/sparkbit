@@ -852,12 +852,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 	btcAssetBalance.setAssetRef("bitcoin");
 	btcAssetBalance.setBalance(bitcoinBalanceAmount);
 	btcAssetBalance.setSpendable(bitcoinSpendableAmount);
-//	btcAssetBalance.setName("Bitcoin")
 	resultList.add(btcAssetBalance);
 
 	
 	int n = assetIDs.length;
-	Wallet.CoinSpark.AssetBalance assetBalance = null;
+	Wallet.CoinSpark.AssetBalance assetBalance;
 	for (int i=0; i<n; i++) {
 	    int id = assetIDs[i];
 	    if (id==0) continue;
@@ -865,10 +864,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    if (asset==null) continue;	    
 	    if (onlyVisible && !asset.isVisible()) continue;
 	    
-	    String name=asset.getName();;
-	    String nameShort=asset.getNameShort();;
+	    String name=asset.getName();
+	    String nameShort=asset.getNameShort();
 
-	    if (name == null && asset != null) {
+	    if (name == null) {
 	    	CoinSparkGenesis genesis = asset.getGenesis();
 		if (genesis!=null) {
 		    name = "Asset from " + genesis.getDomainName();
