@@ -793,7 +793,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	
 	int[] assetIDs = w.CS.getAssetIDs();
 	if (assetIDs==null) {
-	    JSONRPCError.throwAsRpcException("Internal error, getAssetIDs returned null");
+	    return new JSONRPCBalance[0];
 	}
 	
 	ArrayList<JSONRPCBalance> resultList = new ArrayList<>();
