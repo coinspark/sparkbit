@@ -5,10 +5,14 @@
 // Java class names and methods follow Java convention
 
 // Syncing and last seen block is actually on a per wallet basis rather than system-wide
-struct JSONRPCStatusResponse {
-	connected bool
+struct JSONRPCWalletStatus {
+	name string
 	synced bool
 	blocks int
+}
+struct JSONRPCStatusResponse {
+	connected bool
+	wallets []JSONRPCWalletStatus
 }
 
 struct JSONRPCAddressBookEntry {

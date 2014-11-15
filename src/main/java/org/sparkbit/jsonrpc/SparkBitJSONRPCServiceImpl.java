@@ -92,43 +92,56 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
     }
     
     /*
-    getstatus
-	{
-		'connected': true/false,
-		'synchronized': true/false, [if we are up to do with netweork]
-		'blocks': <number of last block seen>,
-	}
+    Get status on a per wallet basis.
     */
     @Override
     public JSONRPCStatusResponse getstatus() throws com.bitmechanic.barrister.RpcException {
-//	StatusEnum status = this.mainFrame.getOnlineStatus();
-	// FIXME: this is a fudge for now, we will fix this method soon.
-	boolean connected = true;
-//	int lastSeenBlock = controller.getModel().getActiveWallet().getLastBlockSeenHeight();
-	int lastSeenBlock = controller.getMultiBitService().getChain().getBestChainHeight();
-
-	boolean replayTaskRunning = ReplayManager.INSTANCE.getCurrentReplayTask()!=null ;
-	boolean regularDownloadRunning = ReplayManager.isRegularDownloadRunning();
-	boolean synced = !regularDownloadRunning && !replayTaskRunning;
+//	boolean replayTaskRunning = ReplayManager.INSTANCE.getCurrentReplayTask()!=null ;
+//	boolean regularDownloadRunning = ReplayManager.isRegularDownloadRunning();
+//	boolean synced = !regularDownloadRunning && !replayTaskRunning;
 	
 	// A regular download can be running in the background, because there is a new block,
 	// and thus we are behind by one block, but the UI will still show that we synced.
 	// We will consider ourselves to be out of sync if we are two or more blocks behind our peers.
-	PeerGroup pg = controller.getMultiBitService().getPeerGroup();
-	if (pg!=null) {
-	    Peer peer = pg.getDownloadPeer();
-	    if (peer != null) {
-		int n = peer.getPeerBlockHeightDifference();
-		if (synced && n>=2) {
-		    synced = false;
+//	PeerGroup pg = controller.getMultiBitService().getPeerGroup();
+//	if (pg!=null) {
+//	    Peer peer = pg.getDownloadPeer();
+//	    if (peer != null) {
+//		int n = peer.getPeerBlockHeightDifference();
+//		if (synced && n>=2) {
+//		    synced = false;
+//		}
+//	    }
+//	}
+	int bestChainHeight = controller.getMultiBitService().getChain().getBestChainHeight();
+
+	List<WalletData> perWalletModelDataList = controller.getModel().getPerWalletModelDataList();
+	List<JSONRPCWalletStatus> wallets = new ArrayList<JSONRPCWalletStatus>();
+	if (perWalletModelDataList != null) {
+	    for (WalletData wd : perWalletModelDataList) {
+		Wallet w = wd.getWallet();
+		long lastSeenBlock = w.getLastBlockSeenHeight();
+		boolean synced = (lastSeenBlock == bestChainHeight);
+		if (wd.isBusy()) {
+		    String key = wd.getBusyTaskKey();
+		    if (key.equals("multiBitDownloadListener.downloadingText") ||
+			    key.equals("singleWalletPanel.waiting.text")) {
+			synced = false;
+		    }
 		}
+		String filename = wd.getWalletFilename();
+		String base = FilenameUtils.getBaseName(filename);
+		JSONRPCWalletStatus ws = new JSONRPCWalletStatus(base, synced, lastSeenBlock);
+		wallets.add(ws);
 	    }
 	}
 	
+	boolean connected = controller.getMultiBitService().getPeerGroup().numConnectedPeers() > 0;
+	
 	JSONRPCStatusResponse resp = new JSONRPCStatusResponse();
-	resp.setBlocks((long)lastSeenBlock);
 	resp.setConnected(connected);
-	resp.setSynced(synced);
+	JSONRPCWalletStatus[] x = wallets.toArray(new JSONRPCWalletStatus[0]);
+	resp.setWallets( x );
 	return resp;
     }
     
