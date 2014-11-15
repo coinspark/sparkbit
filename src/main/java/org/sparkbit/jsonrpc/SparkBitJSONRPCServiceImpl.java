@@ -910,8 +910,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    } else {
 		//ab.setExpiry_date("Never expires");
 	    }
-	    ab.setTracker_urls(new String[]{asset.getCoinsparkTrackerUrl()});
-	    // FIXME: Split this string into an array
+	    ab.setTracker_urls(asset.getCoinsparkTrackerUrls());
 	    ab.setIcon_url(asset.getIconUrl());
 	    ab.setImage_url(asset.getImageUrl());
 	    ab.setFeed_url(asset.getFeedUrl());
