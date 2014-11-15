@@ -907,12 +907,17 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    boolean isValid = (asset.getAssetState()!=CSAsset.CSAssetState.VALID);
 	// FIXME: Check num confirms too?
 	    ab.setValid(isValid);
-	    ab.setChecked_unixtime(asset.getValidChecked().getTime()/1000L);
+	    Date validCheckedDate = asset.getValidChecked();
+	    if (validCheckedDate!=null) {
+		ab.setChecked_unixtime(validCheckedDate.getTime()/1000L);
+	    }
 	    ab.setContract_url(asset.getContractUrl());
 	    ab.setContract_file(asset.getContractPath());
 	    ab.setGenesis_txid(asset.getGenTxID());
-	    ab.setAdded_unixtime(asset.getDateCreation().getTime()/1000L);
-
+	    Date creationDate = asset.getDateCreation();
+	    if (creationDate != null) {
+		ab.setAdded_unixtime(creationDate.getTime()/1000L);
+	    }
 	    // 3 October 2014, 1:47 am
 	    SimpleDateFormat sdf = new SimpleDateFormat("d MMMM yyyy, h:mm");
 	    sdf.setTimeZone(TimeZone.getTimeZone("UTC")); // CoinSpark asset web page shows GMT/UTC.
@@ -928,8 +933,6 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    if (expiryDate != null) {
 		ab.setExpiry_date(sdf.format(expiryDate) + ampmdf.format(expiryDate).toLowerCase() );
 		ab.setExpiry_unixtime(expiryDate.getTime()/1000L);
-	    } else {
-		//ab.setExpiry_date("Never expires");
 	    }
 	    ab.setTracker_urls(asset.getCoinsparkTrackerUrls());
 	    ab.setIcon_url(asset.getIconUrl());
