@@ -27,9 +27,9 @@ import org.multibit.viewsystem.swing.MultiBitFrame;
 import org.multibit.model.core.StatusEnum;
 import org.multibit.network.ReplayManager;
 import com.google.bitcoin.core.*;
-import java.util.HashMap;
+//import java.util.HashMap;
 import java.util.Iterator;
-import org.apache.commons.codec.digest.DigestUtils;
+//import org.apache.commons.codec.digest.DigestUtils;
 import org.coinspark.protocol.CoinSparkAddress;
 import org.coinspark.protocol.CoinSparkAssetRef;
 import org.coinspark.wallet.CSAsset;
@@ -65,6 +65,10 @@ import static org.multibit.model.bitcoin.WalletAssetComboBoxModel.NUMBER_OF_CONF
 import java.util.concurrent.ConcurrentHashMap;
 import org.coinspark.core.CSUtils;
 import java.text.SimpleDateFormat;
+import static org.multibit.network.MultiBitService.WALLET_SUFFIX;
+import static org.multibit.network.MultiBitService.getFilePrefix;
+import org.sparkbit.utils.FileNameCleaner;
+import org.apache.commons.io.FilenameUtils;
 
 /**
  * For now, synchronized access to commands which mutate
@@ -77,13 +81,13 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
     
     private BitcoinController controller;
     private MultiBitFrame mainFrame;
-    private ConcurrentHashMap<String,String> walletFilenameMap;
+//    private ConcurrentHashMap<String,String> walletFilenameMap;
     
     public SparkBitJSONRPCServiceImpl() {
 	this.controller = JSONRPCController.INSTANCE.getBitcoinController();
 	this.mainFrame = JSONRPCController.INSTANCE.getMultiBitFrame();
-	walletFilenameMap = new ConcurrentHashMap<>();
-	updateWalletFilenameMap();
+//	walletFilenameMap = new ConcurrentHashMap<>();
+//	updateWalletFilenameMap();
     }
     
     /*
@@ -133,12 +137,9 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 	List<JSONRPCWallet> wallets = new ArrayList<JSONRPCWallet>();
 	if (perWalletModelDataList != null) {
 	    for (WalletData loopPerWalletModelData : perWalletModelDataList) {
-//		String filename = loopPerWalletModelData.getWalletFilename();
-//		String digest = DigestUtils.md5Hex(filename);
-//		String description = loopPerWalletModelData.getWalletDescription();
-//		JSONRPCWallet lw = new JSONRPCWallet(digest, description);
-		String id = loopPerWalletModelData.getWalletDescription();
-		JSONRPCWallet lw = new JSONRPCWallet(id);
+		String filename = loopPerWalletModelData.getWalletFilename();
+		String base = FilenameUtils.getBaseName(filename);
+		JSONRPCWallet lw = new JSONRPCWallet(base);
 		wallets.add(lw);
 		
 		// store/update local cache
@@ -151,19 +152,25 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
     }
     
     @Override
-    public synchronized Boolean createwallet(String description) throws com.bitmechanic.barrister.RpcException {
-	LocalDateTime dt = new DateTime().toLocalDateTime();
-	String name = "jsonrpc_" + dt.toString("MMDDYYYY") + "_" + dt.toString("HHmmss.SSS");
+    public synchronized Boolean createwallet(String name) throws com.bitmechanic.barrister.RpcException {
 	
+	boolean isNameSane = sanityCheckName(name);
+	if (!isNameSane) {
+	    JSONRPCError.WALLET_NAME_BAD_CHARS.raiseRpcException();
+	}
+	if (name.startsWith(".") || name.endsWith(".")) {
+	    JSONRPCError.WALLET_NAME_PERIOD_START_END.raiseRpcException();
+	}
+	
+
 	String newWalletFilename = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator + name + MultiBitService.WALLET_SUFFIX;
 	File newWalletFile = new File(newWalletFilename);
 	if (newWalletFile.exists()) {
 	    JSONRPCError.WALLET_ID_ALREADY_EXISTS.raiseRpcException();
 	}
 	
-	if (getFilenameForWalletID(description)!=null) {
-	    JSONRPCError.WALLET_ID_ALREADY_EXISTS.raiseRpcException();	    
-	}
+	LocalDateTime dt = new DateTime().toLocalDateTime();
+	String description = name + " (jsonrpc " + dt.toString("YYYY-MM-DD HH:mm" + ")"); //.SSS");
 	
 	// Create a new wallet - protobuf.2 initially for backwards compatibility.
 	try {
@@ -206,18 +213,13 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 	    //JSONRPCError.throwAsRpcException("Could not create wallet", e);
 	}
 
-	updateWalletFilenameMap();
+//	updateWalletFilenameMap();
 	return true;
     }
 	
     @Override
     public synchronized Boolean deletewallet(String walletID) throws com.bitmechanic.barrister.RpcException {
-	String filename = getFilenameForWalletID(walletID);
-	if (filename==null) {
-	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
-	}
-
-	Wallet w = getWalletForWalletID(walletID);
+	Wallet w = getWalletForWalletName(walletID);
 	if (w == null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
@@ -230,7 +232,7 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 	    }
 	}
 
-//	String filename = getFilenameForWalletID(walletID);
+	String filename = getFullPathForWalletName(walletID);
 	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 WalletInfoData winfo = wd.getWalletInfo();
 	if (wd.isBusy()) {
@@ -299,45 +301,50 @@ WalletInfoData winfo = wd.getWalletInfo();
       controller.fireRecreateAllViews(true);
 
 	
-	updateWalletFilenameMap();
+//	updateWalletFilenameMap();
 	return true;
     }
 
     /*
     Synchronized access: clear and recreate the wallet filename map.
     */
-    private synchronized void updateWalletFilenameMap() {
-	walletFilenameMap.clear();
-	List<WalletData> perWalletModelDataList = controller.getModel().getPerWalletModelDataList();
-	if (perWalletModelDataList != null) {
-	    for (WalletData loopPerWalletModelData : perWalletModelDataList) {
-		String filename = loopPerWalletModelData.getWalletFilename();
-		String id = loopPerWalletModelData.getWalletDescription();
-		walletFilenameMap. put(id, filename);
-//
+//    private synchronized void updateWalletFilenameMap() {
+//	walletFilenameMap.clear();
+//	List<WalletData> perWalletModelDataList = controller.getModel().getPerWalletModelDataList();
+//	if (perWalletModelDataList != null) {
+//	    for (WalletData loopPerWalletModelData : perWalletModelDataList) {
 //		String filename = loopPerWalletModelData.getWalletFilename();
-//		String digest = DigestUtils.md5Hex(filename);
-//		walletFilenameMap. put(digest, filename);
-	    }
-	}
-	
-    }
+//		String id = loopPerWalletModelData.getWalletDescription();
+//		walletFilenameMap. put(id, filename);
+////
+////		String filename = loopPerWalletModelData.getWalletFilename();
+////		String digest = DigestUtils.md5Hex(filename);
+////		walletFilenameMap. put(digest, filename);
+//	    }
+//	}
+//	
+//    }
     
     /*
-	Get filename from map, but if it doesn't exist, update map and try again.
+	Get full path for wallet given it's name
     */
-    private String getFilenameForWalletID(String walletID) {
-	String filename = walletFilenameMap.get(walletID);
-	if (filename == null) {
-	    updateWalletFilenameMap();  // synchronized
-	    filename = walletFilenameMap.get(walletID);
-	}
+    private String getFullPathForWalletName(String name) {
+	String filename = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator
+                + name + WALLET_SUFFIX;
 	return filename;
     }
-    
-    private Wallet getWalletForWalletID(String walletID) {
+
+    /*
+    Check to see if a name gets cleaned or not because it contains characters bad for a filename
+    */
+    private boolean sanityCheckName(String name) {
+	String cleaned = FileNameCleaner.cleanFileName(name);
+	return (cleaned.equals(name));
+    }
+	
+    private Wallet getWalletForWalletName(String walletID) {
 	Wallet w = null;
-	String filename = getFilenameForWalletID(walletID);
+	String filename = getFullPathForWalletName(walletID);
 	if (filename != null) {
 	    WalletData wd = controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 	    if (wd!=null) {
@@ -368,7 +375,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     @Override
     public synchronized Boolean setassetvisible(String walletID, String assetRef, Boolean visibility) throws com.bitmechanic.barrister.RpcException
     {
-	Wallet w = getWalletForWalletID(walletID);
+	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
@@ -383,7 +390,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     
     @Override
     public synchronized Boolean addasset(String walletID, String assetRefString) throws com.bitmechanic.barrister.RpcException {
-	Wallet w = getWalletForWalletID(walletID);
+	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
@@ -414,7 +421,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     
     @Override
     public synchronized Boolean refreshasset(String walletID, String assetRef) throws com.bitmechanic.barrister.RpcException {
-	Wallet w = getWalletForWalletID(walletID);
+	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
@@ -435,7 +442,7 @@ WalletInfoData winfo = wd.getWalletInfo();
      @Override
    public JSONRPCAddressBookEntry[] listaddresses(String walletID) throws com.bitmechanic.barrister.RpcException
     {
-	Wallet w = getWalletForWalletID(walletID);
+	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
@@ -471,7 +478,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     // TODO: Should we remove limit of 100 addresses?
     @Override
     public synchronized JSONRPCAddressBookEntry[] createaddress(String walletID, Long quantity) throws com.bitmechanic.barrister.RpcException {
-	Wallet w = getWalletForWalletID(walletID);
+	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
@@ -484,7 +491,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.CREATE_ADDRESS_TOO_MANY.raiseRpcException();
 	}
 
-	String filename = getFilenameForWalletID(walletID);
+	String filename = getFullPathForWalletName(walletID);
 	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 	if (wd.isBusy()) {
 	    JSONRPCError.WALLEY_IS_BUSY.raiseRpcException();
@@ -555,7 +562,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     
     @Override
     public synchronized Boolean setaddresslabel(String walletID, String address, String label) throws com.bitmechanic.barrister.RpcException {
-	Wallet w = getWalletForWalletID(walletID);
+	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
@@ -592,7 +599,7 @@ WalletInfoData winfo = wd.getWalletInfo();
   
 	if (success) {
 	    CSEventBus.INSTANCE.postAsync(new SBEvent(SBEventType.ADDRESS_UPDATED));
-	    String filename = getFilenameForWalletID(walletID);
+	    String filename = getFullPathForWalletName(walletID);
 	    final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 	    wd.setDirty(true);
 	} else {
@@ -605,7 +612,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     @Override
     public JSONRPCTransaction[] listtransactions(String walletID, Long limit) throws com.bitmechanic.barrister.RpcException
     {
-	Wallet w = getWalletForWalletID(walletID);
+	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
@@ -798,7 +805,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     @Override
     public JSONRPCBalance[] listbalances(String walletID, Boolean onlyVisible) throws com.bitmechanic.barrister.RpcException
     {
-	Wallet w = getWalletForWalletID(walletID);
+	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
@@ -920,7 +927,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     @Override
     public synchronized Boolean sendbitcoin(String walletID, String address, Double amount) throws com.bitmechanic.barrister.RpcException
     {
-	Wallet w = getWalletForWalletID(walletID);
+	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
@@ -940,7 +947,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.BITCOIN_ADDRESS_INVALID.raiseRpcException();
 	}
 	
-	String filename = getFilenameForWalletID(walletID);
+	String filename = getFullPathForWalletName(walletID);
 	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 	if (wd.isBusy()) {
 	    JSONRPCError.WALLEY_IS_BUSY.raiseRpcException();
@@ -1022,7 +1029,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	boolean sendValidated = false;
 	boolean sendSuccessful = false;
 	
-		Wallet w = getWalletForWalletID(walletID);
+	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
@@ -1050,7 +1057,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.BITCOIN_ADDRESS_INVALID.raiseRpcException();
 	}
 	
-	String filename = getFilenameForWalletID(walletID);
+	String filename = getFullPathForWalletName(walletID);
 	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 	if (wd.isBusy()) {
 	    JSONRPCError.WALLEY_IS_BUSY.raiseRpcException();

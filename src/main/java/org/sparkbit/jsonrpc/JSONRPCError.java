@@ -47,6 +47,8 @@ public enum JSONRPCError {
   ASSET_NOT_CONFIRMED(19, "Asset does not have enough confirmations to be sent"),
   ASSET_INSUFFICIENT_BALANCE(20, "Insufficient funds to send asset"),
   CREATE_WALLET_FAILED(21, "Could not create wallet"),
+  WALLET_NAME_BAD_CHARS(22, "Wallet name should not contain illegal characters"),
+  WALLET_NAME_PERIOD_START_END(23, "Wallet name cannot start or end with a period character"),
   
   
   
