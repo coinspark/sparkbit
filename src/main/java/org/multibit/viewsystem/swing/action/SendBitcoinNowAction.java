@@ -39,6 +39,8 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.CharBuffer;
 
+import org.mapdb.*;
+
 /**
  * This {@link Action} actually spends bitcoin.
  */
@@ -239,6 +241,17 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
       }
 
       if (sendWasSuccessful) {
+	
+	  /* If sending assets or BTC to a coinspark address, record transaction id --> coinspark address, into hashmap so we can use when displaying transactions */
+	String sendAddress = bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_ADDRESS);
+	if (sendAddress.startsWith("s")) {
+	    java.util.Map<String,String> m = bitcoinController.getMultiBitService().getSendTransactionToCoinSparkAddressMap();
+	    if (m != null) {
+		m.put(transaction.getHashAsString(), sendAddress);
+		bitcoinController.getMultiBitService().getMapDB().commit();
+	    }
+	}
+
         String successMessage = controller.getLocaliser().getString(assetify("sendBitcoinNowAction.bitcoinSentOk"));
         if (sendBitcoinConfirmPanel != null && (sendBitcoinConfirmPanel.isVisible() || useTestParameters)) {
           sendBitcoinConfirmPanel.setMessageText(

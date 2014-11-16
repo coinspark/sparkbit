@@ -435,6 +435,11 @@
             <artifactId>jide-oss</artifactId> 
             <version>3.6.0</version> 
         </dependency>
+        <dependency>
+            <groupId>org.mapdb</groupId>
+            <artifactId>mapdb</artifactId>
+            <version>1.0.6</version>
+        </dependency>
     </dependencies>
 
     <reporting>
