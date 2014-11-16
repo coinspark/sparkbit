@@ -658,21 +658,60 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
 			    addressString = m.get(tx.getHashAsString());
 			}
 		    } catch (Exception e) {
-			// We catch any map exception, and carry on.
 		    }
 
-		    try {
-			if (addressString == null) {
+		    if (addressString == null) {
+			// get bitcoin address
+			try {
 			    addressString = theirOutput.getScriptPubKey().getToAddress(getNetworkParameters()).toString();
+			} catch (ScriptException se) {
 			}
-		    } catch (ScriptException se) {
-			addressString = "";
+
+			// We must ignore implicit transfer of assets to work out if assets were sent
+			boolean hasAssets = false;
+			if (wallet.CS.getBalanceDB() != null) {
+			    Map<Integer, BigInteger> receiveMap = wallet.CS.getAssetsSentToMe(tx);
+			    Map<Integer, BigInteger> sendMap = wallet.CS.getAssetsSentFromMe(tx);
+			    for (Integer assetID : sendMap.keySet()) {
+				if (assetID == null || assetID == 0) {
+				    continue; // skip bitcoin
+				}
+				BigInteger receivedAmount = receiveMap.get(assetID); // should be number of raw units
+				BigInteger sentAmount = sendMap.get(assetID);
+				boolean isReceivedAmountMissing = (receivedAmount == null);
+				boolean isSentAmountMissing = (sentAmount == null);
+				BigInteger netAmount = BigInteger.ZERO;
+				if (!isReceivedAmountMissing) {
+				    netAmount = netAmount.add(receivedAmount);
+				}
+				if (!isSentAmountMissing) {
+				    netAmount = netAmount.subtract(sentAmount);
+				}
+				if (netAmount.equals(BigInteger.ZERO)) {
+				    continue;
+				}
+				if (sentAmount != null && sentAmount.equals(BigInteger.ZERO)) {
+				    continue; // not confirmed yet
+				}
+				hasAssets = true;
+				break;
+			    }
+			}
+
+			if (hasAssets) {
+			    addressString = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(addressString);
+			}
+
+			if (addressString == null) {
+			    addressString = "";
+			}
+
 		    }
 		    /* CoinSpark END */
 		    String label = null;
 		    if (perWalletModelData.getWalletInfo() != null) {
-			String csa = perWalletModelData.getWalletInfo().lookupCoinSparkAddressForSendingAddress(addressString);
-			if (csa != null) addressString = csa; // NOTE: Check to make sure addressString not used elsewhere, except below for string generation.
+			//String csa = perWalletModelData.getWalletInfo().lookupCoinSparkAddressForSendingAddress(addressString);
+			//if (csa != null) addressString = csa; // NOTE: Check to make sure addressString not used elsewhere, except below for string generation.
 			label = perWalletModelData.getWalletInfo().lookupLabelForSendingAddress(addressString);
 			}
                     if (label != null && !label.equals("")) {
