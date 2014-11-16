@@ -46,6 +46,7 @@ import org.multibit.file.FileHandler;
 import java.io.*;
 import org.multibit.file.BackupManager;
 import com.google.bitcoin.crypto.KeyCrypterException;
+import com.google.bitcoin.script.Script;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
@@ -651,7 +652,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 	List<Transaction> transactions = w.getRecentTransactions(limit.intValue(), false);
 	for (Transaction tx : transactions) {
-	    
+
 	    Date txDate = controller.getModel().getDateOfTransaction(controller, tx);
 	    long unixtime = txDate.getTime()/1000L; // unix epoch in seconds
 	    long confirmations = 0;
@@ -676,7 +677,83 @@ WalletInfoData winfo = wd.getWalletInfo();
 //	    for (JSONRPCTransactionAmount ata : amounts) {
 //		entries[index++] = new AssetTransactionAmountEntry(ata.getAssetRef(), ata);
 //	    }
-	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, incoming, amountsArray, fee, txid);
+	    
+	    /* Get send and receive address */
+	    TransactionOutput myOutput = null;
+	    TransactionOutput theirOutput = null;
+	    List<TransactionOutput> transactionOutputs = tx.getOutputs();
+	    if (transactionOutputs != null) {
+		for (TransactionOutput transactionOutput : transactionOutputs) {
+		    if (transactionOutput != null && transactionOutput.isMine(w)) {
+			myOutput = transactionOutput;
+		    }
+		    if (transactionOutput != null && !transactionOutput.isMine(w)) {
+			// We have to skip the OP_RETURN output as there is no address and it result sin an exception when trying to get the destination address
+			Script script = transactionOutput.getScriptPubKey();
+			if (script != null) {
+			    if (script.isSentToAddress() || script.isSentToP2SH()) {
+				theirOutput = transactionOutput;
+			    }
+			}
+		    }
+		}
+	    }
+	    
+	    boolean hasAssets = amounts.size()>1;
+	    String myReceiveAddress = null;
+	    String theirAddress = null;
+	    
+	    if (incoming) {
+		try {
+		    if (myOutput != null) {
+			Address toAddress = new Address(this.controller.getModel().getNetworkParameters(), myOutput.getScriptPubKey().getPubKeyHash());
+			myReceiveAddress = toAddress.toString();
+		    }
+		    if (myReceiveAddress != null && hasAssets) {
+			String s = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(myReceiveAddress);
+			if (s != null) {
+			    myReceiveAddress = s;
+			}
+		    }
+		} catch (ScriptException e) {
+		}
+	    } else {
+		// outgoing transaction
+		 if (theirOutput != null) {
+		    // First let's see if we have stored the recipient in our map
+		    try {
+			Map<String, String> m = controller.getMultiBitService().getSendTransactionToCoinSparkAddressMap();
+			if (m != null) {
+			    theirAddress = m.get(tx.getHashAsString());
+			}
+		    } catch (Exception e) {
+		    }
+
+		     if (theirAddress == null) {
+			 try {
+			     theirAddress = theirOutput.getScriptPubKey().getToAddress(controller.getModel().getNetworkParameters()).toString();
+			 } catch (ScriptException se) {
+			 }
+			 if (theirAddress != null & hasAssets) {
+			     String s = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(theirAddress);
+			     if (s != null) {
+				 theirAddress = s;
+			     }
+			 }
+		     }
+		 }
+	    }
+	    
+	    String address = "";
+	    if (incoming && myReceiveAddress!=null) {
+		address = myReceiveAddress;
+	    } else if (!incoming && theirAddress != null) {
+		address = theirAddress;
+	    }
+	    
+	    
+	    
+	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, incoming, amountsArray, fee, txid, address);
 	    resultList.add(atx);
 	}
 	
