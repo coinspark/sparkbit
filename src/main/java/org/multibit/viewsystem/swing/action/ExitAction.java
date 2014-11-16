@@ -43,6 +43,8 @@ import java.util.List;
 import org.multibit.viewsystem.swing.UpdateAssetsTimerTask;
 import org.sparkbit.jsonrpc.JSONRPCController;
 
+import org.mapdb.*;
+
 /**
  * Exit the application.
  */
@@ -145,6 +147,13 @@ public class ExitAction extends AbstractExitAction {
                     log.error("BlockStoreException on blockstore close. Message was '" + e.getMessage() + "'");
                 }
             }
+	    
+	    // Shut down mapDB
+	    DB db = bitcoinController.getMultiBitService().getMapDB();
+	    if (db!=null) {
+		db.commit();
+		db.close();
+	    }
         }
 
 	// Shut down the JSON-RPC server

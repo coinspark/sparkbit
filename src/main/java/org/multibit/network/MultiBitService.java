@@ -64,6 +64,8 @@ import java.util.logging.Level;
 import org.multibit.model.bitcoin.WalletAddressBookData;
 import org.sparkbit.jsonrpc.JSONRPCController;
 
+import org.mapdb.*;
+
 /**
  * <p>
  * MultiBitService encapsulates the interaction with the bitcoin netork
@@ -93,6 +95,8 @@ public class MultiBitService {
   public static final String IRC_CHANNEL_TEST = "#bitcoinTEST";
   public static final String IRC_CHANNEL_TESTNET3 = "#bitcoinTEST3";
 
+  public static final String SPARKBITDB_SEND_TX_TO_COINSPARK_ADDRESS_MAP_NAME = "sendTxToCoinSparkAddressMap";
+  
   public Logger logger = LoggerFactory.getLogger(MultiBitService.class.getName());
 
   private MultiBitPeerGroup peerGroup;
@@ -102,6 +106,8 @@ public class MultiBitService {
   private MultiBitBlockChain blockChain;
 
   private BlockStore blockStore;
+  
+  private DB mapDB;
 
   private final Controller controller;
   private final BitcoinController bitcoinController;
@@ -128,6 +134,14 @@ public class MultiBitService {
     }
   }
 
+  public DB getMapDB() {
+      return mapDB;
+  }
+  
+  public Map getSendTransactionToCoinSparkAddressMap() {
+      return mapDB.getHashMap(SPARKBITDB_SEND_TX_TO_COINSPARK_ADDRESS_MAP_NAME);
+  }
+  
   /**
    * @param bitcoinController BitcoinController
    */
@@ -170,6 +184,11 @@ public class MultiBitService {
       String filePrefix=controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator+getFilePrefix();
       String headerStoreFile = blockChain.setBlockHeaderStore(filePrefix);
       log.debug("Headerstore is '" + headerStoreFile + "'");
+      
+      log.debug("Loading/creating mapDB storage...");
+      String sparkbitMapDBFilePath = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator + "sparkbit.mapdb";
+      mapDB = DBMaker.newFileDB(new File(sparkbitMapDBFilePath)).closeOnJvmShutdown().make();
+      log.debug("mapDB fihle path is: " + sparkbitMapDBFilePath);
       
 /* CoinSpark END */
       

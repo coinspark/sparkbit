@@ -35,6 +35,8 @@ import org.slf4j.LoggerFactory;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.multibit.utils.CSMiscUtils;
+
 /**
  * Model containing the MultiBit data.
  * 
@@ -465,7 +467,7 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
                 if (transactionInputs != null) {
                     TransactionInput firstInput = transactionInputs.get(0);
                     if (firstInput != null) {
-                        walletDataRow.setDescription(createDescription(bitcoinController, perWalletModelData.getWallet(), transactionInputs,
+                        walletDataRow.setDescription(createDescription(bitcoinController, perWalletModelData.getWallet(), loopTransaction, transactionInputs,
                                 transactionOutputs, walletDataRow.getCredit(), walletDataRow.getDebit()));
                     }
                 }
@@ -554,7 +556,7 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
      * @param debit
      * @return A description of the transaction
      */
-    public String createDescription(final Controller controller, Wallet wallet, List<TransactionInput> transactionInputs,
+    public String createDescription( final BitcoinController controller, Wallet wallet, Transaction tx, List<TransactionInput> transactionInputs,
             List<TransactionOutput> transactionOutputs, BigInteger credit, BigInteger debit) {
         String toReturn = "";
 
@@ -608,17 +610,31 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
                 if (perWalletModelData.getWalletInfo() != null) {
                     label = perWalletModelData.getWalletInfo().lookupLabelForReceivingAddress(addressString);
                 }
-		/* CoinSpark START*/
-		if (label == null || label.equals("")) label = addressString;
-		toReturn = controller.getLocaliser().getString("multiBitModel.creditDescriptionWithLabel", new Object[]{label});
-		/* CoinSpark END */
-//                if (label != null && !label.equals("")) {
-//                    toReturn = controller.getLocaliser().getString("multiBitModel.creditDescriptionWithLabel",
-//                            new Object[]{addressString, label});
-//                } else {
-//                    toReturn = controller.getLocaliser().getString("multiBitModel.creditDescription",
-//                            new Object[]{addressString});
-//                }
+		
+		// If this transaction has assets, convert bitcoin address to a coinspark address.
+		// Fudge: balanceDB might be null when this is invoked, so do nothing
+		boolean hasAssets = false;
+		if (wallet.CS.getBalanceDB() != null) {
+		    Map<Integer, BigInteger> receiveMap = wallet.CS.getAssetsSentToMe(tx);
+		    for (Integer assetID : receiveMap.keySet()) {
+			if (assetID == null || assetID == 0) {
+			    continue; // skip bitcoin
+			}
+			hasAssets = true;
+			break;
+		    }
+		}
+		if (hasAssets) {
+		    addressString = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(addressString);
+		}
+
+                if (label != null && !label.equals("")) {
+                    toReturn = controller.getLocaliser().getString("multiBitModel.creditDescriptionWithLabel",
+                            new Object[]{addressString, label});
+                } else {
+                    toReturn = controller.getLocaliser().getString("multiBitModel.creditDescription",
+                            new Object[]{addressString});
+                }
             } catch (ScriptException e) {
                 log.error(e.getMessage(), e);
 
@@ -634,8 +650,21 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
 		    // Catch error "com.google.bitcoin.core.ScriptException: Cannot cast this script to a pay-to-address type"
 //                    String addressString = theirOutput.getScriptPubKey().getToAddress(getNetworkParameters()).toString();
 		    String addressString = null;
+
+		    // First let's see if we have stored the recipient in our map
 		    try {
-			addressString = theirOutput.getScriptPubKey().getToAddress(getNetworkParameters()).toString();
+			Map<String, String> m = controller.getMultiBitService().getSendTransactionToCoinSparkAddressMap();
+			if (m != null) {
+			    addressString = m.get(tx.getHashAsString());
+			}
+		    } catch (Exception e) {
+			// We catch any map exception, and carry on.
+		    }
+
+		    try {
+			if (addressString == null) {
+			    addressString = theirOutput.getScriptPubKey().getToAddress(getNetworkParameters()).toString();
+			}
 		    } catch (ScriptException se) {
 			addressString = "";
 		    }
@@ -645,7 +674,7 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
 			String csa = perWalletModelData.getWalletInfo().lookupCoinSparkAddressForSendingAddress(addressString);
 			if (csa != null) addressString = csa; // NOTE: Check to make sure addressString not used elsewhere, except below for string generation.
 			label = perWalletModelData.getWalletInfo().lookupLabelForSendingAddress(addressString);
-		    }
+			}
                     if (label != null && !label.equals("")) {
                         toReturn = controller.getLocaliser().getString("multiBitModel.debitDescriptionWithLabel",
                                 new Object[]{addressString, label});
