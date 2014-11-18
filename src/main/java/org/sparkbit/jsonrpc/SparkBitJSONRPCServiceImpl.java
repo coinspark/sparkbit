@@ -472,7 +472,9 @@ WalletInfoData winfo = wd.getWalletInfo();
 	List<JSONRPCAddressBookEntry> addresses = new ArrayList<JSONRPCAddressBookEntry>();
 	
 	String address, sparkAddress, label;
-	    WalletInfoData addressBook = this.controller.getModel().getActiveWalletWalletInfo();
+	String filename = getFullPathForWalletName(walletID);
+	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
+	final WalletInfoData addressBook = wd.getWalletInfo();
             if (addressBook != null) {
                 ArrayList<WalletAddressBookData> receivingAddresses = addressBook.getReceivingAddresses();
                 if (receivingAddresses != null) {
@@ -599,8 +601,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	if (label==null) label=""; // this shouldn't happen when invoked via barrister
 	
 	boolean success = false;
-	
-	WalletInfoData addressBook = this.controller.getModel().getActiveWalletWalletInfo();
+
+	String filename = getFullPathForWalletName(walletID);
+	final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
+	final WalletInfoData addressBook = wd.getWalletInfo();
 	if (addressBook != null) {
 	    ArrayList<WalletAddressBookData> receivingAddresses = addressBook.getReceivingAddresses();
 	    if (receivingAddresses != null) {
@@ -621,8 +625,6 @@ WalletInfoData winfo = wd.getWalletInfo();
   
 	if (success) {
 	    CSEventBus.INSTANCE.postAsync(new SBEvent(SBEventType.ADDRESS_UPDATED));
-	    String filename = getFullPathForWalletName(walletID);
-	    final WalletData wd = this.controller.getModel().getPerWalletModelDataByWalletFilename(filename);
 	    wd.setDirty(true);
 	} else {
 	    JSONRPCError.ADDRESS_NOT_FOUND.raiseRpcException();
