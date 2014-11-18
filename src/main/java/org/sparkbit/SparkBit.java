@@ -88,6 +88,31 @@ public final class SparkBit {
     private SparkBit() {
     }
 
+    /*
+    If we catch a ctrl-C we try to shutdown gracefully.
+    
+    We don't want to deadlock so we set custom property on exit action to not invoke system.exit
+    http://blog.joda.org/2014/02/exiting-jvm.html
+    
+    Some notes on shutdown hooks:
+    http://stackoverflow.com/questions/1611931/catching-ctrlc-in-java
+    http://stackoverflow.com/questions/2921945/useful-example-of-a-shutdown-hook-in-java
+    http://stackoverflow.com/questions/10418907/running-shutdown-hook-in-netbeans-ide
+    */
+    private static void installShutdownHook(final ExitAction exitAction, final Thread mainThread) {
+	exitAction.isInvokedFromShutdownHook = true;
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override public void run() {
+                try {
+                    System.out.println(">>>> SHUTDOWN HOOK INVOKED!  Attempting to exit gracefully...");
+		    exitAction.actionPerformed(null);
+		    mainThread.join();
+               } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+    }
     /**
      * Start MultiBit user interface.
      *
@@ -96,10 +121,25 @@ public final class SparkBit {
     @SuppressWarnings("deprecation")
     public static void main(String args[]) {
         log.info("Starting MultiBit at " + (new Date()).toGMTString());
-        // Print out all the system properties.
-        for (Map.Entry<?,?> e : System.getProperties().entrySet()) {
-            log.debug(String.format("%s = %s", e.getKey(), e.getValue()));
-        }
+        // Print out all the system properties and environment variables
+/*        for (Map.Entry<?, ?> e : System.getProperties().entrySet()) {
+	    log.debug(String.format("%s = %s", e.getKey(), e.getValue()));
+	    System.out.println(String.format("%s = %s", e.getKey(), e.getValue()));
+	}
+	for (Map.Entry<String, String> e : System.getenv().entrySet()) {
+	    System.out.println(String.format("ENV: %s = %s", e.getKey(), e.getValue()));
+	}
+*/	
+	
+	// If headless=true is set in jsonrpc.properties, let's launch in headless mode.
+	// If the java system property java.awt.headless is set manually, that works too. 
+	// Can also set in Netbeans config action for 'Run Project' like so:
+	// exec.args=-Djava.awt.headless=true
+	// But only the default config seems to execute, can't get other configs to run.
+	Properties jsonRPCProps = FileHandler.loadJSONRPCConfig(new ApplicationDataDirectoryLocator());
+	if (Boolean.TRUE.toString().equals( jsonRPCProps.getProperty("headless"))) {
+	    System.setProperty("java.awt.headless","true");	    
+	}
 
         ViewSystem swingViewSystem = null;
         // Enclosing try to enable graceful closure for unexpected errors.
@@ -250,13 +290,23 @@ public final class SparkBit {
             FontSizer.INSTANCE.initialise(controller);
 //            CurrencyConverter.INSTANCE.initialise(finalController);
 
+	    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+	    boolean isHeadless = ge.isHeadless();
+	    if (isHeadless) {
+		final Thread mainThread = Thread.currentThread();
+		ExitAction exitAction = new ExitAction(bitcoinController, null);
+		exitAction.setBitcoinController(bitcoinController); // constructor does not set ivar
+		SparkBit.installShutdownHook(exitAction, mainThread);
+	    }
+	    if (!isHeadless) {
+
             // This is when the GUI is first displayed to the user.
             log.debug("Creating user interface with initial view : " + controller.getCurrentView());
             swingViewSystem = new MultiBitFrame(coreController, bitcoinController, exchangeController, genericApplication, controller.getCurrentView());
 
             log.debug("Registering with controller");
             coreController.registerViewSystem(swingViewSystem);
-
+}
             String userDataString = localiser.getString("multibit.userDataDirectory", new String[] {applicationDataDirectoryLocator.getApplicationDataDirectory()});
             log.debug(userDataString);
             Message directoryMessage1 = new Message(userDataString);
@@ -457,8 +507,10 @@ public final class SparkBit {
 
                     if (actualOrderToLoad.size() > 0) {
                         boolean thereWasAnErrorLoadingTheWallet = false;
+			if (!isHeadless) {
+			    ((MultiBitFrame) swingViewSystem).setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+			}
 
-                        ((MultiBitFrame) swingViewSystem).setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                         for (String actualOrder : actualOrderToLoad) {
                             log.debug("Loading wallet from '{}'", actualOrder);
                             Message message = new Message(controller.getLocaliser().getString("multiBit.openingWallet",
@@ -548,7 +600,9 @@ public final class SparkBit {
                     }
                     controller.fireDataChangedUpdateNow();
 
-                    ((MultiBitFrame) swingViewSystem).setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+		    if (!isHeadless) {
+			((MultiBitFrame) swingViewSystem).setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+		    }
                 }
             }
 
