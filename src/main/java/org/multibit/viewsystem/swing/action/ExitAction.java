@@ -60,6 +60,9 @@ public class ExitAction extends AbstractExitAction {
 
     private CoreController coreController = null;
     private BitcoinController bitcoinController = null;
+    
+    // Set this to true when executing the exit action from a shutdown hook, to avoid deadlock.
+    public boolean isInvokedFromShutdownHook = false;
 
     /**
      * Creates a new {@link ExitAction}.
@@ -151,8 +154,10 @@ public class ExitAction extends AbstractExitAction {
 	    // Shut down mapDB
 	    DB db = bitcoinController.getMultiBitService().getMapDB();
 	    if (db!=null) {
-		db.commit();
-		db.close();
+		if (!db.isClosed()) {
+		    db.commit();
+		    db.close();
+		}
 	    }
         }
 
@@ -227,6 +232,6 @@ public class ExitAction extends AbstractExitAction {
             mainFrame.dispose();
         }
 
-        System.exit(0);
+	if (!isInvokedFromShutdownHook) System.exit(0);
     }
 }
