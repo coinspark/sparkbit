@@ -253,7 +253,7 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
                 //controller.getModel().setUserPreference(BitcoinModel.GRAB_FOCUS_FOR_ACTIVE_WALLET, "true");
 
                 // Save the user properties to disk.
-                //FileHandler.writeUserPreferences(this.controller);
+                FileHandler.writeUserPreferences(this.controller);
                 //log.debug("User preferences with new wallet written successfully");
 
                 // Backup the wallet and wallet info.
