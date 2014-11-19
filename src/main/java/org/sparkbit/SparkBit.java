@@ -137,10 +137,13 @@ public final class SparkBit {
 	// exec.args=-Djava.awt.headless=true
 	// But only the default config seems to execute, can't get other configs to run.
 	Properties jsonRPCProps = FileHandler.loadJSONRPCConfig(new ApplicationDataDirectoryLocator());
+	System.out.println(">>>> jsonRPCProps = " + jsonRPCProps);
+	boolean isHeadless = false;
 	if (Boolean.TRUE.toString().equals( jsonRPCProps.getProperty("headless"))) {
-	    System.setProperty("java.awt.headless","true");	    
+	    System.setProperty("java.awt.headless","true");
 	}
-
+	isHeadless = Boolean.TRUE.toString().equals( System.getProperty("java.awt.headless"));
+	
         ViewSystem swingViewSystem = null;
         // Enclosing try to enable graceful closure for unexpected errors.
         try {
@@ -290,8 +293,8 @@ public final class SparkBit {
             FontSizer.INSTANCE.initialise(controller);
 //            CurrencyConverter.INSTANCE.initialise(finalController);
 
-	    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-	    boolean isHeadless = ge.isHeadless();
+	    // Headless mode?  When launching from GUI, graphics environment returns true.
+	    //boolean isHeadless = GraphicsEnvironment.isHeadless();
 	    if (isHeadless) {
 		final Thread mainThread = Thread.currentThread();
 		ExitAction exitAction = new ExitAction(bitcoinController, null);
