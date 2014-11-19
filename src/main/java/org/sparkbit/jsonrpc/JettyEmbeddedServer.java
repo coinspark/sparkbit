@@ -63,6 +63,8 @@ import org.eclipse.jetty.util.security.Credential;
 import org.eclipse.jetty.server.handler.IPAccessHandler;
 import static org.sparkbit.jsonrpc.JSONRPCController.*;
 
+// GRACEFUL SHUTDOWN
+import org.eclipse.jetty.server.handler.StatisticsHandler;
 
 /**
  * Example of configuring multiple connectors:
@@ -70,6 +72,11 @@ import static org.sparkbit.jsonrpc.JSONRPCController.*;
  */
 public class JettyEmbeddedServer {
 
+    // Milliseconds we want server and stats handler to wait before shutting down socket.
+    // During this time, try to finish any requests currently being processed, but no
+    // new requests are allowed.
+    public static final int GRACEFUL_SHUTDOWN_PERIOD = 3000;
+    
     private JSONRPCController controller = null;
     private Server server = null;
 
@@ -407,7 +414,14 @@ public class JettyEmbeddedServer {
 	    
 	    // make context a subordinate of ipaccess
 	    ipaccess.setHandler(context);
-	    server.setHandler(ipaccess);
+
+	    // wrap ipaccess into a stats handler for graceful shutdown
+	    // https://tickets.puppetlabs.com/browse/TK-92
+	    // https://bugs.eclipse.org/bugs/show_bug.cgi?id=420142
+	    StatisticsHandler stats = new StatisticsHandler();
+	    stats.setHandler(ipaccess);
+	    
+	    server.setHandler(stats);
 	    server.start();
 	} catch (Exception e) {
 	    e.printStackTrace();
@@ -417,9 +431,8 @@ public class JettyEmbeddedServer {
     }
 
     public void stopServer() throws Exception {
-	// do this in a new Thread() ?
+	server.setStopTimeout(GRACEFUL_SHUTDOWN_PERIOD);
 	server.setStopAtShutdown(true);
-	server.setStopTimeout(3000);
 	try {
 	    server.stop();
 	} catch (Exception e) {

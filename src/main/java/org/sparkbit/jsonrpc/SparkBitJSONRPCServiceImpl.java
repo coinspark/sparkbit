@@ -71,6 +71,10 @@ import static org.multibit.network.MultiBitService.getFilePrefix;
 import org.sparkbit.utils.FileNameCleaner;
 import org.apache.commons.io.FilenameUtils;
 import java.util.TimeZone;
+import org.multibit.viewsystem.swing.action.ExitAction;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Executors;
 
 /**
  * For now, synchronized access to commands which mutate
@@ -80,10 +84,14 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
     // Limit on the number of addresses you can create in one call
     public static final int CREATE_ADDRESSES_LIMIT = 100;
     
+    // How many milliseconds before we shutdown via ExitAction
+    public static final int SHUTDOWN_DELAY = JettyEmbeddedServer.GRACEFUL_SHUTDOWN_PERIOD + 1000;
     
     private BitcoinController controller;
 //    private MultiBitFrame mainFrame;
 //    private ConcurrentHashMap<String,String> walletFilenameMap;
+    
+    private Timer stopTimer;
     
     public SparkBitJSONRPCServiceImpl() {
 	this.controller = JSONRPCController.INSTANCE.getBitcoinController();
@@ -91,7 +99,31 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 //	walletFilenameMap = new ConcurrentHashMap<>();
 //	updateWalletFilenameMap();
     }
-    
+
+    // Quit after a delay so we can return true to JSON-RPC client.
+    @Override
+    public Boolean stop() throws com.bitmechanic.barrister.RpcException {
+	final BitcoinController myController = this.controller;
+	stopTimer = new Timer();
+	stopTimer.schedule(new TimerTask() {
+	    @Override
+	    public void run() {
+		ExitAction exitAction = new ExitAction(myController, null);
+		exitAction.setBitcoinController(myController);
+		exitAction.actionPerformed(null);
+	    }
+	}, SHUTDOWN_DELAY);
+
+	// Signal the server to stop
+	Executors.newSingleThreadExecutor().execute(new Runnable() {
+	    @Override
+	    public void run() {
+		JSONRPCController.INSTANCE.stopServer();
+	    }
+	});
+	return true;
+    }
+	
     /*
     Get status on a per wallet basis.
     */

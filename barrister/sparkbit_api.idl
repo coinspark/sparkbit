@@ -96,5 +96,8 @@ interface sparkbit {
   	listtransactions(walletname string, limit int) []JSONRPCTransaction
 	listbalances(walletname string, onlyvisible bool) []JSONRPCBalance
   	sendbitcoin(walletname string, address string, amount float) string
+  	stop() bool
+
+  	// stop() can only be invoked from same computer as sparkbit
 }
 
