@@ -252,6 +252,8 @@ public class JettyEmbeddedServer {
 	     sslscan --no-failed localhost:8081
 	     or use pysslscan:
 	     pysslscan scan --scan=server.ciphers --report=term --tls12 127.0.0.1:8081
+	    
+	     Netbeans (same as my local JRE) and JWrapper provide different ciphersuite
 	     */
 	    //String[] myProtocols = {"TLSv1.2", "TLSv1.1", "TLSv1"};
 	    ArrayList<String> protocols = new ArrayList<String>();
@@ -266,10 +268,10 @@ public class JettyEmbeddedServer {
 		"TLS_DHE_.*"
 	    };
 	    String[] badCiphers = {".*_DES_.*", ".*_RC4_.*", ".*_NULL_.*"};
-	    sslContextFactory.setIncludeProtocols(myProtocols);
-	    sslContextFactory.setExcludeProtocols(badProtocols);
-	    sslContextFactory.setIncludeCipherSuites(myCiphers);
-	    sslContextFactory.setExcludeCipherSuites(badCiphers);
+	//    sslContextFactory.setIncludeProtocols(myProtocols);
+	//    sslContextFactory.setExcludeProtocols(badProtocols);
+	//    sslContextFactory.setIncludeCipherSuites(myCiphers);
+	//    sslContextFactory.setExcludeCipherSuites(badCiphers);
 
         // HTTPS Configuration
 	    // A new HttpConfiguration object is needed for the next connector and you can pass the old one as an
