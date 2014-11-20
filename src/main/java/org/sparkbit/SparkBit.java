@@ -250,7 +250,7 @@ public final class SparkBit {
 			/* CoinSpark END */
 
             // Trust all HTTPS certificates.
-            ConnectHttps.trustAllCerts();
+            //ConnectHttps.trustAllCerts();
 
             // Initialise currency converter.
             CurrencyConverter.INSTANCE.initialise(finalController);
