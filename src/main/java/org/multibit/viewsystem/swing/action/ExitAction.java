@@ -150,15 +150,6 @@ public class ExitAction extends AbstractExitAction {
                     log.error("BlockStoreException on blockstore close. Message was '" + e.getMessage() + "'");
                 }
             }
-	    
-	    // Shut down mapDB
-	    DB db = bitcoinController.getMultiBitService().getMapDB();
-	    if (db!=null) {
-		if (!db.isClosed()) {
-		    db.commit();
-		    db.close();
-		}
-	    }
         }
 
 	// Shut down the JSON-RPC server
@@ -220,6 +211,16 @@ public class ExitAction extends AbstractExitAction {
             FileHandler.writeUserPreferences(bitcoinController);
         }
 
+		    
+	    // Shut down mapDB
+	    DB db = bitcoinController.getMultiBitService().getMapDB();
+	    if (db!=null) {
+		if (!db.isClosed()) {
+		    db.commit();
+		    db.close();
+		}
+	    }
+	
         log.debug("Shutting down Bitcoin URI checker ...");
         ApplicationInstanceManager.shutdownSocket();
 
