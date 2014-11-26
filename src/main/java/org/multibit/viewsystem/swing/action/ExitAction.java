@@ -44,6 +44,7 @@ import org.multibit.viewsystem.swing.UpdateAssetsTimerTask;
 import org.sparkbit.jsonrpc.JSONRPCController;
 
 import org.mapdb.*;
+import org.sparkbit.SparkBitMapDB;
 
 /**
  * Exit the application.
@@ -213,7 +214,7 @@ public class ExitAction extends AbstractExitAction {
 
 		    
 	    // Shut down mapDB
-	    DB db = bitcoinController.getMultiBitService().getMapDB();
+	    DB db = SparkBitMapDB.INSTANCE.getMapDB();
 	    if (db!=null) {
 		if (!db.isClosed()) {
 		    db.commit();

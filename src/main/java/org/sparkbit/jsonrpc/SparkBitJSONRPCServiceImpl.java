@@ -75,6 +75,7 @@ import org.multibit.viewsystem.swing.action.ExitAction;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
+import org.sparkbit.SparkBitMapDB;
 
 /**
  * For now, synchronized access to commands which mutate
@@ -756,7 +757,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		 if (theirOutput != null) {
 		    // First let's see if we have stored the recipient in our map
 		    try {
-			Map<String, String> m = controller.getMultiBitService().getSendTransactionToCoinSparkAddressMap();
+			Map<String,String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
 			if (m != null) {
 			    theirAddress = m.get(tx.getHashAsString());
 			}

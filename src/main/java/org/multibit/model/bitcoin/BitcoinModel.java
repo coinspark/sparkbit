@@ -36,6 +36,7 @@ import java.math.BigInteger;
 import java.util.*;
 
 import org.multibit.utils.CSMiscUtils;
+import org.sparkbit.SparkBitMapDB;
 
 /**
  * Model containing the MultiBit data.
@@ -653,7 +654,7 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
 
 		    // First let's see if we have stored the recipient in our map
 		    try {
-			Map<String, String> m = controller.getMultiBitService().getSendTransactionToCoinSparkAddressMap();
+			Map<String, String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
 			if (m != null) {
 			    addressString = m.get(tx.getHashAsString());
 			}
