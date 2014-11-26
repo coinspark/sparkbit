@@ -684,9 +684,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
 	
-	if (limit>100) {
-	    JSONRPCError.LIST_TRANSACTIONS_TOO_MANY.raiseRpcException();
-	} else if (limit<=0) {
+//	if (limit>100) {
+//	    JSONRPCError.LIST_TRANSACTIONS_TOO_MANY.raiseRpcException();
+//	} else 
+	    
+	if (limit<=0) {
 	    JSONRPCError.LIST_TRANSACTIONS_TOO_FEW.raiseRpcException();
 	}
 	
