@@ -720,7 +720,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    Double fee = null;
 	    if (!incoming) {
 		BigDecimal feeBTC = new BigDecimal(feeSatoshis).divide(new BigDecimal(Utils.COIN));
-		fee = new Double( feeBTC.doubleValue() );
+		fee = -1.0 * feeBTC.doubleValue();
 	    }
 	    String txid = tx.getHashAsString();
 	    ArrayList<JSONRPCTransactionAmount> amounts = getAssetTransactionAmounts(w, tx);
