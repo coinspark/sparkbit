@@ -677,7 +677,7 @@ public class CSMiscUtils {
 	    if (url != null) {
 		URI uri = new URI(url);
 		domain = uri.getHost();
-		if (domain.startsWith("www")) {
+		if (domain.startsWith("www.")) {
 		    domain = domain.substring(4);
 		}
 	    }
