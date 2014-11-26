@@ -1037,6 +1037,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    }
 	    
 	    String assetRef = CSMiscUtils.getHumanReadableAssetRef(asset);
+	    if (assetRef==null) assetRef = "Awaiting new asset confirmation...";
+	    
 	    assetBalance = w.CS.getAssetBalance(id);
 	    Long spendableRaw = assetBalance.spendable.longValue();
 	    Double spendableQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, assetBalance.spendable).doubleValue();
