@@ -688,16 +688,24 @@ WalletInfoData winfo = wd.getWalletInfo();
 //	    JSONRPCError.LIST_TRANSACTIONS_TOO_MANY.raiseRpcException();
 //	} else 
 	    
-	if (limit<=0) {
+	if (limit<0) {
 	    JSONRPCError.LIST_TRANSACTIONS_TOO_FEW.raiseRpcException();
 	}
+	
+	// if limit is 0 get them all
 	
 	List<JSONRPCTransaction> resultList = new ArrayList<JSONRPCTransaction>();
 	
 	
 	int lastSeenBlock = controller.getMultiBitService().getChain().getBestChainHeight();
 
-	List<Transaction> transactions = w.getRecentTransactions(limit.intValue(), false);
+	List<Transaction> transactions = null;
+	if (limit > 0) {
+	    transactions = w.getRecentTransactions(limit.intValue(), false);
+	} else {
+	    transactions = w.getTransactionsByTime();
+	}
+	
 	for (Transaction tx : transactions) {
 
 	    Date txDate = controller.getModel().getDateOfTransaction(controller, tx);
