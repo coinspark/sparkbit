@@ -11,7 +11,9 @@ struct JSONRPCWalletStatus {
 	blocks int
 }
 struct JSONRPCStatusResponse {
-	connected bool
+	version string
+	testnet bool
+	connections int
 	wallets []JSONRPCWalletStatus
 }
 
@@ -22,7 +24,7 @@ struct JSONRPCAddressBookEntry {
 }
 
 struct JSONRPCTransactionAmount {
-	assetref string
+	asset_ref string
 	raw int
 	qty float
 	display string
@@ -33,11 +35,11 @@ struct JSONRPCTransactionAmount {
 struct JSONRPCTransaction {
 	unixtime int
 	confirmations int
-	incoming bool
+	category string
 	amounts []JSONRPCTransactionAmount
 	fee float [optional]
 	txid string
-	receive_address string
+	address string
 	}
 
 struct JSONRPCBalanceAmount {
@@ -48,7 +50,7 @@ struct JSONRPCBalanceAmount {
 
 // If we subclass with JSONRPCAssetBalance, the returned json is treated as parent class so fields are missing
 struct JSONRPCBalance {
-	assetref string
+	asset_ref string
 	balance JSONRPCBalanceAmount
 	spendable JSONRPCBalanceAmount
 	name string [optional]
@@ -86,12 +88,13 @@ interface sparkbit {
 
 	getstatus() JSONRPCStatusResponse
 	listwallets() []string
+	deleteasset(walletname string, assetref string) bool
 	deletewallet(walletname string) bool
 	setassetvisible(walletname string, assetref string, visibility bool) bool
 	addasset(walletname string, assetref string) bool
 	refreshasset(walletname string, assetref string) bool
 	listaddresses(walletname string) []JSONRPCAddressBookEntry
-	createaddress(walletname string, quantity int) []JSONRPCAddressBookEntry
+	createaddresses(walletname string, quantity int) []JSONRPCAddressBookEntry
 	setaddresslabel(walletname string, address string, label string) bool
   	listtransactions(walletname string, limit int) []JSONRPCTransaction
 	listbalances(walletname string, onlyvisible bool) []JSONRPCBalance

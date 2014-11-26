@@ -176,10 +176,13 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 	    }
 	}
 	
-	boolean connected = controller.getMultiBitService().getPeerGroup().numConnectedPeers() > 0;
-	
+	String versionNumber = controller.getLocaliser().getVersionNumber();
+	int numConnectedPeers = controller.getMultiBitService().getPeerGroup().numConnectedPeers();
+	boolean isTestNet = controller.getMultiBitService().isTestNet3();
 	JSONRPCStatusResponse resp = new JSONRPCStatusResponse();
-	resp.setConnected(connected);
+	resp.setVersion(versionNumber);
+	resp.setConnections((long)numConnectedPeers);
+	resp.setTestnet(isTestNet);
 	JSONRPCWalletStatus[] x = wallets.toArray(new JSONRPCWalletStatus[0]);
 	resp.setWallets( x );
 	return resp;
@@ -474,6 +477,13 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return true;
     }
     
+    
+    @Override
+    public Boolean deleteasset(String walletname, String assetref) throws com.bitmechanic.barrister.RpcException {
+	// FIXME: IMPLEMENT THIS METHOD
+	return false;
+    }
+	
     @Override
     public synchronized Boolean refreshasset(String walletID, String assetRef) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletName(walletID);
@@ -534,7 +544,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     
     // TODO: Should we remove limit of 100 addresses?
     @Override
-    public synchronized JSONRPCAddressBookEntry[] createaddress(String walletID, Long quantity) throws com.bitmechanic.barrister.RpcException {
+    public synchronized JSONRPCAddressBookEntry[] createaddresses(String walletID, Long quantity) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
@@ -787,8 +797,9 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    }
 	    
 	    
-	    
-	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, incoming, amountsArray, fee, txid, address);
+	    String category = (incoming) ? "receive" : "send";
+
+	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, category, amountsArray, fee, txid, address);
 	    resultList.add(atx);
 	}
 	
@@ -909,7 +920,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    }
 	    BigDecimal displayQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, netAmount);
 	    JSONRPCTransactionAmount amount = new JSONRPCTransactionAmount();
-	    amount.setAssetref(assetRef);
+	    amount.setAsset_ref(assetRef);
 	    amount.setDisplay(s1);
 	    amount.setName(fullName);
 	    amount.setName_short(name);
@@ -924,7 +935,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	String btcAmount = Utils.bitcoinValueToFriendlyString(satoshiAmount) + " BTC";
 	BigDecimal satoshiAmountBTC = new BigDecimal(satoshiAmount).divide(new BigDecimal(Utils.COIN));
 	JSONRPCTransactionAmount amount = new JSONRPCTransactionAmount();
-	    amount.setAssetref("bitcoin");
+	    amount.setAsset_ref("bitcoin");
 	    amount.setDisplay(btcAmount);
 	    amount.setName("Bitcoin");
 	    amount.setName_short("Bitcoin");
@@ -961,7 +972,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	JSONRPCBalanceAmount bitcoinBalanceAmount = new JSONRPCBalanceAmount(rawBalanceSatoshi.longValue(), rawBalanceBTC.doubleValue(), rawBalanceDisplay);
 	JSONRPCBalanceAmount bitcoinSpendableAmount = new JSONRPCBalanceAmount(rawSpendableSatoshi.longValue(), rawSpendableBTC.doubleValue(), rawSpendableDisplay);	
 	JSONRPCBalance btcAssetBalance = new JSONRPCBalance();
-	btcAssetBalance.setAssetref("bitcoin");
+	btcAssetBalance.setAsset_ref("bitcoin");
 	btcAssetBalance.setBalance(bitcoinBalanceAmount);
 	btcAssetBalance.setSpendable(bitcoinSpendableAmount);
 	resultList.add(btcAssetBalance);
@@ -1002,7 +1013,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    String balanceDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, assetBalance.total);
 	    JSONRPCBalanceAmount balanceAmount = new JSONRPCBalanceAmount(balanceRaw, balanceQty, balanceDisplay);
 	    JSONRPCBalance ab = new JSONRPCBalance();
-	    ab.setAssetref(assetRef);
+	    ab.setAsset_ref(assetRef);
 	    ab.setBalance(balanceAmount);
 	    ab.setSpendable(spendableAmount);
 	    

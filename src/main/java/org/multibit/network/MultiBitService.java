@@ -775,4 +775,8 @@ public class MultiBitService {
   public MultiBitCheckpointManager getCheckpointManager() {
     return checkpointManager;
   }
+  
+  public boolean isTestNet3() {
+      return (TESTNET3_GENESIS_HASH.equals(bitcoinController.getModel().getNetworkParameters().getGenesisBlock().getHashAsString()));
+  }
 }
