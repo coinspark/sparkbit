@@ -948,6 +948,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    String assetRef = "";
 	    if (asset!=null) {
 		fullName = asset.getName();
+		if (fullName==null) fullName = name; // use short name
 		assetRef = CSMiscUtils.getHumanReadableAssetRef(asset);
 	    }
 	    BigDecimal displayQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, netAmount);
