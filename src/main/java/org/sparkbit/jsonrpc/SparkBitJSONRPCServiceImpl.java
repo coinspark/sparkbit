@@ -480,9 +480,31 @@ WalletInfoData winfo = wd.getWalletInfo();
     
     @Override
     public Boolean deleteasset(String walletname, String assetref) throws com.bitmechanic.barrister.RpcException {
-	// FIXME: IMPLEMENT THIS METHOD
-	return false;
+	Wallet w = getWalletForWalletName(walletname);
+	boolean success = false;
+	CSAsset asset = getAssetForAssetRefString(w, assetref);
+	if (asset != null) {
+	    int assetID = asset.getAssetID();
+	    BigInteger x = w.CS.getAssetBalance(assetID).total;
+	    boolean canDelete = x.equals(BigInteger.ZERO);
+	    if (canDelete) {
+		success = w.CS.deleteAsset(asset);
+		if (success) {
+		    // Note: the event can be fired, but the listener can do nothing if in headless mode.
+		    // We want main asset panel to refresh, since there isn't an event fired on manual reset.
+		    CSEventBus.INSTANCE.postAsyncEvent(CSEventType.ASSET_DELETED, assetID);
+		} else {
+		    JSONRPCError.DELETE_ASSET_FAILED.raiseRpcException();
+		}
+	    } else {
+		JSONRPCError.DELETE_ASSET_NONZERO_BALANCE.raiseRpcException();
+	    }
+	} else {
+	    JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
+	}
+	return success;
     }
+    
 	
     @Override
     public synchronized Boolean refreshasset(String walletID, String assetRef) throws com.bitmechanic.barrister.RpcException {
