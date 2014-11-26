@@ -956,11 +956,6 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
 	
-	int[] assetIDs = w.CS.getAssetIDs();
-	if (assetIDs==null) {
-	    return new JSONRPCBalance[0];
-	}
-	
 	ArrayList<JSONRPCBalance> resultList = new ArrayList<>();
 
 	// Add entry for BTC balances
@@ -980,7 +975,13 @@ WalletInfoData winfo = wd.getWalletInfo();
 	resultList.add(btcAssetBalance);
 
 	
-	int n = assetIDs.length;
+		
+	int[] assetIDs = w.CS.getAssetIDs();
+	int n = 0;
+	if (assetIDs!=null) {
+	    n = assetIDs.length;
+	}
+	
 	Wallet.CoinSpark.AssetBalance assetBalance;
 	for (int i=0; i<n; i++) {
 	    int id = assetIDs[i];
