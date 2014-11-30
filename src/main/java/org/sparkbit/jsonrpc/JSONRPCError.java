@@ -49,7 +49,8 @@ public enum JSONRPCError {
   CREATE_WALLET_FAILED(21, "Could not create wallet"),
   WALLET_NAME_BAD_CHARS(22, "Wallet name should not contain illegal characters"),
   WALLET_NAME_PERIOD_START_END(23, "Wallet name cannot start or end with a period character"),
-  
+  DELETE_ASSET_FAILED(24, "Could not delete asset"),
+  DELETE_ASSET_NONZERO_BALANCE(25, "Cannot delete asset because it still has a balance"),
   
   
   THROW_EXCEPTION(99999, ""); // RESERVED. For wrapping up a general exception and throwing it.
