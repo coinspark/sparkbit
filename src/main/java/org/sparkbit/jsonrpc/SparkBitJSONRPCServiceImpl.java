@@ -76,6 +76,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import org.sparkbit.SparkBitMapDB;
+import org.apache.commons.io.FileDeleteStrategy;
 
 /**
  * For now, synchronized access to commands which mutate
@@ -337,9 +338,21 @@ WalletInfoData winfo = wd.getWalletInfo();
 //                log.error(">>>> CS Log File: Cannot delete");
 		}
 	    }
+	    
+	    // Delete cached contracts
+	    String csfiles = filename + ".csfiles";
+	    f = new File(csfiles);
+	    if (f.exists()) {
+		FileDeleteStrategy.FORCE.delete(f);
+	    }
 
-	    
-	    
+	    // Delete the backup folder and cached contracts
+	    String backupFolderPath = BackupManager.INSTANCE.calculateTopLevelBackupDirectoryName(new File(filename));
+	    f = new File(backupFolderPath);
+	    if (f.exists()) {
+		FileDeleteStrategy.FORCE.delete(f);		
+	    }
+    
 	} catch (Exception e) {
 	    JSONRPCError.throwAsRpcException("Error deleting wallet files", e);
 	}
