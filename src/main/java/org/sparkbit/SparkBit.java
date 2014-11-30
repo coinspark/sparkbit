@@ -144,6 +144,20 @@ public final class SparkBit {
 	}
 	isHeadless = Boolean.TRUE.toString().equals( System.getProperty("java.awt.headless"));
 	
+	// Go into headless mode IF the environment does not have window mode
+	try {
+	    boolean gfxEnvIsHeadless = java.awt.GraphicsEnvironment.isHeadless();
+	    System.out.println("gfxEnvIsHeadless: " + gfxEnvIsHeadless);
+	    if (gfxEnvIsHeadless) {
+		System.out.println("...we must run as headless");
+		isHeadless = true; // force ourselves into headless mode
+	    }
+	} catch (HeadlessException e) {
+	    System.out.println("CAUGHT EXCEPTION: " + e);
+	    isHeadless = true;
+	}
+	
+	
         ViewSystem swingViewSystem = null;
         // Enclosing try to enable graceful closure for unexpected errors.
         try {
@@ -268,6 +282,7 @@ public final class SparkBit {
                     userPreferences.setProperty(CoreModel.LOOK_AND_FEEL, lookAndFeel);
                 }
 
+		if (!isHeadless) {
                 if (lookAndFeel != null && !lookAndFeel.equals("")) {
                     for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                         if (lookAndFeel.equalsIgnoreCase(info.getName())) {
@@ -278,6 +293,7 @@ public final class SparkBit {
                 } else {
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 }
+		}
             } catch (UnsupportedLookAndFeelException e) {
                 // Carry on.
             } catch (ClassNotFoundException e) {
@@ -286,7 +302,9 @@ public final class SparkBit {
                 // Carry on.
             } catch (IllegalAccessException e) {
                 // Carry on.
-            }
+            } catch (Exception e) {
+		// Carry on...
+	    }
 
             // Initialise singletons.
             ColorAndFontConstants.init();
