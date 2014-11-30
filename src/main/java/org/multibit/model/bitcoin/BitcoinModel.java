@@ -80,6 +80,9 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
     /* CoinSpark START */
     public static final String SHOW_MULTIPLE_WALLETS = "showMultipleWallets";
     public static final String SHOW_DEVELOPER_TOOLS = "showDeveloperTools";
+    public static final String SHOW_PRIVATE_KEY_MENU = "showPrivateKeyMenu";
+    public static final String CAN_SEND_INVALID_ASSETS = "canSendInvalidAssets";
+    
     
     // Send bitcoin and send bitcoin confirm.
     public static final String SEND_SPARK_ADDRESS = "sendSparkAddress";
