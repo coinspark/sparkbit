@@ -317,12 +317,14 @@ public class CSTransactionDetailsPanel extends JPanel {
         detailPanel.add(totalDebitText, constraints);
 
         BigInteger fee = rowTableData.getTransaction().calculateFee(this.bitcoinController.getModel().getActiveWallet());
+	fee = fee.negate(); // CSPK: show as negative
         feeText.setText(CurrencyConverter.INSTANCE.prettyPrint(Utils.bitcoinValueToPlainString(fee)));
         if (BigInteger.ZERO.compareTo(value) > 0) {
             // debit
             amountLabel.setText("Amount Sent:"); //controller.getLocaliser().getString("transactionDetailsDialog.amountSent"));
             try {
                 BigInteger totalDebit = rowTableData.getTransaction().getValue(this.bitcoinController.getModel().getActiveWallet()).negate();
+		totalDebit = totalDebit.negate(); // CSPK: Show as negative
                 BigInteger amountSent = totalDebit.subtract(fee);
                 totalDebitText.setText(CurrencyConverter.INSTANCE.prettyPrint(Utils.bitcoinValueToPlainString(totalDebit)));
                 amountText.setText(CurrencyConverter.INSTANCE.prettyPrint(Utils.bitcoinValueToPlainString(amountSent)));
@@ -351,7 +353,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 	
 	// Override the amount text with asset info.
 	Wallet wallet = this.bitcoinController.getModel().getActiveWallet();
-	amountText.setText( CSMiscUtils.getDescriptionOfTransactionAssetChanges(wallet, rowTableData.getTransaction()));
+	amountText.setText( CSMiscUtils.getDescriptionOfTransactionAssetChanges(wallet, rowTableData.getTransaction(), true, false));
 
         MultiBitLabel descriptionLabel = new MultiBitLabel("");
         descriptionLabel.setText("Description:"); //controller.getLocaliser().getString("walletData.descriptionText"));

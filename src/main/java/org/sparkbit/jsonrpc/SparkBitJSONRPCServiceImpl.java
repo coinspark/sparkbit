@@ -788,7 +788,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		fee = -1.0 * feeBTC.doubleValue();
 	    }
 	    String txid = tx.getHashAsString();
-	    ArrayList<JSONRPCTransactionAmount> amounts = getAssetTransactionAmounts(w, tx);
+	    ArrayList<JSONRPCTransactionAmount> amounts = getAssetTransactionAmounts(w, tx, true, false);
 	    JSONRPCTransactionAmount[] amountsArray = amounts.toArray(new JSONRPCTransactionAmount[0]);
 
 //	    int size = amounts.size();
@@ -889,7 +889,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     * Return array of asset transaction objects.
     * Original method is in CSMiscUtils, so any changes there, must be reflected here.
     */
-    private ArrayList<JSONRPCTransactionAmount> getAssetTransactionAmounts(Wallet wallet, Transaction tx) {
+    private ArrayList<JSONRPCTransactionAmount> getAssetTransactionAmounts(Wallet wallet, Transaction tx, boolean excludeBTCFee, boolean absoluteBTCFee) {
 	if (wallet==null || tx==null) return null;
 	
 	Map<Integer, BigInteger> receiveMap = wallet.CS.getAssetsSentToMe(tx);
@@ -1008,6 +1008,17 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 	BigInteger satoshiAmount = receiveMap.get(0);
 	satoshiAmount = satoshiAmount.subtract(sendMap.get(0));
+	
+	// We will show the fee separately so no need to include here.
+	if (excludeBTCFee && isSentByMe) {
+	    BigInteger feeSatoshis = tx.calculateFee(wallet);  // returns positive
+	    if (absoluteBTCFee) {
+		satoshiAmount = satoshiAmount.abs().subtract(feeSatoshis);
+	    } else {
+		satoshiAmount = satoshiAmount.add(feeSatoshis);
+	    }
+	}
+	
 	String btcAmount = Utils.bitcoinValueToFriendlyString(satoshiAmount) + " BTC";
 	BigDecimal satoshiAmountBTC = new BigDecimal(satoshiAmount).divide(new BigDecimal(Utils.COIN));
 	JSONRPCTransactionAmount amount = new JSONRPCTransactionAmount();

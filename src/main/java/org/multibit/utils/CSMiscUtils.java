@@ -519,8 +519,11 @@ public class CSMiscUtils {
 	return (amountSatoshis.compareTo(spendingLimit) <= 0);
     }
 
-    
-    public static String getDescriptionOfTransactionAssetChanges(Wallet wallet, Transaction tx) {
+    /*
+    @param excludeBTCFee  When sending BTC, exclude any fee from BTC amount
+    @param absoluteBTCFee  When sending BTC, use positive number value, not negative to show balance and fee calc.
+    */
+    public static String getDescriptionOfTransactionAssetChanges(Wallet wallet, Transaction tx, boolean excludeBTCFee, boolean absoluteBTCFee) {
 	if (wallet==null || tx==null) return "";
 	
 	Map<Integer, BigInteger> receiveMap = wallet.CS.getAssetsSentToMe(tx);
@@ -624,6 +627,17 @@ public class CSMiscUtils {
 	}
 	BigInteger satoshiAmount = receiveMap.get(0);
 	satoshiAmount = satoshiAmount.subtract(sendMap.get(0));
+	
+	// We will show the fee separately so no need to include here.
+	if (excludeBTCFee && isSentByMe) {
+	    BigInteger feeSatoshis = tx.calculateFee(wallet);  // returns positive
+	    if (absoluteBTCFee) {
+		satoshiAmount = satoshiAmount.abs().subtract(feeSatoshis);
+	    } else {
+		satoshiAmount = satoshiAmount.add(feeSatoshis);
+	    }
+	}
+	
 	String btcAmount = Utils.bitcoinValueToFriendlyString(satoshiAmount);
 	nameAmounts.add("BTC: " + btcAmount);
 	

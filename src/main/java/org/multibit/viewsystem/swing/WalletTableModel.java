@@ -178,7 +178,7 @@ public class WalletTableModel extends AbstractTableModel {
 	case "walletTransactionTableColumn.descriptionOfAssetChanges":
 	{
 	    Wallet wallet = this.bitcoinController.getModel().getActiveWallet();
-	    return CSMiscUtils.getDescriptionOfTransactionAssetChanges(wallet, walletDataRow.getTransaction());
+	    return CSMiscUtils.getDescriptionOfTransactionAssetChanges(wallet, walletDataRow.getTransaction(), false, false);
 	}
         case "walletTransactionTableColumn.assetAmount":
 	{
