@@ -1222,6 +1222,16 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 	    if (sendSuccessful) {
 		// There is enough money.
+		
+		/* If sending assets or BTC to a coinspark address, record transaction id --> coinspark address, into hashmap so we can use when displaying transactions */
+		if (address.startsWith("s")) {
+		    java.util.Map<String, String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
+		    if (m != null) {
+			m.put(sendTxHash, address);
+			SparkBitMapDB.INSTANCE.getMapDB().commit();
+		    }
+		}
+		
 	    } else {
 		// There is not enough money
 	    }
@@ -1401,6 +1411,16 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 	    if (sendSuccessful) {
 		// There is enough money.
+		
+		/* If sending assets or BTC to a coinspark address, record transaction id --> coinspark address, into hashmap so we can use when displaying transactions */
+		if (address.startsWith("s")) {
+		    java.util.Map<String, String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
+		    if (m != null) {
+			m.put(sendTxHash, address);
+			SparkBitMapDB.INSTANCE.getMapDB().commit();
+		    }
+		}
+	
 	    } else {
 		// There is not enough money
 	    }
