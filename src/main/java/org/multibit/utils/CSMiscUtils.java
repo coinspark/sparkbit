@@ -57,6 +57,7 @@ import org.multibit.viewsystem.swing.view.components.MultiBitLabel;
 import org.multibit.controller.bitcoin.BitcoinController;
 import com.google.bitcoin.core.Wallet.SendRequest;
 import org.joda.time.LocalDateTime;
+import org.multibit.model.bitcoin.BitcoinModel;
 
 /*
  * Mixed bag of tools.
@@ -716,5 +717,14 @@ public class CSMiscUtils {
 	if (d == null) return "";
 	LocalDateTime dt = new DateTime(d).toLocalDateTime();
 	return dt.toString("d MMM y, HH:mm:ss z");
+    }
+    
+    // Helper function
+    public static boolean canSendInvalidAsset(BitcoinController controller) {
+	String s = controller.getModel().getUserPreference(BitcoinModel.CAN_SEND_INVALID_ASSETS);
+        if (Boolean.TRUE.toString().equals(s)) {
+            return true;
+        }
+	return false;
     }
 }

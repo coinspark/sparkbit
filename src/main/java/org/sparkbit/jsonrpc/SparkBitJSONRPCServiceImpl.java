@@ -1275,7 +1275,9 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    }
 	    
 	    if (asset.getAssetState()!=CSAsset.CSAssetState.VALID) {
-		JSONRPCError.ASSET_STATE_INVALID.raiseRpcException();
+		if (!CSMiscUtils.canSendInvalidAsset(controller)) {
+		    JSONRPCError.ASSET_STATE_INVALID.raiseRpcException();
+		}
 	    }
 	    
 	    // Check number of confirms

@@ -124,6 +124,8 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 		}
 	    }
 	    
+	    // Todo: Allow invalid assets to be sent even if spendable balance is 0
+	    //if (CSMiscUtils.canSendInvalidAsset(bitcoinController) 
             AssetValidator validator = new AssetValidator(super.bitcoinController);
             if (validator.validate(sendAddress, sendAmount, assetId, assetAmountRawUnits.toString() )) {
 		/* CoinSpark START */

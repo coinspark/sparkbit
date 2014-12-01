@@ -126,7 +126,7 @@ public class AssetValidator {
 	boolean isValid = false;
 	if (asset!=null) {
 	    CSAssetState state = asset.getAssetState();
-	    if (state==CSAssetState.VALID) {
+	    if (state==CSAssetState.VALID || CSMiscUtils.canSendInvalidAsset(this.bitcoinController)) {
 		isValid = true;
 	    }
 	}
