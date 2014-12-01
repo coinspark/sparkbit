@@ -30,7 +30,7 @@ public enum JSONRPCError {
   
   DELETE_WALLET_NOT_EMPTY(3, "Cannot delete wallet as it is not empty"),
   WALLEY_IS_BUSY(4, "Wallet is busy"),
-  ASSETREF_NOT_FOUND(5, "Asset reference not found"),
+  ASSETREF_NOT_FOUND(5, "Could not find an asset with that asset reference in the wallet"),
   CREATE_ADDRESS_TOO_MANY(6, "Number of addresses to create cannot be more than 100"),
   CREATE_ADDRESS_TOO_FEW(7, "Number of addresses to create must be at least 1"),
   COINSPARK_ADDRESS_INVALID(8, "CoinSpark address is invalid"),
@@ -51,6 +51,7 @@ public enum JSONRPCError {
   WALLET_NAME_PERIOD_START_END(23, "Wallet name cannot start or end with a period character"),
   DELETE_ASSET_FAILED(24, "Could not delete asset"),
   DELETE_ASSET_NONZERO_BALANCE(25, "Cannot delete asset because it still has a balance"),
+  ASSETREF_INVALID(26, "Asset reference is not valid"),
   
   
   THROW_EXCEPTION(99999, ""); // RESERVED. For wrapping up a general exception and throwing it.

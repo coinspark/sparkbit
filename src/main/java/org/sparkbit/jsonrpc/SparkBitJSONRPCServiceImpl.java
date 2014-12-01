@@ -424,6 +424,18 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return w;
     }
     
+    // Helper function
+    private boolean isAssetRefValid(String s) {
+	if (s!=null) {
+	    s = s.trim();
+	    CoinSparkAssetRef assetRef = new CoinSparkAssetRef();
+	    if (assetRef.decode(s)) {
+		return true;
+	    }
+	}
+	return false;
+    }
+    
     private CSAsset getAssetForAssetRefString(Wallet w, String assetRef) {
 	CSAssetDatabase db = w.CS.getAssetDB();
 	int[] assetIDs = w.CS.getAssetIDs();
@@ -451,7 +463,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 	}
 	CSAsset asset = getAssetForAssetRefString(w, assetRef);
 	if (asset == null) {
-	    JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
+	    if (isAssetRefValid(assetRef)) {
+		JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
+	    } else {
+		JSONRPCError.ASSETREF_INVALID.raiseRpcException();		
+	    }
 	} else {
 	    asset.setVisibility(visibility);
 	    CSEventBus.INSTANCE.postAsyncEvent(CSEventType.ASSET_VISIBILITY_CHANGED, asset.getAssetID());
@@ -489,7 +505,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		    }
 		}
 	    } else {
-		JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
+		JSONRPCError.ASSETREF_INVALID.raiseRpcException();
 	    }
 	}
 
@@ -498,10 +514,10 @@ WalletInfoData winfo = wd.getWalletInfo();
     
     
     @Override
-    public Boolean deleteasset(String walletname, String assetref) throws com.bitmechanic.barrister.RpcException {
+    public Boolean deleteasset(String walletname, String assetRef) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletName(walletname);
 	boolean success = false;
-	CSAsset asset = getAssetForAssetRefString(w, assetref);
+	CSAsset asset = getAssetForAssetRefString(w, assetRef);
 	if (asset != null) {
 	    int assetID = asset.getAssetID();
 	    BigInteger x = w.CS.getAssetBalance(assetID).total;
@@ -519,7 +535,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 		JSONRPCError.DELETE_ASSET_NONZERO_BALANCE.raiseRpcException();
 	    }
 	} else {
-	    JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
+	    if (isAssetRefValid(assetRef)) {
+		JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
+	    } else {
+		JSONRPCError.ASSETREF_INVALID.raiseRpcException();		
+	    }
 	}
 	return success;
     }
@@ -539,7 +559,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    // We want main asset panel to refresh, since there isn't an event fired on manual reset.
 	    CSEventBus.INSTANCE.postAsyncEvent(CSEventType.ASSET_UPDATED, asset.getAssetID());
 	} else {
-	    JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
+	    if (isAssetRefValid(assetRef)) {
+		JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
+	    } else {
+		JSONRPCError.ASSETREF_INVALID.raiseRpcException();		
+	    }
 	}
 
 	return true;
@@ -1277,7 +1301,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 	    CSAsset asset = getAssetForAssetRefString(w, assetRef);
 	    if (asset==null) {
-		JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
+		if (isAssetRefValid(assetRef)) {
+		    JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
+		} else {
+		    JSONRPCError.ASSETREF_INVALID.raiseRpcException();		
+		}
 	    }
 	    
 	    if (asset.getAssetState()!=CSAsset.CSAssetState.VALID) {
@@ -1380,6 +1408,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    //--- bolilerplate begins...
 	} catch (InsufficientMoneyException ime) {
 	    JSONRPCError.ASSET_INSUFFICIENT_BALANCE.raiseRpcException();
+	} catch (com.bitmechanic.barrister.RpcException e) {
+	    throw(e);
 	} catch (Exception e) {
 	    JSONRPCError.throwAsRpcException("Could not send asset due to error: " , e);
 	} finally {
