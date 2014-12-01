@@ -462,31 +462,37 @@ WalletInfoData winfo = wd.getWalletInfo();
     @Override
     public synchronized Boolean addasset(String walletID, String assetRefString) throws com.bitmechanic.barrister.RpcException {
 	Wallet w = getWalletForWalletName(walletID);
-	if (w==null) {
+	if (w == null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
-	
+
 	String s = assetRefString;
 	if ((s != null) && (s.length() > 0)) {
-	    s  = s.trim();
+	    s = s.trim();
+
+	    // Does the asset already exist? If so, return true.
+	    if (getAssetForAssetRefString(w, s) != null) {
+		return true;
+	    }
+
 	    //System.out.println("asset ref detected! " + s);
 	    CoinSparkAssetRef assetRef = new CoinSparkAssetRef();
 	    if (assetRef.decode(s)) {
-		Wallet wallet = this.controller.getModel().getActiveWallet();
-		CSAssetDatabase assetDB = wallet.CS.getAssetDB();
+//		Wallet wallet = this.controller.getModel().getActiveWallet();
+		CSAssetDatabase assetDB = w.CS.getAssetDB();
 		if (assetDB != null) {
 		    CSAsset asset = new CSAsset(assetRef, CSAsset.CSAssetSource.MANUAL);
 		    if (assetDB.insertAsset(asset) != null) {
 			//System.out.println("Inserted new asset manually: " + asset);
 		    } else {
-			JSONRPCError.throwAsRpcException("Internal error, assetDB.insertAsset == null");
+			JSONRPCError.throwAsRpcException("Internal error, assetDB.insertAsset() failed for an unknown reason");
 		    }
 		}
 	    } else {
 		JSONRPCError.ASSETREF_NOT_FOUND.raiseRpcException();
 	    }
 	}
-	
+
 	return true;
     }
     
