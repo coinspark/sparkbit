@@ -62,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import org.multibit.model.bitcoin.WalletAddressBookData;
+import org.multibit.utils.CSMiscUtils;
 import org.sparkbit.SparkBitMapDB;
 import org.sparkbit.jsonrpc.JSONRPCController;
 
@@ -559,6 +560,11 @@ public class MultiBitService {
         log.error("Could not add wallet '" + walletFilename + "' to the peerGroup as the peerGroup is null. This is bad. ");
       }
 
+      
+      // !!! Experimental: Enable sending of invalid assets if user setting found
+      if (CSMiscUtils.canSendInvalidAsset(bitcoinController)) {
+	wallet.CS.setCanSendInvalidAssets(true);
+      }
     }
 
     return perWalletModelDataToReturn;
