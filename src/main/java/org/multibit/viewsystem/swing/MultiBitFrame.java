@@ -1580,7 +1580,7 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
                 ReplayManager.INSTANCE.addDownloadListeners(replayPerWalletModelDataList);
             }
                 
-            if (initialView != null && !(initialView == View.TRANSACTIONS_VIEW) && !(initialView == View.SEND_BITCOIN_VIEW)
+            if (initialView != null && !(initialView == View.COINSPARK_ASSETS_VIEW) && !(initialView == View.TRANSACTIONS_VIEW) && !(initialView == View.SEND_BITCOIN_VIEW)
                     && !(initialView == View.RECEIVE_BITCOIN_VIEW)) {
                 JPanel currentTabPanel = new JPanel(new BorderLayout());
                 Viewable currentView = viewFactory.getView(initialView);
