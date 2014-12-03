@@ -88,6 +88,7 @@ import java.awt.event.*;
 import org.multibit.utils.CSMiscUtils;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import org.multibit.model.bitcoin.BitcoinModel;
 
 /* CoinSpark END */
 
@@ -1556,7 +1557,14 @@ public class CSShowAssetsPanel extends JPanel implements Viewable {
 //		BigInteger x = wallet.CS.getUnspentAssetQuantity(assetID);
 		BigInteger x = wallet.CS.getAssetBalance(assetID).total; 
 
-		boolean canDelete = x.equals(BigInteger.ZERO);
+		// Allow deleting invalid assets which have a non-zero balance
+		String s = controller.getModel().getUserPreference(BitcoinModel.CAN_DELETE_INVALID_ASSETS);
+		boolean deleteInvalidAsset = false;
+		if (Boolean.TRUE.toString().equals(s)) {
+		    deleteInvalidAsset = asset.getAssetState()!=CSAsset.CSAssetState.VALID;
+		}
+		
+		boolean canDelete = (x.equals(BigInteger.ZERO) || deleteInvalidAsset);
 		deleteAssetButton.setEnabled(canDelete);
 
                 // Find out which indexes are selected.

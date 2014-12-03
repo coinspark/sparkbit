@@ -52,6 +52,7 @@ public enum JSONRPCError {
   DELETE_ASSET_FAILED(24, "Could not delete asset"),
   DELETE_ASSET_NONZERO_BALANCE(25, "Cannot delete asset because it still has a balance"),
   ASSETREF_INVALID(26, "Asset reference is not valid"),
+  DELETE_INVALID_ASSET_FAILED(27,"Cannot delete an invalid asset with a non-zero balance"),
   
   
   THROW_EXCEPTION(99999, ""); // RESERVED. For wrapping up a general exception and throwing it.

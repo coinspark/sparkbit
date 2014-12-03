@@ -522,7 +522,16 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    int assetID = asset.getAssetID();
 	    BigInteger x = w.CS.getAssetBalance(assetID).total;
 	    boolean canDelete = x.equals(BigInteger.ZERO);
-	    if (canDelete) {
+	    
+	    // Delete invalid asset if property allows
+	    String s = controller.getModel().getUserPreference(BitcoinModel.CAN_DELETE_INVALID_ASSETS);
+	    boolean isAssetInvalid = asset.getAssetState() != CSAsset.CSAssetState.VALID;
+	    boolean deleteInvalidAsset = false;
+	    if (Boolean.TRUE.toString().equals(s) && isAssetInvalid) {
+		deleteInvalidAsset = true;
+	    }
+		
+	    if (canDelete || deleteInvalidAsset) {
 		success = w.CS.deleteAsset(asset);
 		if (success) {
 		    // Note: the event can be fired, but the listener can do nothing if in headless mode.
@@ -532,7 +541,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 		    JSONRPCError.DELETE_ASSET_FAILED.raiseRpcException();
 		}
 	    } else {
-		JSONRPCError.DELETE_ASSET_NONZERO_BALANCE.raiseRpcException();
+		if (isAssetInvalid) {
+		    JSONRPCError.DELETE_INVALID_ASSET_FAILED.raiseRpcException();
+		} else {
+		    JSONRPCError.DELETE_ASSET_NONZERO_BALANCE.raiseRpcException();
+		}
 	    }
 	} else {
 	    if (isAssetRefValid(assetRef)) {
