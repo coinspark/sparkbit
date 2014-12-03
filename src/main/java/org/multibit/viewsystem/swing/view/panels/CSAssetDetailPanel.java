@@ -163,7 +163,7 @@ public class CSAssetDetailPanel extends javax.swing.JPanel {
 	Date validationDate = asset.getValidChecked();
 	visible = (validationDate != null);
 	dateValidatedKeyLabel.setVisible(visible);
-	dateValidatedKeyLabel.setVisible(visible);
+	dateValidatedLabel.setVisible(visible);
 	if (visible) {
 		dateValidatedLabel.setText(prettyFormatDate(validationDate));
 	}
