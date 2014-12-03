@@ -100,6 +100,9 @@ public class CSDualStyledLabelCellRenderer extends AbstractCellEditor
 	panel.setBackground(table.getBackground());
 	
 	HashMap<String, Object> map = (HashMap<String, Object>) value;
+	
+	if (value==null) return panel;
+	
 	String text = (String) map.get("text");
 	String text2 = (String) map.get("text2");
 	StyleRange style = (StyleRange) map.get("style");
