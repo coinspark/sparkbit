@@ -334,7 +334,7 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
 	// Ignore, don't update table etc. unless view is selected tab pane.
 	//if (!this.viewIsVisible) return;	
 //	Object o = event.getInfo();
-	log.debug(">>>> received event: " + event);
+//	log.debug(">>>> received event: " + event);
 	SBEventType t = event.getType();
 	if (t == SBEventType.ADDRESS_CREATED || t == SBEventType.ADDRESS_UPDATED)
 	{
