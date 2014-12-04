@@ -1371,7 +1371,9 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    String displayQtyString = new BigDecimal(quantity).toPlainString();
 	    BigInteger assetAmountRawUnits = CSMiscUtils.getRawUnitsFromDisplayString(asset, displayQtyString);
 	    int assetID = asset.getAssetID();
-	    BigInteger spendableAmount =  w.CS.getAssetBalance(assetID).spendable; 
+	    // Previously we checked against .spendable, but this prevented us from
+	    // spending assets which were change, and thus spendable, but unconfirmed 
+	    BigInteger spendableAmount =  w.CS.getAssetBalance(assetID).total; // spendable; 
 	    
             String sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);	    
 	    	    CoinSparkGenesis genesis = asset.getGenesis();
