@@ -23,4 +23,5 @@ package org.sparkbit;
 public enum SBEventType {
     ADDRESS_CREATED,	// no payload
     ADDRESS_UPDATED,	// no payload
+    TX_CONFIDENCE_CHANGED, // payload is the Transaction object
 }

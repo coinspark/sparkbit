@@ -46,6 +46,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import org.coinspark.wallet.CSEventBus;
+import org.sparkbit.SBEvent;
+import org.sparkbit.SBEventType;
 
 /**
  * The MVC controller for MultiBit.
@@ -228,6 +231,7 @@ public class BitcoinController extends AbstractController<CoreController> implem
         for (ViewSystem viewSystem : super.getViewSystem()) {
             viewSystem.onTransactionConfidenceChanged(wallet, transaction);
         }
+	CSEventBus.INSTANCE.postAsync(new SBEvent(SBEventType.TX_CONFIDENCE_CHANGED, transaction));
     }
     
     @Override
