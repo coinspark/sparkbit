@@ -1373,7 +1373,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    int assetID = asset.getAssetID();
 	    // Previously we checked against .spendable, but this prevented us from
 	    // spending assets which were change, and thus spendable, but unconfirmed 
-	    BigInteger spendableAmount =  w.CS.getAssetBalance(assetID).total; // spendable; 
+	    BigInteger spendableAmount =  w.CS.getAssetBalance(assetID).spendable;
 	    
             String sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);	    
 	    	    CoinSparkGenesis genesis = asset.getGenesis();
@@ -1431,7 +1431,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		JSONRPCError.ASSET_INSUFFICIENT_BALANCE.raiseRpcException();
 	    } else {
 		sendSuccessful = true;
-		sendTxHash = sendTransaction.getHashAsString();
+		sendTxHash = sendTransaction.getHashAsString();		
 		
 		// This returns immediately if rpcsetassettimeout is 0.
 		JSONRPCController.INSTANCE.waitForTxBroadcast(sendTxHash);		

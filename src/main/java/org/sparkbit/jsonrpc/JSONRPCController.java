@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import org.sparkbit.SBEvent;
 import org.sparkbit.SBEventType;
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.wallet.DefaultCoinSelector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.*;
@@ -134,6 +135,43 @@ public enum JSONRPCController {
     
     
     /*
+    Wait for transaction to become selectable.
+    Return true when done, false if timed out.
+    */
+    private static final int WAIT_FOR_TX_SELECTABLE_SLEEP_INTERVAL=100; // milliseconds
+    public boolean waitForTxSelectable(Transaction tx) {
+	int n = jetty.sendAssetTimeout;
+	if (n==0) return true; // don't wait if timeout period is 0
+	
+	final StopWatch stopwatch = new StopWatch();
+	stopwatch.start();
+	boolean timedOut = false;
+	
+	while(!DefaultCoinSelector.isSelectable(tx)) {
+	    try {
+		Thread.sleep(WAIT_FOR_TX_SELECTABLE_SLEEP_INTERVAL);
+	    } catch (InterruptedException e) {
+	    }
+	    stopwatch.split();
+	    long elapsed = stopwatch.getSplitTime();
+	    if (elapsed > n) {
+		timedOut = true;
+		log.debug("Waiting to be selectable timed out for txid " + tx.getHashAsString());
+		break; // timed out waiting for tx to be selectable
+	    }
+	    stopwatch.unsplit();
+	}
+	
+	stopwatch.stop();
+	if (!timedOut) {
+	    log.debug("Waiting to be selectable took " + stopwatch + " for txid " + tx.getHashAsString() + " and broadcast count is " + tx.getConfidence().getBroadcastByCount());
+	}
+	
+	return true;
+    }
+
+    
+    /*
     Return true if done (or skipped because timeout value is 0)
     Return false if timeout (deadline passed) or exception
     */
@@ -200,7 +238,7 @@ public enum JSONRPCController {
 	    result = true;
 
 	    // Register ourselves as a listener the CSEventBus
-	    subscribeToEvents();
+	    //subscribeToEvents();
 	    
 	} catch (java.net.BindException bindexception) {
 	    log.error(">>>> Port already in use");
