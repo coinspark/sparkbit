@@ -92,6 +92,7 @@ public class JettyEmbeddedServer {
     public boolean allowTLS10;
     public boolean allowTLS11;
     public String keystoreFilename;
+    public int sendAssetTimeout = DEFAULT_SEND_ASSET_TIMEOUT;
     
      public String toString() {
 	if (server==null) {
@@ -110,6 +111,7 @@ public class JettyEmbeddedServer {
 	sb.append(" allow tls 1.0 = " + this.allowTLS10 + "\n");
 	sb.append(" allow tls 1.1 = " + this.allowTLS11 + "\n");
 	sb.append(" keystore filename = " + this.keystoreFilename + "\n");
+	sb.append(" send asset timeout = " + this.sendAssetTimeout + "\n");
 	/*
 		Connector[] connectors = server.getConnectors();
 	for (int i=0; i<connectors.length; i++) {
@@ -158,6 +160,16 @@ public class JettyEmbeddedServer {
 	timeout = (useSSL) ? DEFAULT_SSL_TIMEOUT : DEFAULT_TIMEOUT;
 	n = this.controller.getIntPreference(RPC_TIMEOUT);
 	if (n!=0) timeout = n;
+	
+	sendAssetTimeout = DEFAULT_SEND_ASSET_TIMEOUT;
+	if (this.controller.getPreference(RPC_SEND_ASSET_TIMEOUT)==null) {
+	    // if missing, use default
+	} else {
+	    n = this.controller.getIntPreference(RPC_SEND_ASSET_TIMEOUT);
+	    if (n>=0) {
+		sendAssetTimeout = n; // if 0, we basically skip timeout.
+	    }
+	}
 	
 	allowIP = DEFAULT_ALLOW_IP_LOCALHOST;
 	if (useSSL) {

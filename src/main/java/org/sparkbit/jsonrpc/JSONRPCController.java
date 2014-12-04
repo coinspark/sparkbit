@@ -23,6 +23,7 @@
  */
 package org.sparkbit.jsonrpc;
 
+import com.google.common.eventbus.Subscribe;
 import java.io.File;
 import org.multibit.model.core.*;
 import java.util.Properties;
@@ -33,7 +34,19 @@ import org.eclipse.jetty.server.Server;
 import org.multibit.file.FileHandler;
 import org.sparkbit.ApplicationDataDirectoryLocator;
 import java.util.Enumeration;
-import org.multibit.viewsystem.swing.MultiBitFrame;
+import org.coinspark.wallet.CSEventBus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sparkbit.SBEvent;
+import org.sparkbit.SBEventType;
+import com.google.bitcoin.core.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.concurrent.locks.*;
+import org.joda.time.DateTime;
+import java.util.Date;
+import org.apache.commons.lang3.time.StopWatch;
+import org.multibit.network.MultiBitService;
 
 //import org.eclipse.jetty.server.Server;
 
@@ -43,6 +56,8 @@ import org.multibit.viewsystem.swing.MultiBitFrame;
 public enum JSONRPCController {
     INSTANCE;
     
+    private static final Logger log = LoggerFactory.getLogger(JSONRPCController.class);
+
     // netstat -lnptu  
     public static final int DEFAULT_PORT = 38332;
     
@@ -50,29 +65,107 @@ public enum JSONRPCController {
     
     public static final int DEFAULT_TIMEOUT = 30000;
     public static final int DEFAULT_SSL_TIMEOUT = 500000;
+    public static final int DEFAULT_SEND_ASSET_TIMEOUT = 20000;
     
     // Config properties
     public static final String RPC_SERVER = "rpcserver";
     public static final String RPC_DIGEST = "rpcdigest";
     public static final String RPC_USER = "rpcuser";
     public static final String RPC_PASSWORD = "rpcpassword"; // Credential
-    public static final String RPC_TIMEOUT = "rpctimeout"; // in seconds
+    public static final String RPC_TIMEOUT = "rpctimeout"; // in milliseconds
     public static final String RPC_PORT = "rpcport"; // default port is 38332
     public static final String RPC_ALLOW_IP = "rpcallowip";
     public static final String RPC_SSL = "rpcssl";
     public static final String RPC_SSL_ALLOW_TLS10 = "rpcsslallowtls10";
     public static final String RPC_SSL_ALLOW_TLS11 = "rpcsslallowtls11";
     public static final String RPC_SSL_KEYSTORE_FILENAME = "rpcsslkeystorefilename";
+    public static final String RPC_SEND_ASSET_TIMEOUT = "rpcsendassettimeout"; // in milliseconds
     
     private BitcoinController controller;
     private JettyEmbeddedServer jetty;
     private Properties config;
-    
+    private boolean subscribedToEventBus;
+    private Lock txBroadcastLock = new ReentrantLock();
+    private ConcurrentHashMap<String,Condition> txBroadcastMap;
+
+    public ConcurrentHashMap<String, Condition> getTxBroadcastMap() {
+	return txBroadcastMap;
+    }
+   
     // initialize this singleton
     public void initialize(BitcoinController controller) {
         this.controller = controller;
 	this.config = FileHandler.loadJSONRPCConfig(new ApplicationDataDirectoryLocator());
 	this.jetty = new JettyEmbeddedServer(this);
+    }
+  
+    // This method is only called once
+    private void subscribeToEvents() {
+	if (!subscribedToEventBus) {
+	    txBroadcastMap = new ConcurrentHashMap<>();
+	    CSEventBus.INSTANCE.registerAsyncSubscriber(this);
+	    subscribedToEventBus = true;
+	}
+    }
+    
+    @Subscribe
+    public void listen(SBEvent event) throws Exception {
+	SBEventType t = event.getType();
+	if (t == SBEventType.TX_CONFIDENCE_CHANGED) {
+	    Transaction tx = (Transaction) event.getInfo();
+	    int count = tx.getConfidence().getBroadcastByCount();
+	    if (count > 0) {
+		String txid = tx.getHashAsString();
+		if (txBroadcastMap.containsKey(txid)) {
+		    Condition c = txBroadcastMap.remove(txid);
+		    txBroadcastLock.lock();
+		    try {
+			c.signalAll();
+			log.debug("Peer broadcast count " + count + " for txid " + txid);
+		    } catch (Exception e) {
+			log.error("Condition signalAll() failed: " + e);
+		    } finally {
+			txBroadcastLock.unlock();
+		    }
+		}
+	    }
+	}
+    }
+    
+    
+    /*
+    Return true if done (or skipped because timeout value is 0)
+    Return false if timeout (deadline passed) or exception
+    */
+    public boolean waitForTxBroadcast(String txid) {
+	int n = jetty.sendAssetTimeout;
+	if (n==0) return true; // don't wait if timeout period is 0
+	
+	Date deadline = new DateTime().plusMillis(n).toDate();
+	final StopWatch stopwatch = new StopWatch();
+	stopwatch.start();
+	boolean notYetElapsed;
+
+	txBroadcastLock.lock();
+	try {
+	    Condition c = txBroadcastLock.newCondition();
+	    txBroadcastMap.put(txid, c);
+	    while (txBroadcastMap.containsKey(txid)) {
+		notYetElapsed = c.awaitUntil(deadline);
+		if (!notYetElapsed) {
+		    log.debug("Peer broadcast waiting timed out for txid " + txid);
+		    return false;
+		}
+	    }
+	} catch (InterruptedException e) {
+	    return false;
+	} finally {
+	    stopwatch.stop();
+	    txBroadcastLock.unlock();
+	    txBroadcastMap.remove(txid);  // remove txid, we are done with it whatever happens.
+	}
+	log.debug("Peer broadcast waiting took " + stopwatch + " for txid " + txid);
+	return true;
     }
     
     public BitcoinController getBitcoinController() {
@@ -105,10 +198,14 @@ public enum JSONRPCController {
 		this.jetty.restartServer();
 	    }
 	    result = true;
+
+	    // Register ourselves as a listener the CSEventBus
+	    subscribeToEvents();
+	    
 	} catch (java.net.BindException bindexception) {
-	    System.out.println(">>>> Port already in use");
+	    log.error(">>>> Port already in use");
 	} catch (Exception e) {
-	    System.out.println(">>>> Failed to start jsonrpc server");	    	    
+	    log.error(">>>> Failed to start jsonrpc server due to exception: " + e.getMessage());	    	    
 	}
 	return result;
     }
@@ -121,7 +218,7 @@ public enum JSONRPCController {
 	    }
 	    result = true;
 	} catch (Exception e) {
-	    System.out.println(">>>> Failed to stop jsonrpc server");	    
+	    log.error("Failed to stop jsonrpc server, exception: " + e.getMessage());	    
 	}	
 	return result;
     }

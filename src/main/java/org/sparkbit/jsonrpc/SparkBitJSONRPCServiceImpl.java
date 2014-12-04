@@ -1430,7 +1430,9 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    } else {
 		sendSuccessful = true;
 		sendTxHash = sendTransaction.getHashAsString();
-		System.out.println(">>>> Sent transaction was:\n" + sendTransaction.toString());
+		
+		// This returns immediately if rpcsetassettimeout is 0.
+		JSONRPCController.INSTANCE.waitForTxBroadcast(sendTxHash);		
 	    }
 
 	    if (sendSuccessful) {
