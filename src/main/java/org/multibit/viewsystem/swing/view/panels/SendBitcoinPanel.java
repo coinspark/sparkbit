@@ -316,12 +316,12 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 //    formPanel.add(MultiBitTitledPanel.createStent((int) notUsedReceiveAddressLabel.getPreferredSize().getWidth()), constraints);
     /* CoinSpark END */
 
-	int longFieldWidth = fontMetrics.stringWidth(MultiBitFrame.EXAMPLE_LONG_FIELD_TEXT);
-	addressTextField = new MultiBitTextField("", MultiBitFrame.EXAMPLE_LONG_FIELD_TEXT.length(), controller);
+	int coinsparkFieldWidth = fontMetrics.stringWidth(MultiBitFrame.EXAMPLE_COINSPARK_FIELD_TEXT);
+	addressTextField = new MultiBitTextField("", MultiBitFrame.EXAMPLE_COINSPARK_FIELD_TEXT.length(), controller);
 //	addressTextField = new MultiBitTextField("", 24, controller);
 	addressTextField.setHorizontalAlignment(JTextField.LEADING);
 //	int fontHeight = getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() + TEXTFIELD_VERTICAL_DELTA;
-	Dimension addressSize = new Dimension(new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() + TEXTFIELD_VERTICAL_DELTA));
+	Dimension addressSize = new Dimension(new Dimension(coinsparkFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() + TEXTFIELD_VERTICAL_DELTA));
 	addressTextField.setMinimumSize(addressSize);
 	//addressTextField.setMaximumSize(addressSize);
 	addressTextField.setPreferredSize(addressSize);
@@ -331,7 +331,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.fill = GridBagConstraints.HORIZONTAL;
 	constraints.gridx = 2;
 	constraints.gridy = 1;
-	constraints.weightx = 1.0;
+	constraints.weightx = 1000; //1.0;
 	constraints.weighty = 0.2;
 	constraints.gridwidth = 3;
 	constraints.anchor = GridBagConstraints.LINE_START;
@@ -370,17 +370,19 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.fill = GridBagConstraints.NONE;
 	constraints.gridx = 8;
 	constraints.gridy = 1;
-	constraints.weightx = 1; //0.0;
+	constraints.weightx = 1.0; //10.0; //1; //0.0;
 	constraints.weighty = 0.2;
 	constraints.gridwidth = 1;
 	constraints.anchor = GridBagConstraints.LINE_START;
 	formPanel.add(pasteAddressButton, constraints);
 
+
+	// Move the paste button stent to gridx 10 to act as a buffer area on the right hand side.
 	JPanel pasteButtonStent = MultiBitTitledPanel.createStent((int)copyAddressButton.getPreferredSize().getWidth(), (int)copyAddressButton.getPreferredSize().getHeight());
         constraints.fill = GridBagConstraints.BOTH;
-        constraints.gridx = 9;
+        constraints.gridx = 10;
         constraints.gridy = 1;
-        constraints.weightx = 15; //10.0;
+        constraints.weightx = 1.0; //10.0;
         constraints.weighty = 0.2;
         constraints.gridwidth = 1;
         constraints.gridheight = 1;
@@ -505,7 +507,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	});
 //	labelScrollPane.setMinimumSize(new Dimension(longFieldWidth,40));
 //	labelScrollPane.setPreferredSize(new Dimension(longFieldWidth,80));
-	Dimension labelDimension = new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + 6);// + TEXTFIELD_VERTICAL_DELTA + 6);
+	Dimension labelDimension = new Dimension(coinsparkFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + 6);// + TEXTFIELD_VERTICAL_DELTA + 6);
 	labelScrollPane.setMinimumSize(labelDimension);
 	//labelScrollPane.setMaximumSize(labelDimension);
 	labelScrollPane.setPreferredSize(labelDimension);
@@ -521,7 +523,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.gridx = 2;
 	constraints.gridy = 3;
 	constraints.weightx = 1; //0.6;
-	constraints.weighty = 1; //0.2; //1
+	constraints.weighty = 0; //1; //0.2; //1
 	constraints.gridwidth = 3;
 	constraints.gridheight = 1;
 	constraints.anchor = GridBagConstraints.LINE_START;
@@ -657,7 +659,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.fill = GridBagConstraints.HORIZONTAL;
 	constraints.gridx = 6;
 	constraints.gridy = 3;
-	constraints.weightx = 0.1;
+	constraints.weightx = 1; //0.1;
 	constraints.weighty = 0.1;
 	constraints.gridwidth = 3;
 	constraints.gridheight = 1;
