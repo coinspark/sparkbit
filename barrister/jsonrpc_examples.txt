@@ -1,0 +1,87 @@
+SPARKBIT-CLI
+
+sparkbit-cli [options] jsoncommand jsonparameters...
+
+Notes:
+1. Only basic authentication, not digest authentication (limitation of Go http library, not server)
+2. Tested on Linux and Mac, not tested on Windows
+
+Examples:
+
+// List commands
+sparkbit-cli
+
+// List wallets of locally running
+sparkbit-cli listwallets
+
+// Local server has ssl turned off
+spartkbit-cli --ssl=false listwallets
+
+// Get status of server
+sparkbit-cli -a 192.168.2.10 getstatus
+
+// List balances of visible assets on the default wallet named "sparkbit" on that server
+sparkbit-cli -a 192.168.2.10 listbalances sparkbit true
+
+// Batch operation in Zsh
+// Send 10 x 1000 units of asset 323573-89772-19167 from default sparkbit wallet on local server
+repeat 10 time ./sparkbit-cli sendasset sparkbit s2VQXQCKabLa1pxrCX5jCAtfRExmq8Fr9tAUr 323573-89772-19167 100 true
+
+
+JSON-RPC
+
+Notes:
+1. install jq ( http://stedolan.github.io/jq/ ) so you can results from curl into jq for pretty printing in terminal e.g. curl blah blah | jq "."
+2. these examples are for jsonrpc setup from sample config files, which you should put in your SparkBit-Data folder.
+3. keystore file is for ssl  - it's self-signed, just a quick test
+4. sparkbit.idl defines the api - http://barrister.bitmechanic.com/
+6. tested on linux (and mac, although support should really be just for linux as unlikely people will run headless version on a mac or windows based server?)
+7. in developer tools, press 'print server' to display current state of server
+
+
+CURL EXAMPLES [TODO: May be outdated, check API in .idl]
+--insecure is for accepting self-signed certs during development and testing
+--digest is only required if using digest authentication instead of basic authentiction
+
+Get Status
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.getstatus", "params": [], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api
+
+CREATE WALLET
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.createwallet", "params": ["my_json_wallet"], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api
+
+Delete wallet
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.deletewallet", "params"["My Wallet"], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api
+
+List wallets
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.listwallets", "params": [], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api
+
+Refresh asset
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.refreshasset", "params": ["My Wallet", "324484-30330-62270"], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api
+
+Add asset ref manually
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.addasset", "params": ["My Wallet", "9999-8888-7777"], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api
+
+SET ASSET VISIBILITY
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.setassetvisible", "params": ["My Wallet", "324475-60992-48274", true], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api
+
+LIST ADDRESSES
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.listaddresses", "params": ["My Wallet"], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api
+
+CREATE ADDRESS
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.createaddress", "params": ["My Wallet", 3], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api
+
+SET ADDRESS LABEL
+ % curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.setaddresslabel", "params": ["My Wallet", "1KkazpFNkKWAkS7Vj7fW1YNTATDZqEL3bv", "abcd-012"], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api
+
+LIST TRANSACTIONS
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.listtransactions", "params": ["My Wallet", 3], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api | jq "."
+
+LIST BALANCES
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.listbalances", "params": ["My Wallet", true], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api | jq "."
+
+SEND BITCOIN TO COINSPARK ADDRESS or BITCOIN ADDRESS
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.sendbitcoin", "params": ["My Wallet", "sV6TzxpLXC83oFemPCdpTxTzpsaVKHygSZD5K", 0.00001000 ], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api
+
+SEND ASSETS TO COINSPARK ADDRESS
+curl --digest --insecure -H 'Content-Type: application/json' -d '{"method":"sparkbit.sendasset", "params": ["My Wallet", "sV6TzxpLXC83oFemPCdpTxTzpsaVKHygSZD5K", "327211-65847-58381", 1.0000, 1, true ], "jsonrpc":"2.0" }' https://user:password@localhost:38332/api
+
