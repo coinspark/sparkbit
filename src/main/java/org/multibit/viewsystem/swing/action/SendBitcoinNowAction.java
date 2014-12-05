@@ -53,6 +53,7 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
 
   private final Controller controller;
   private final BitcoinController bitcoinController;
+  private final MultiBitFrame mainFrame;
 
   private SendBitcoinConfirmPanel sendBitcoinConfirmPanel;
   private JPasswordField walletPasswordField;
@@ -88,6 +89,7 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
                               SendBitcoinConfirmPanel sendBitcoinConfirmPanel, JPasswordField walletPasswordField, ImageIcon icon, SendRequest sendRequest, boolean isAsset) {
     super(bitcoinController.getLocaliser().getString("sendBitcoinConfirmAction.text"), icon);
 
+    this.mainFrame = mainFrame;
     this.bitcoinController = bitcoinController;
     this.controller = this.bitcoinController;
 
@@ -259,6 +261,12 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
                   controller.getLocaliser().getString(assetify("sendBitcoinNowAction.bitcoinSentOk")));
           sendBitcoinConfirmPanel.showOkButton();
           sendBitcoinConfirmPanel.clearAfterSend();
+	  
+	  // Store the transaction in the panel so that we can check to see if it is spendable
+	  // and if not, hide spendable balances in main UI for as long as panel is visible.
+	  if (this.isAsset) {
+	    mainFrame.sendPanelTransaction = transaction;
+	  }
         } else {
           MessageManager.INSTANCE.addMessage(new Message(successMessage));
         }

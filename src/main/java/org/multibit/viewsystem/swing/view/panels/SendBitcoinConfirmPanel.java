@@ -711,7 +711,18 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
     public void showOkButton() {
         OkBackToParentAction okAction = new OkBackToParentAction(controller, sendBitcoinConfirmDialog);
         sendButton.setAction(okAction);
-
+	
+	// Fudge UI...
+	if (isAsset()) {
+	    Runnable r = new Runnable() {
+		@Override
+		public void run() {
+		    mainFrame.sendPanelTransaction = null;
+		}
+	    };
+	    okAction.setRunnableToRunOnExit(r);
+	}
+	
         cancelButton.setVisible(false);
     }
 

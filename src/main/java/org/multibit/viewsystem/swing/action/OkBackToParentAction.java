@@ -34,6 +34,13 @@ public class OkBackToParentAction extends AbstractAction {
     private static final long serialVersionUID = 191352235461234705L;
 
     private MultiBitDialog dialog;
+    
+    // Code to run on exit
+    private Runnable runnableToRunOnExit;
+
+    public void setRunnableToRunOnExit(Runnable runnableToRunOnExit) {
+	this.runnableToRunOnExit = runnableToRunOnExit;
+    }
 
     /**
      * Creates a new {@link OkBackToParentAction}.
@@ -56,5 +63,8 @@ public class OkBackToParentAction extends AbstractAction {
         if (dialog != null) {
             dialog.setVisible(false);
         }
+	
+	// Execute runnable
+	if (runnableToRunOnExit != null) runnableToRunOnExit.run();
     }
 }

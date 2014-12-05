@@ -41,6 +41,7 @@ import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionConfidence;
 import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.core.PeerGroup;
+import com.google.bitcoin.wallet.DefaultCoinSelector;
 import java.math.BigInteger;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -202,6 +203,20 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 	    assetBalance = wallet.CS.getAssetBalance(id);
 	    showAssetSpendableFlag = (assetBalance.total.compareTo(assetBalance.spendable) != 0);
 	    showAssetUpdatingNowFlag = assetBalance.updatingNow;
+	    
+	    // Fudge UI, if the send panel transaction is set - which means the send panel
+	    // is visible - hide spendable numbers if transaction is not selectable.
+	    if (showAssetSpendableFlag) {
+		Transaction tx = multiBitFrame.sendPanelTransaction;
+		if (tx!=null) {
+		    showAssetSpendableFlag = DefaultCoinSelector.isSelectable(tx);
+		    if (showAssetSpendableFlag) {
+			// panel may still be visible but we are selectable so lets clear property
+			multiBitFrame.sendPanelTransaction = null;
+		    }
+		}
+	    }
+	    
 	}
 	
 	

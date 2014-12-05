@@ -112,6 +112,12 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
     private static final int FUDGE_HEADER_PANEL_AND_ASSET_TABLE_HEIGHT = 3;
     boolean showMultipleWallets;
     boolean showPrivateKeyMenu;
+    
+    // If the sendPanelTransaction is visible, it sets this to the successful transaction.
+    // We can use this, if not null, to fudge the UI and hide spendable balances which
+    // fluctuate while the transaction is not selectable and the panel is still visible.
+    // When the panel closes it clears this variable.
+    public Transaction sendPanelTransaction = null;
     /* CoinSpark END */
     
     private static final Logger log = LoggerFactory.getLogger(MultiBitFrame.class);
