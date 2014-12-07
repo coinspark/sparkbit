@@ -262,14 +262,6 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
 
     private static FireDataChangedTimerTask fireDataChangedTimerTask;
     
-    /* CoinSpark START */
-    /**
-     * CoinSpark timer to fire off requests to update a wallet's asset database and calculate balances.
-     */
-    private static Timer updateAssetsTimer;
-    private static UpdateAssetsTimerTask updateAssetsTimerTask;
-    //public static final int UPDATE_ASSETS_INTERVAL_TIME = 1000*15; // 15 seconds
-    /* CoinSpark END */
     
     @SuppressWarnings("deprecation")
     public MultiBitFrame(CoreController coreController, BitcoinController bitcoinController, ExchangeController exchangeController, GenericApplication application, View initialView) {
@@ -383,12 +375,6 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
         fireDataChangedTimer = new Timer();
         fireDataChangedTimer.scheduleAtFixedRate(fireDataChangedTimerTask, FIRE_DATA_CHANGED_UPDATE_LATER_DELAY_TIME, FIRE_DATA_CHANGED_UPDATE_LATER_DELAY_TIME);
         
-        /* CoinSpark START */
-        updateAssetsTimerTask = new UpdateAssetsTimerTask(this.bitcoinController, this);
-        updateAssetsTimer = new Timer();
-        updateAssetsTimer.scheduleAtFixedRate(updateAssetsTimerTask, updateAssetsTimerTask.INTERVAL, updateAssetsTimerTask.INTERVAL);
-        // TODO: cancel the timer upon quitting application in ExitAction.
-        /* CoinSpark END */
     }
 
     public GenericApplication getApplication() {
@@ -2312,12 +2298,6 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
     public void onScriptsAdded(Wallet wallet, List<Script> scripts) {
 
     }
-  
-    /* CoinSpark START */
-    public UpdateAssetsTimerTask getUpdateAssetsTimerTask() {
-        return updateAssetsTimerTask;
-    }
-    /* CoinSpark END */
     
     @Subscribe
     public void listen(CSEvent event) throws Exception {

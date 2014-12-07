@@ -40,7 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
-import org.multibit.viewsystem.swing.UpdateAssetsTimerTask;
+import org.multibit.viewsystem.swing.UpdateAssetBalanceService;
 import org.sparkbit.jsonrpc.JSONRPCController;
 
 import org.mapdb.*;
@@ -122,10 +122,7 @@ public class ExitAction extends AbstractExitAction {
             }
             
             /* CoinSpark START */
-            UpdateAssetsTimerTask updateAssetsTimerTask = mainFrame.getUpdateAssetsTimerTask();
-            if (updateAssetsTimerTask != null) {
-                updateAssetsTimerTask.cancel();
-            }
+	    UpdateAssetBalanceService.INSTANCE.cancelAndAwaitTermination();
             /* CoinSpark END */
         }
         

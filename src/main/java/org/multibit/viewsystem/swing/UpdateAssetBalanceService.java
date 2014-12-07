@@ -18,14 +18,7 @@
  */
 package org.multibit.viewsystem.swing;
 
-import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import javax.swing.SwingUtilities;
-
-import org.multibit.controller.Controller;
 import org.multibit.controller.bitcoin.BitcoinController;
-import org.multibit.viewsystem.DisplayHint;
-import org.multibit.viewsystem.View;
 import org.multibit.model.bitcoin.WalletData;
 
 import com.google.bitcoin.core.Wallet;
@@ -35,52 +28,68 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.Executors;
-import org.coinspark.wallet.CSAssetDatabase;
-import org.coinspark.wallet.CSBalanceDatabase;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 
-public class UpdateAssetsTimerTask extends TimerTask {
+public enum UpdateAssetBalanceService  {
+    INSTANCE;
+    
     public static final int INTERVAL = 5000; // milliseconds
 
-    private static Logger log = LoggerFactory.getLogger(UpdateAssetsTimerTask.class);
+    private static Logger log = LoggerFactory.getLogger(UpdateAssetBalanceService.class);
 
-    private Controller controller;
+    //private Controller controller;
     private BitcoinController bitcoinController;
-
-    private MultiBitFrame mainFrame;
 
 //    private boolean updateTransactions = false;
 //    private boolean isCurrentlyUpdating = false;
 
-    private ExecutorService pool; // single executor thread, tasks processed in sequence
-
-    public UpdateAssetsTimerTask(BitcoinController bitcoinController, MultiBitFrame mainFrame) {
-        this.controller = bitcoinController;
+    //private ExecutorService pool; // single executor thread, tasks processed in sequence
+    private ScheduledThreadPoolExecutor pool;
+    
+    public void initalize(BitcoinController bitcoinController) {
+        //this.controller = bitcoinController;
         this.bitcoinController = bitcoinController;
-        this.mainFrame = mainFrame;
-        this.pool = Executors.newSingleThreadExecutor();
+        this.pool = new ScheduledThreadPoolExecutor(1); //Executors.newSingleThreadExecutor();
+	
+	try {
+	    this.pool.scheduleWithFixedDelay(getRunnable(), INTERVAL, INTERVAL, TimeUnit.MILLISECONDS);
+	} catch (Exception e) {
+	    // uh-oh
+	}
     }
     
 
-    @Override
-    public boolean cancel() {
-        this.pool.shutdown();
-        this.pool.shutdownNow();
-        return super.cancel();
+    //@Override
+//    public void cancel() {
+//        //this.pool.shutdown();
+//        this.pool.shutdownNow();
+//        //return super.cancel();
+//    }
+    
+    public boolean cancelAndAwaitTermination() {
+	boolean result = false;
+	try {
+	    this.pool.shutdownNow();
+	    result = this.pool.awaitTermination(1000, TimeUnit.MILLISECONDS);
+	} catch (InterruptedException e) {
+	    //
+	}
+	return result;
     }
     
     // TODO: Better for task to iterate over wallets and invoke update methods
     //       or add a separate task for each wallet to the executor queue?
-    @Override
-    public void run() {
-//        log.debug("UpdateAssetsTimerTask run() has fired...");
-        // if (this.bitcoinController.getModel().getActiveWallet() != null) {
-
-        pool.execute(new Runnable() {
+//    @Override
+    public Runnable getRunnable() {
+        return new Runnable() {
             @Override
             public void run() {
-                log.debug("UpdateAssetsTimerTask fired and executing");
+                log.debug("UpdateAssetBalanceService fired and executing");
+		
+		if (pool.isShutdown()) return;
+		
                 PeerGroup peerGroup = null;
                 if (bitcoinController.getMultiBitService() != null && bitcoinController.getMultiBitService().getPeerGroup() != null) {
                     peerGroup = bitcoinController.getMultiBitService().getPeerGroup();
@@ -90,6 +99,7 @@ public class UpdateAssetsTimerTask extends TimerTask {
                 if (perWalletModelDataList != null) {
                     Iterator<WalletData> iterator = perWalletModelDataList.iterator();
                     while (iterator.hasNext()) {
+			if (pool.isShutdown()) return;
 			try {
 			    WalletData wd = iterator.next();
 			    if (wd != null) {
@@ -97,29 +107,15 @@ public class UpdateAssetsTimerTask extends TimerTask {
 				Wallet w = wd.getWallet();
 				if (w == null) {
 				    log.debug("getWallet() returned null");
-
 				} else {
 				    if (peerGroup == null) {
 					log.debug("Cannot invoke validateAssets(peerGroup) as peerGroup is null");
 				    } else {
+					if (pool.isShutdown()) return;
 					w.CS.validateAllAssets(peerGroup);
-//					CSAssetDatabase assetDB = w.CS.getAssetDB();
-//					if (assetDB == null) {
-//					    log.debug("getAssetDB() returned null");
-//					} else {
-//					    assetDB.validateAssets(peerGroup);
-////                                        log.debug("Invoked validateAssets(peerGroup)");
-//					}
 				    }
-
+				    if (pool.isShutdown()) return;
 				    w.CS.calculateBalances();
-//				    CSBalanceDatabase balanceDB = w.CS.getBalanceDB();
-//				    if (balanceDB == null) {
-////                                    log.debug("getBalanceDB() returned null");
-//				    } else {
-//					balanceDB.calculateBalances();
-////                                    log.debug("Invoked calculateBalances()");
-//				    }
 				}
 			    }
 			} catch (java.util.ConcurrentModificationException cme) {
@@ -129,17 +125,7 @@ public class UpdateAssetsTimerTask extends TimerTask {
                 }
                 //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
-        });
-
-//        log.debug("UpdateAssetsTimerTask run() is ending.");
+        };
     }
 
-//    public boolean isUpdateTransactions() {
-//        // Clone before return.
-//        return updateTransactions ? true : false;
-//    }
-//
-//    public void setUpdateTransactions(boolean updateTransactions) {
-//        this.updateTransactions = updateTransactions;
-//    }
 }

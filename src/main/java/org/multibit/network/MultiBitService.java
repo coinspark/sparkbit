@@ -63,6 +63,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import org.multibit.model.bitcoin.WalletAddressBookData;
 import org.multibit.utils.CSMiscUtils;
+import org.multibit.viewsystem.swing.UpdateAssetBalanceService;
 import org.sparkbit.SparkBitMapDB;
 import org.sparkbit.jsonrpc.JSONRPCController;
 
@@ -116,6 +117,9 @@ public class MultiBitService {
   private MultiBitCheckpointManager checkpointManager;
   private String checkpointsFilename;
 
+  private UpdateAssetBalanceService updateAssetsTimerTask;
+  private Timer updateAssetsTimer;
+  
   public static Date genesisBlockCreationDate;
 
 
@@ -222,6 +226,10 @@ public class MultiBitService {
 	  }
       }
       /* Launch JSON-RPC Service END */
+      
+      /* Launch timer to ping tracking servers */
+      UpdateAssetBalanceService.INSTANCE.initalize(this.bitcoinController);
+      /* Launch timer END */
   }
 
   private void handleError(Exception e) {
