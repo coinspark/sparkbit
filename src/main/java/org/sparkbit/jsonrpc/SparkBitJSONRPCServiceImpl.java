@@ -1371,10 +1371,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    String displayQtyString = new BigDecimal(quantity).toPlainString();
 	    BigInteger assetAmountRawUnits = CSMiscUtils.getRawUnitsFromDisplayString(asset, displayQtyString);
 	    int assetID = asset.getAssetID();
-	    // Previously we checked against .spendable, but this prevented us from
-	    // spending assets which were change, and thus spendable, but unconfirmed 
 	    BigInteger spendableAmount =  w.CS.getAssetBalance(assetID).spendable;
 	    
+	    System.out.println(">>>> Want to send: " + assetAmountRawUnits + " , AssetID=" + assetID + ", total="+w.CS.getAssetBalance(assetID).total + ", spendable=" + w.CS.getAssetBalance(assetID).spendable );
+            
             String sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);	    
 	    	    CoinSparkGenesis genesis = asset.getGenesis();
 
@@ -1448,7 +1448,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 			SparkBitMapDB.INSTANCE.getMapDB().commit();
 		    }
 		}
-	
+		
+				
+		// This returns immediately if rpcsendassettimeout is 0.
+		JSONRPCController.INSTANCE.waitForTxSelectable(sendTransaction);
+//		JSONRPCController.INSTANCE.waitForTxBroadcast(sendTxHash);
 	    } else {
 		// There is not enough money
 	    }
