@@ -147,7 +147,7 @@ public enum JSONRPCController {
 	stopwatch.start();
 	boolean timedOut = false;
 	
-	while(!DefaultCoinSelector.isSelectable(tx, 0)) {
+	while(!DefaultCoinSelector.isSelectable(tx)) {
 	    try {
 		Thread.sleep(WAIT_FOR_TX_SELECTABLE_SLEEP_INTERVAL);
 	    } catch (InterruptedException e) {
