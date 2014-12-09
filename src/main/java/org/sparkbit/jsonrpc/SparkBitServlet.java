@@ -34,11 +34,19 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
+import org.apache.commons.lang3.time.StopWatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SparkBitServlet extends HttpServlet {
+    
+    private static final Logger log = LoggerFactory.getLogger(SparkBitServlet.class);
+
     private Contract contract;
     private Server server;
     private JacksonSerializer serializer;
+    
+    private static long counter = 0;
 
     public SparkBitServlet() {
         // Serialize requests/responses as JSON using Jackson
@@ -63,6 +71,12 @@ public class SparkBitServlet extends HttpServlet {
     
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
         try {
+	    long requestID = ++counter;
+	    log.info("----------------------------------------------------");
+	    log.info("*** Request # " + requestID + " RECEIVED");
+	    final StopWatch stopwatch = new StopWatch();
+	    stopwatch.start();
+	    
             InputStream is = req.getInputStream();
             OutputStream os = resp.getOutputStream();
             resp.addHeader("Content-Type", "application/json");
@@ -72,12 +86,17 @@ public class SparkBitServlet extends HttpServlet {
             // specified in the request. The result, including any
             // RpcException (if thrown), will be serialized to the OutputStream
         //    server.call(serializer, is, os);
-	    
+	    log.info("remote host = " + req.getRemoteHost());
+	    log.info("request URL = " + req.getRequestURL().toString());
+//	    log.info("session ID = " + req.getRequestedSessionId());
 	    // We use a modified version of the above call so that we can filter 'stop' for localhost
 	    mycall(req.getRemoteHost(), server, serializer, is, os);
 
             is.close();
             os.close();
+	    
+	    stopwatch.stop();
+	    log.info("*** Request # " + requestID + " FINISHED - processing time = " + stopwatch);
         }
         catch (Exception e) {
             throw new ServletException(e);
@@ -114,16 +133,19 @@ public class SparkBitServlet extends HttpServlet {
 	    List respList = new ArrayList();
 	    for (Object o : list) {
 		RpcRequest rpcReq = new RpcRequest((Map) o);
-		System.out.println(">>>> LIST CAST: (Map) o = " + (Map)o );
+//		System.out.println(">>>> LIST CAST: (Map) o = " + (Map)o );
 		respList.add(server.call(rpcReq).marshal()); // modified
 	    }
 	    ser.write(respList, os);
 	} else if (obj instanceof Map) {
 	    // Modified: only allow stop method if remote host is actually localhost 127.0.0.1
 	    String method = (String)((Map)obj).get("method");
+	    
+	    log.info("method = " + method);
+	    
 	    if (method.equals("sparkbit.stop") && !remoteHost.equals("127.0.0.1")) {
 		ser.write(new RpcResponse(null, RpcException.Error.INVALID_REQ.exc("Invalid Request - You can only invoke stop from localhost")).marshal(), os);	
-	    } else {		
+	    } else {
 		RpcRequest rpcReq = new RpcRequest((Map) obj);
 		ser.write(server.call(rpcReq).marshal(), os); // modified
 	    }

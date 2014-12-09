@@ -77,12 +77,16 @@ import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import org.sparkbit.SparkBitMapDB;
 import org.apache.commons.io.FileDeleteStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * For now, synchronized access to commands which mutate
  */
 public class SparkBitJSONRPCServiceImpl implements sparkbit {
     
+    private static final Logger log = LoggerFactory.getLogger(SparkBitJSONRPCServiceImpl.class);
+
     // Limit on the number of addresses you can create in one call
     public static final int CREATE_ADDRESSES_LIMIT = 100;
     
@@ -105,6 +109,9 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
     // Quit after a delay so we can return true to JSON-RPC client.
     @Override
     public Boolean stop() throws com.bitmechanic.barrister.RpcException {
+	log.info("STOP");
+	log.info("Shutting down JSON-RPC server, will wait " + SHUTDOWN_DELAY + " milliseconds before instructing SparkBit to exit.");
+	
 	final BitcoinController myController = this.controller;
 	stopTimer = new Timer();
 	stopTimer.schedule(new TimerTask() {
@@ -131,6 +138,7 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
     */
     @Override
     public JSONRPCStatusResponse getstatus() throws com.bitmechanic.barrister.RpcException {
+	log.info("GET STATUS");
 //	boolean replayTaskRunning = ReplayManager.INSTANCE.getCurrentReplayTask()!=null ;
 //	boolean regularDownloadRunning = ReplayManager.isRegularDownloadRunning();
 //	boolean synced = !regularDownloadRunning && !replayTaskRunning;
@@ -158,10 +166,12 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 		Wallet w = wd.getWallet();
 		long lastSeenBlock = w.getLastBlockSeenHeight();
 		boolean synced = (lastSeenBlock == mostCommonChainHeight);
-//		System.out.println(">>>> last block = " + lastSeenBlock);
-//		System.out.println(">>>> mostCommonChainHeight = " + mostCommonChainHeight);
-//		System.out.println(">>>> replay UUID = " + wd.getReplayTaskUUID());
-//		System.out.println(">>>> busy key = " + wd.getBusyTaskKey());
+		
+		log.debug(">>>> *** description = " + wd.getWalletDescription());
+		log.debug(">>>> last block = " + lastSeenBlock);
+		log.debug(">>>> mostCommonChainHeight = " + mostCommonChainHeight);
+		log.debug(">>>> replay UUID = " + wd.getReplayTaskUUID());
+		log.debug(">>>> busy key = " + wd.getBusyTaskKey());
 		if (wd.getReplayTaskUUID() != null) {
 		    synced = false;
 		} else if (wd.isBusy()) {
@@ -191,7 +201,8 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
     
     @Override
     public String[] listwallets() throws com.bitmechanic.barrister.RpcException {
-
+	log.info("LIST WALLETS");
+	
 	List<WalletData> perWalletModelDataList = controller.getModel().getPerWalletModelDataList();
 	List<String> names = new ArrayList<String>();
 	if (perWalletModelDataList != null) {
@@ -211,6 +222,8 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
     
     @Override
     public synchronized Boolean createwallet(String name) throws com.bitmechanic.barrister.RpcException {
+	log.info("CREATE WALLET");
+	log.info("wallet name = " + name);
 	
 	boolean isNameSane = sanityCheckName(name);
 	if (!isNameSane) {
@@ -277,6 +290,9 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 	
     @Override
     public synchronized Boolean deletewallet(String walletID) throws com.bitmechanic.barrister.RpcException {
+	log.info("DELETE WALLET");
+	log.info("wallet name = " + walletID);
+	
 	Wallet w = getWalletForWalletName(walletID);
 	if (w == null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
@@ -457,6 +473,11 @@ WalletInfoData winfo = wd.getWalletInfo();
     @Override
     public synchronized Boolean setassetvisible(String walletID, String assetRef, Boolean visibility) throws com.bitmechanic.barrister.RpcException
     {
+	log.info("SET ASSET VISIBILITY");
+	log.info("wallet name = " + walletID);
+	log.info("asset ref   = " + assetRef);
+	log.info("visibility  = " + visibility);
+	
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
@@ -477,6 +498,10 @@ WalletInfoData winfo = wd.getWalletInfo();
     
     @Override
     public synchronized Boolean addasset(String walletID, String assetRefString) throws com.bitmechanic.barrister.RpcException {
+	log.info("ADD ASSET");
+	log.info("wallet name = " + walletID);
+	log.info("asset ref   = " + assetRefString);
+	
 	Wallet w = getWalletForWalletName(walletID);
 	if (w == null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
@@ -515,6 +540,10 @@ WalletInfoData winfo = wd.getWalletInfo();
     
     @Override
     public Boolean deleteasset(String walletname, String assetRef) throws com.bitmechanic.barrister.RpcException {
+	log.info("DELETE ASSET");
+	log.info("wallet name = " + walletname);
+	log.info("asset ref   = " + assetRef);
+	
 	Wallet w = getWalletForWalletName(walletname);
 	boolean success = false;
 	CSAsset asset = getAssetForAssetRefString(w, assetRef);
@@ -560,6 +589,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	
     @Override
     public synchronized Boolean refreshasset(String walletID, String assetRef) throws com.bitmechanic.barrister.RpcException {
+	log.info("REFRESH ASSET");
+	log.info("wallet name = " + walletID);
+	log.info("asset ref   = " + assetRef);
+	
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
@@ -585,6 +618,9 @@ WalletInfoData winfo = wd.getWalletInfo();
      @Override
    public JSONRPCAddressBookEntry[] listaddresses(String walletID) throws com.bitmechanic.barrister.RpcException
     {
+	log.info("LIST ADDRESSES");
+	log.info("wallet name = " + walletID);
+	
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
@@ -623,6 +659,10 @@ WalletInfoData winfo = wd.getWalletInfo();
     // TODO: Should we remove limit of 100 addresses?
     @Override
     public synchronized JSONRPCAddressBookEntry[] createaddresses(String walletID, Long quantity) throws com.bitmechanic.barrister.RpcException {
+	log.info("CREATE ADDRESSES");
+	log.info("wallet name = " + walletID);
+	log.info("quantity    = " + quantity);
+
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
@@ -707,6 +747,11 @@ WalletInfoData winfo = wd.getWalletInfo();
     
     @Override
     public synchronized Boolean setaddresslabel(String walletID, String address, String label) throws com.bitmechanic.barrister.RpcException {
+	log.info("SET ADDRESS LABEL");
+	log.info("wallet name = " + walletID);
+	log.info("address     = " + address);
+	log.info("label       = " + label);
+	
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
@@ -757,6 +802,10 @@ WalletInfoData winfo = wd.getWalletInfo();
     @Override
     public JSONRPCTransaction[] listtransactions(String walletID, Long limit) throws com.bitmechanic.barrister.RpcException
     {
+	log.info("LIST TRANSACTIONS");
+	log.info("wallet name = " + walletID);
+	log.info("limit #     = " + limit);
+	
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
@@ -1049,6 +1098,10 @@ WalletInfoData winfo = wd.getWalletInfo();
     @Override
     public JSONRPCBalance[] listbalances(String walletID, Boolean onlyVisible) throws com.bitmechanic.barrister.RpcException
     {
+	log.info("LIST BALANCES");
+	log.info("wallet name  = " + walletID);
+	log.info("only visible = " + onlyVisible);
+	
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
@@ -1177,6 +1230,11 @@ WalletInfoData winfo = wd.getWalletInfo();
     @Override
     public synchronized String sendbitcoin(String walletID, String address, Double amount) throws com.bitmechanic.barrister.RpcException
     {
+	log.info("SEND BITCOIN");
+	log.info("wallet name = " + walletID);
+	log.info("address     = " + address);
+	log.info("amount      = " + amount);
+	
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
@@ -1226,11 +1284,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 	    // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
 	    // Complete it (which works out the fee) but do not sign it yet.
-	    System.out.println(">>>> Just about to complete the tx (and calculate the fee)...");
+	    log.info("Just about to complete the tx (and calculate the fee)...");
 
 	    w.completeTx(sendRequest, false);
 	    sendValidated = true;
-	    System.out.println(">>>> The fee after completing the transaction was " + sendRequest.fee);
+	    log.info("The fee after completing the transaction was " + sendRequest.fee);
 	    // Let's do it for real now.
 
 	    Transaction sendTransaction = this.controller.getMultiBitService().sendCoins(wd, sendRequest, null);
@@ -1241,7 +1299,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    } else {
 		sendSuccessful = true;
 		sendTxHash = sendTransaction.getHashAsString();
-		System.out.println(">>>> Sent transaction was:\n" + sendTransaction.toString());
+		log.info("Sent transaction was:\n" + sendTransaction.toString());
 	    }
 
 	    if (sendSuccessful) {
@@ -1288,6 +1346,13 @@ WalletInfoData winfo = wd.getWalletInfo();
     @Override
     public synchronized String sendasset(String walletID, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
     {
+	log.info("SEND ASSET");
+	log.info("wallet name = " + walletID);
+	log.info("address     = " + address);
+	log.info("asset ref   = " + assetRef);
+	log.info("quantity    = " + quantity);
+	log.info("sender pays = " + senderPays);
+	
 	String sendTxHash = null;
 	boolean sendValidated = false;
 	boolean sendSuccessful = false;
@@ -1373,9 +1438,9 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    int assetID = asset.getAssetID();
 	    BigInteger spendableAmount =  w.CS.getAssetBalance(assetID).spendable;
 	    
-	    System.out.println(">>>> Want to send: " + assetAmountRawUnits + " , AssetID=" + assetID + ", total="+w.CS.getAssetBalance(assetID).total + ", spendable=" + w.CS.getAssetBalance(assetID).spendable );
+	    log.info("Want to send: " + assetAmountRawUnits + " , AssetID=" + assetID + ", total="+w.CS.getAssetBalance(assetID).total + ", spendable=" + w.CS.getAssetBalance(assetID).spendable );       
             
-            String sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);	    
+	    String sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);	    
 	    	    CoinSparkGenesis genesis = asset.getGenesis();
 
 	    	    long desiredRawUnits = assetAmountRawUnits.longValue();
@@ -1416,12 +1481,12 @@ WalletInfoData winfo = wd.getWalletInfo();
                 // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
 
                 // Complete it (which works out the fee) but do not sign it yet.
-                System.out.println("Just about to complete the tx (and calculate the fee)...");
+                log.info("Just about to complete the tx (and calculate the fee)...");
 
 		// there is enough money, so let's do it for real now
 		    w.completeTx(sendRequest, false);
 	    sendValidated = true;
-	    System.out.println(">>>> The fee after completing the transaction was " + sendRequest.fee);
+	    log.info("The fee after completing the transaction was " + sendRequest.fee);
 	    // Let's do it for real now.
 
 	    Transaction sendTransaction = this.controller.getMultiBitService().sendCoins(wd, sendRequest, null);
@@ -1432,9 +1497,6 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    } else {
 		sendSuccessful = true;
 		sendTxHash = sendTransaction.getHashAsString();		
-		
-		// This returns immediately if rpcsetassettimeout is 0.
-		JSONRPCController.INSTANCE.waitForTxBroadcast(sendTxHash);		
 	    }
 
 	    if (sendSuccessful) {

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <configuration>
+    
+    <!-- Java class to set and properties we need e.g. json rpc log filename -->
+    <contextListener class="org.sparkbit.LoggerStartupListener"/>
+    
     <!-- Standard console appender -->
     <appender name="CONSOLE_APPENDER" class="ch.qos.logback.core.ConsoleAppender">
         <!-- Simplified standard logging encoder -->
@@ -8,10 +12,24 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg %xEx%n</pattern>
         </encoder>
     </appender>
-
+    
+    <appender name="JSONRPC_LOG_FILE_APPENDER" class="ch.qos.logback.core.FileAppender">
+        <file>${jsonrpc_server_log_file}</file>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+  
     <root level="WARN">
         <appender-ref ref="CONSOLE_APPENDER"/>
     </root>
+    
+    <!-- Disabling additivity for a logger prevents parents of that logger from
+    using their appenders to display the message.-->
+    <logger name="org.sparkbit.jsonrpc" additivity="false">
+       <!-- <level value="DEBUG" />-->
+        <appender-ref ref="JSONRPC_LOG_FILE_APPENDER"  />
+    </logger>
 
     <!-- Selected third-party frameworks can be enabled here for development if required -->
     <!--<logger name="org.hibernate" level="DEBUG" />-->

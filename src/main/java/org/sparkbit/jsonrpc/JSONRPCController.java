@@ -23,6 +23,7 @@
  */
 package org.sparkbit.jsonrpc;
 
+import ch.qos.logback.classic.Level;
 import com.google.common.eventbus.Subscribe;
 import java.io.File;
 import org.multibit.model.core.*;
@@ -48,6 +49,7 @@ import org.joda.time.DateTime;
 import java.util.Date;
 import org.apache.commons.lang3.time.StopWatch;
 import org.multibit.network.MultiBitService;
+import ch.qos.logback.classic.Level;
 
 //import org.eclipse.jetty.server.Server;
 
@@ -81,6 +83,7 @@ public enum JSONRPCController {
     public static final String RPC_SSL_ALLOW_TLS11 = "rpcsslallowtls11";
     public static final String RPC_SSL_KEYSTORE_FILENAME = "rpcsslkeystorefilename";
     public static final String RPC_SEND_ASSET_TIMEOUT = "rpcsendassettimeout"; // in milliseconds
+    public static final String RPC_LOGGING = "rpclogging";
     
     private BitcoinController controller;
     private JettyEmbeddedServer jetty;
@@ -98,8 +101,12 @@ public enum JSONRPCController {
         this.controller = controller;
 	this.config = FileHandler.loadJSONRPCConfig(new ApplicationDataDirectoryLocator());
 	this.jetty = new JettyEmbeddedServer(this);
+	
+	if (getBoolPreference(RPC_LOGGING)==false) {
+	    ((ch.qos.logback.classic.Logger)log).setLevel(Level.OFF);
+	}
     }
-  
+    
     // This method is only called once
     private void subscribeToEvents() {
 	if (!subscribedToEventBus) {
@@ -154,17 +161,18 @@ public enum JSONRPCController {
 	    }
 	    stopwatch.split();
 	    long elapsed = stopwatch.getSplitTime();
+	    stopwatch.unsplit();
+//	    log.debug("elapsed = " + elapsed);
 	    if (elapsed > n) {
 		timedOut = true;
-		log.debug("Waiting to be selectable timed out for txid " + tx.getHashAsString());
+		log.debug("Waiting in loop to be selectable timed out for txid " + tx.getHashAsString());
 		break; // timed out waiting for tx to be selectable
 	    }
-	    stopwatch.unsplit();
 	}
 	
 	stopwatch.stop();
 	if (!timedOut) {
-	    log.debug("Waiting to be selectable took " + stopwatch + " for txid " + tx.getHashAsString() + " and broadcast count is " + tx.getConfidence().getBroadcastByCount());
+	    log.debug("Waiting in loop to be selectable took " + stopwatch + " for txid " + tx.getHashAsString() + " and broadcast count is " + tx.getConfidence().getBroadcastByCount());
 	}
 	
 	return true;
@@ -239,11 +247,12 @@ public enum JSONRPCController {
 
 	    // Register ourselves as a listener the CSEventBus
 	    //subscribeToEvents();
+	    log.info("JSON-RPC server started:\n" + this.jetty);
 	    
 	} catch (java.net.BindException bindexception) {
-	    log.error(">>>> Port already in use");
+	    log.error("Failed to start JSON-RPC server, socket already in use: " + bindexception);
 	} catch (Exception e) {
-	    log.error(">>>> Failed to start jsonrpc server due to exception: " + e.getMessage());	    	    
+	    log.error("Failed to start JSON-RPC server: " + e);	    	    
 	}
 	return result;
     }
@@ -255,8 +264,9 @@ public enum JSONRPCController {
 		jetty.stopServer();
 	    }
 	    result = true;
+	    log.info("Stopped JSON-RPC server");
 	} catch (Exception e) {
-	    log.error("Failed to stop jsonrpc server, exception: " + e.getMessage());	    
+	    log.error("Failed to stop JSON-RPC server, exception: " + e);	    
 	}	
 	return result;
     }

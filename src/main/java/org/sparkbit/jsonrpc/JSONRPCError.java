@@ -19,6 +19,8 @@ package org.sparkbit.jsonrpc;
 
 import com.bitmechanic.barrister.RpcException;
 import java.lang.Exception;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * JSON-RPC Error Codes
@@ -58,6 +60,8 @@ public enum JSONRPCError {
   THROW_EXCEPTION(99999, ""); // RESERVED. For wrapping up a general exception and throwing it.
   
 
+  private static final Logger log = LoggerFactory.getLogger(JSONRPCError.class);
+
   private final int code;
   private final String description;
 
@@ -81,10 +85,12 @@ public enum JSONRPCError {
   
     // Convenience function
     public void raiseRpcException() throws RpcException {
+	log.error(this.toString());
 	throw new RpcException(this.code, this.description);
     }
 
     public static void throwAsRpcException(String message) throws RpcException {
+	log.error(THROW_EXCEPTION.getCode() + ": " + message);
 	throw new RpcException(THROW_EXCEPTION.getCode(), message);
     }
 
@@ -93,7 +99,7 @@ public enum JSONRPCError {
 	if (s == null) {
 	    s = e.toString();
 	}
-
+	log.error(THROW_EXCEPTION.getCode() + ": " + message + " : " + s);
 	throw new RpcException(THROW_EXCEPTION.getCode(), message + " : " + s);
     }
   
