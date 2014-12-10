@@ -17,6 +17,7 @@
  */
 package org.sparkbit.jsonrpc;
 
+import java.net.ServerSocket;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -46,6 +47,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import java.util.Collections;
 
@@ -79,6 +81,8 @@ public class JettyEmbeddedServer {
     
     private JSONRPCController controller = null;
     private Server server = null;
+    
+    private SslContextFactory sslContextFactory = null;
 
     public boolean runServer;
     public boolean useDigest;
@@ -92,7 +96,11 @@ public class JettyEmbeddedServer {
     public boolean allowTLS10;
     public boolean allowTLS11;
     public String keystoreFilename;
+    public String keyStorePassword;
+    public String keyManagerPassword;
     public int sendAssetTimeout = DEFAULT_SEND_ASSET_TIMEOUT;
+    public String ciphers = DEFAULT_SSL_CIPHERS;
+    public String[] ciphersArray;
     
      public String toString() {
 	if (server==null) {
@@ -110,7 +118,16 @@ public class JettyEmbeddedServer {
 	sb.append(" require SSL = " + this.useSSL + "\n");
 	sb.append(" allow tls 1.0 = " + this.allowTLS10 + "\n");
 	sb.append(" allow tls 1.1 = " + this.allowTLS11 + "\n");
+	 String[] enabledCiphers = sslContextFactory.newSSLEngine().getEnabledCipherSuites();
+	 String[] enabledProtocols = sslContextFactory.newSSLEngine().getEnabledProtocols();
+	 sb.append(" requested ciphers = " + Arrays.toString(ciphersArray) + "\n");
+	 sb.append(" enabled ciphers = " + Arrays.toString(enabledCiphers) + "\n");
+	 sb.append(" enabled protocols = " + Arrays.toString(enabledProtocols) + "\n");
+
 	sb.append(" keystore filename = " + this.keystoreFilename + "\n");
+	sb.append(" keystore password = " + this.keyStorePassword + "\n");
+	sb.append(" keymanager password = " + this.keyManagerPassword + "\n");
+	
 	sb.append(" send asset timeout = " + this.sendAssetTimeout + "\n");
 	/*
 		Connector[] connectors = server.getConnectors();
@@ -184,7 +201,21 @@ public class JettyEmbeddedServer {
 		}
 	    }
 	}
-	// FIXME: Check this is correct behaviour of bitcoind, that we ignore IP lists if non-SSL.
+	
+	if (useSSL) {
+	    ciphers = DEFAULT_SSL_CIPHERS;
+	    
+	    String s = this.controller.getPreference(RPC_SSL_CIPHERS);
+	    if (s!=null) {
+		ciphers = s;
+	    }
+	    
+	    ciphersArray = ciphers.split(",");
+	    for (int i = 0; i < ciphersArray.length; i++) {
+		ciphersArray[i] = ciphersArray[i].trim();
+	    }
+	}
+	
 	if (!useSSL) {
 	    allowIP = DEFAULT_ALLOW_IP_LOCALHOST;
 	} 
@@ -192,6 +223,9 @@ public class JettyEmbeddedServer {
 	allowTLS10 = this.controller.getBoolPreference(RPC_SSL_ALLOW_TLS10);
 	allowTLS11 = this.controller.getBoolPreference(RPC_SSL_ALLOW_TLS11);
 	keystoreFilename = this.controller.getPreference(RPC_SSL_KEYSTORE_FILENAME);
+	keyStorePassword = this.controller.getPreference(RPC_SSL_KEYSTORE_PASSWORD);
+	keyManagerPassword = this.controller.getPreference(RPC_SSL_KEYMANAGER_PASSWORD);
+	
 	// java.io.FileNotFoundException gets thrown if keystore not found
     }
     
@@ -235,13 +269,14 @@ public class JettyEmbeddedServer {
 	    // SSL requires a certificate so we configure a factory for ssl contents with information pointing to what
 	    // keystore the ssl connection needs to know about. Much more configuration is available the ssl context,
 	    // including things like choosing the particular certificate out of a keystore to be used.
-	    SslContextFactory sslContextFactory = new SslContextFactory();
+	    sslContextFactory = new SslContextFactory();
+	    
+	    
 	    String keystorePathString = controller.getPathOfKeystore(this.keystoreFilename);
-	    System.out.println(">>>> keystorePathString = " + keystorePathString);
 	    sslContextFactory.setKeyStorePath(keystorePathString);
-	    sslContextFactory.setKeyStorePassword("password");
-	    sslContextFactory.setKeyManagerPassword("password");
-	    // FIXME: Java keystores must have a password. Can't be blank.
+	    sslContextFactory.setKeyStorePassword(this.keyStorePassword);
+	    sslContextFactory.setKeyManagerPassword(this.keyManagerPassword);
+	    // Java keystores must have a password. Can't be blank.
 	    
 	    	    /*
 	     Ideally we want TLS 1.2 only, PFS only and 256 bits only.
@@ -252,6 +287,7 @@ public class JettyEmbeddedServer {
 	     http://www.eclipse.org/jetty/documentation/current/configuring-ssl.html
 	
 	     Table of cipher suites available in Java SDK:
+	     https://docs.oracle.com/javase/8/docs/technotes/guides/security/SunProviders.html
 	     http://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html
 	
 	     Useful discussion:
@@ -267,23 +303,22 @@ public class JettyEmbeddedServer {
 	    
 	     Netbeans (same as my local JRE) and JWrapper provide different ciphersuite
 	     */
+	    if (ciphersArray.length==0) {
+		throw new Exception("No ciphers were specified, cannot set up server with SSL");
+	    }
+	    
 	    //String[] myProtocols = {"TLSv1.2", "TLSv1.1", "TLSv1"};
 	    ArrayList<String> protocols = new ArrayList<String>();
 	    protocols.add("TLSv1.2");
 	    if (allowTLS11) protocols.add("TLSv1.1");
 	    if (allowTLS10) protocols.add("TLSv1");
 	    String[] myProtocols = protocols.toArray(new String[protocols.size()]);
-	    
-	    String[] badProtocols ={"SSL.*"}; // SSLv2Hello, SSLv3
-	    String[] myCiphers = {
-		"TLS_ECDHE_.*",
-		"TLS_DHE_.*"
-	    };
-	    String[] badCiphers = {".*_DES_.*", ".*_RC4_.*", ".*_NULL_.*"};
-	//    sslContextFactory.setIncludeProtocols(myProtocols);
-	//    sslContextFactory.setExcludeProtocols(badProtocols);
-	//    sslContextFactory.setIncludeCipherSuites(myCiphers);
-	//    sslContextFactory.setExcludeCipherSuites(badCiphers);
+	    String[] badProtocols ={"SSL.*"}; // this matches SSLv2, SSLv3 etc.  ".*" matches any char, not "*"
+	    String[] badCiphers = {".*_DES_.*", ".*_RC4_.*", ".*_NULL_.*"}; // let's be explicit
+	    sslContextFactory.setIncludeProtocols(myProtocols);
+	    sslContextFactory.setExcludeProtocols(badProtocols);
+	    sslContextFactory.setIncludeCipherSuites(ciphersArray);
+	    sslContextFactory.setExcludeCipherSuites(badCiphers);
 
         // HTTPS Configuration
 	    // A new HttpConfiguration object is needed for the next connector and you can pass the old one as an

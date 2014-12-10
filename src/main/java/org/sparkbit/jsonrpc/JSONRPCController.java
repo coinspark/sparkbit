@@ -70,6 +70,9 @@ public enum JSONRPCController {
     public static final int DEFAULT_SSL_TIMEOUT = 500000;
     public static final int DEFAULT_SEND_ASSET_TIMEOUT = 20000;
     
+    // Default ciphers, comma separated
+    public static final String DEFAULT_SSL_CIPHERS = "TLS_ECDHE_.*,TLS_DHE_.*";
+    
     // Config properties
     public static final String RPC_SERVER = "rpcserver";
     public static final String RPC_DIGEST = "rpcdigest";
@@ -82,6 +85,9 @@ public enum JSONRPCController {
     public static final String RPC_SSL_ALLOW_TLS10 = "rpcsslallowtls10";
     public static final String RPC_SSL_ALLOW_TLS11 = "rpcsslallowtls11";
     public static final String RPC_SSL_KEYSTORE_FILENAME = "rpcsslkeystorefilename";
+    public static final String RPC_SSL_KEYSTORE_PASSWORD = "rpcsslkeystorepassword";
+    public static final String RPC_SSL_KEYMANAGER_PASSWORD = "rpcsslkeymanagerpassword";
+    public static final String RPC_SSL_CIPHERS = "rpcsslciphers";
     public static final String RPC_SEND_ASSET_TIMEOUT = "rpcsendassettimeout"; // in milliseconds
     public static final String RPC_LOGGING = "rpclogging";
     
