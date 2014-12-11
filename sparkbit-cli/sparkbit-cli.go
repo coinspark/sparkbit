@@ -152,7 +152,7 @@ func init() {
 
 	flag.BoolVar(&flagHelp, "help", false, "Display this information")
 	flag.BoolVar(&flagVersion, "version", false, "Display version information")
-	flag.BoolVarP(&flagInsecure, "insecure", "k", false, "This option explicitly allows performing 'insecure' SSL connections and transfers.  Use this option when connecting to servers with self-signed certificates.")
+	flag.BoolVarP(&flagInsecure, "insecure", "k", false, "This option explicitly allows performing 'insecure' SSL connections and transfers.  For example, use this option when connecting to remote servers with self-signed certificates.  This option is not required when connecting to localhost (127.0.0.1) as insecure connections are allowed.")
 
 	flag.Parse()
 
@@ -291,8 +291,11 @@ func main() {
 
 	// Set a global option on our patched version of barrister.go
 	// to allow connecting to self-signed certs
+	// If connecting to localhost, we don't require CA signed cert.
+	if serverAddress=="127.0.0.1" || strings.ToLower(serverAddress)=="localhost" {
+		flagInsecure = true
+	}
 	barrister.Global_insecure_ssl = flagInsecure
-
 
 	sparkbit := NewSparkbitProxy(connectionString)
 
