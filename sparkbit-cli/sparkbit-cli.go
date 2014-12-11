@@ -301,6 +301,10 @@ func main() {
 		}
 	}
 	barrister.Global_insecure_ssl = flagInsecure
+	if verbose {
+		fmt.Println("insecure ssl flag = " , flagInsecure)
+		fmt.Print("\n");
+	}
 
 	sparkbit := NewSparkbitProxy(connectionString)
 
