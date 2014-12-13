@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import java.util.Collections;
+import org.apache.commons.lang3.StringUtils;
 
 // BASIC AUTH
 import org.eclipse.jetty.security.ConstraintMapping;
@@ -111,7 +112,7 @@ public class JettyEmbeddedServer {
 	sb.append(" run server = " + this.runServer + "\n");
 	sb.append(" timeout = " + this.timeout + "\n");
 	sb.append(" port = " + this.port + "\n");
-	sb.append(" allowed ip addresses = " + allowIP + "\n");
+	sb.append(" allowed ip addresses = " + StringUtils.join(whiteListAllowedIP, ",") + "\n");
 	sb.append(" use digest authentication = " + this.useDigest + "\n");
 	sb.append(" username = " + this.user + "\n");
 	sb.append(" password = " + this.password + "\n");
@@ -188,20 +189,15 @@ public class JettyEmbeddedServer {
 	    }
 	}
 	
-	allowIP = DEFAULT_ALLOW_IP_LOCALHOST;
-	if (useSSL) {
-	    String s = this.controller.getPreference(RPC_ALLOW_IP);
-	    if (s!=null) {
-		allowIP = s;
-		whiteListAllowedIP = s.split(",");
-//		System.out.println( ">>>> allowIP = " + allowIP);
-		//System.out.println( ">>>> whiteListAllowedIP = " + whiteListAllowedIP);
-		for (int i=0; i<whiteListAllowedIP.length; i++) {
-		    whiteListAllowedIP[i] = whiteListAllowedIP[i].trim();
-		}
-	    }
+	String userAllowedIP = this.controller.getPreference(RPC_ALLOW_IP);
+	if (userAllowedIP != null) {
+	    allowIP = userAllowedIP;
 	}
-	
+	whiteListAllowedIP = allowIP.split("!");
+	for (int i=0; i<whiteListAllowedIP.length; i++) {
+	    whiteListAllowedIP[i] = whiteListAllowedIP[i].trim();
+	}
+		
 	if (useSSL) {
 	    ciphers = DEFAULT_SSL_CIPHERS;
 	    
@@ -448,18 +444,16 @@ public class JettyEmbeddedServer {
 	// Add a handler to filter by IP address.
 	// http://download.eclipse.org/jetty/stable-9/apidocs/org/eclipse/jetty/server/handler/IPAccessHandler.html
 	// http://stackoverflow.com/questions/20660919/jetty-how-to-only-allow-requests-from-a-specific-domain
-	IPAccessHandler ipaccess = new IPAccessHandler();
-	    ipaccess.addWhite("127.0.0.1|/*");
+	// Wilcards etc.
+	// http://www.eclipse.org/jetty/documentation/9.1.4.v20140401/ipaccess-handler.html
+	    IPAccessHandler ipaccess = new IPAccessHandler();
+//	    ipaccess.addWhite("127.0.0.1|/*");
 	    if (whiteListAllowedIP != null) {
 		for (String ip : whiteListAllowedIP) {
-		    String filter = ip + "|/*";
-//		    System.out.println(">>>> IP FILTER: " + filter);
-		    ipaccess.addWhite(filter);
+//		    String filter = ip + "|/*";
+		    ipaccess.addWhite(ip);
 		}
 	    }
-	    // examples:
-	 //ipaccess.addWhite("192.168.1.1-255|/*");
-	    // ipaccess.addBlack("192.168.1.132|/home/*");
 	    
 	    // make context a subordinate of ipaccess
 	    ipaccess.setHandler(context);
