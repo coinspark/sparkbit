@@ -28,16 +28,16 @@ import java.io.IOException;
 public class ApplicationDataDirectoryLocator {
     private String applicationDataDirectory = null;
     
-    private static final Logger log = LoggerFactory.getLogger(ApplicationDataDirectoryLocator.class);
+//    private static final Logger log = LoggerFactory.getLogger(ApplicationDataDirectoryLocator.class);
 
     public ApplicationDataDirectoryLocator() {
         this.applicationDataDirectory = getApplicationDataDirectory();
-        log.info("Application data directory.1 = '{}'",applicationDataDirectory);
+//        log.info("Application data directory.1 = '{}'",applicationDataDirectory);
     }
     
     public ApplicationDataDirectoryLocator(File applicationDataDirectory) {
         this.applicationDataDirectory = applicationDataDirectory.getAbsolutePath();
-        log.info("Application data directory.2 = '{}'",applicationDataDirectory);
+//        log.info("Application data directory.2 = '{}'",applicationDataDirectory);
     }
     
     /**
@@ -101,6 +101,7 @@ public class ApplicationDataDirectoryLocator {
             if (!directory.exists()) {
                 boolean created = directory.mkdir();
                 if (!created) {
+		    final Logger log = LoggerFactory.getLogger(ApplicationDataDirectoryLocator.class);
                     log.error("Could not create the application data directory of '" + applicationDataDirectory + "'");
                 }
             }
