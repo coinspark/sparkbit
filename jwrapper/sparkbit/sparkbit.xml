@@ -30,11 +30,11 @@
 	-->
 
 	<!-- The JREs JWrapper should use for Windows, Linux32, Linux64... -->
-	<Windows64JRE>JRE-1.7/win32/jre1.7.0_05</Windows64JRE>
-	<Windows32JRE>JRE-1.7/win32/jre1.7.0_05</Windows32JRE>
-	<Linux64JRE>JRE-1.7/linuxx64/jre1.7.0_13</Linux64JRE>
-	<Linux32JRE>JRE-1.7/linux/jre1.7.0_13</Linux32JRE>
-	<Mac64JRE>JRE-1.7/macos64/jre1.7.0_45.jre</Mac64JRE>
+	<Windows64JRE>JRE-1.7/win32/jre1.7.0_71</Windows64JRE>
+	<Windows32JRE>JRE-1.7/win64/jre1.7.0_71</Windows32JRE>
+	<Linux64JRE>JRE-1.7/linuxx64/jre1.7.0_71</Linux64JRE>
+	<Linux32JRE>JRE-1.7/linux/jre1.7.0_71</Linux32JRE>
+	<Mac64JRE>JRE-1.7/macos64/jre1.7.0.71.jre</Mac64JRE>
 
 	<!-- The files that the app wants to bundle, here we have just one which is a JAR file and we specify that it should be on the launch classpath -->
 	<!--<File classpath='yes'myapp/sparkbit-exe-full.jar</File>
