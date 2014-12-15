@@ -32,6 +32,8 @@ import java.security.KeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 
+import java.util.Arrays;
+
 public final class ConnectHttps {
     private static final Logger log = LoggerFactory.getLogger(ConnectHttps.class);
 
@@ -39,8 +41,8 @@ public final class ConnectHttps {
 
         trustAllCerts();
 
-        httpGet("https://multibit.org/version.txt");
-        httpGet("https://data.mtgox.com/api/2/BTCUSD/money/ticker");
+//        httpGet("https://multibit.org/version.txt");
+//        httpGet("https://data.mtgox.com/api/2/BTCUSD/money/ticker");
     }
 
     /**
@@ -73,7 +75,12 @@ public final class ConnectHttps {
 
         SSLContext sc;
         try {
-            sc = SSLContext.getInstance("SSL");
+            sc = SSLContext.getInstance("TLS");
+	    
+	    SSLContext context = SSLContext.getDefault();
+	    SSLSocketFactory sf = context.getSocketFactory();
+	    String[] cipherSuites = sf.getDefaultCipherSuites();
+	    log.info("SSLSocketFactory default ciphersuites = " + Arrays.toString(cipherSuites));
 
             sc.init(null, trustAllCerts, new java.security.SecureRandom());
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
