@@ -120,7 +120,7 @@ public final class SparkBit {
      */
     @SuppressWarnings("deprecation")
     public static void main(String args[]) {
-        log.info("Starting MultiBit at " + (new Date()).toGMTString());
+        log.info("Starting SparkBit at " + (new Date()).toGMTString());
         // Print out all the system properties and environment variables
 /*        for (Map.Entry<?, ?> e : System.getProperties().entrySet()) {
 	    log.debug(String.format("%s = %s", e.getKey(), e.getValue()));
@@ -131,13 +131,28 @@ public final class SparkBit {
 	}
 */	
 	
+	/*
+	HTTPS connections are used to connect to issuer sites and asset tracking servers
+	1. Only use TLS as recommended by Oracle, do not use SSL
+	http://www.oracle.com/technetwork/java/javase/documentation/cve-2014-3566-2342133.html
+	2. Set the cipher to use for Java 7 as there are problems with TLS_DHE key exchange.
+	e.g. TLS_DHE_RSA_WITH_AES_128_CBC_SHA does not work in 1.7.0_71 but ok in 1.8
+	http://stackoverflow.com/questions/10687200/java-7-and-could-not-generate-dh-keypair
+	*/
+	System.setProperty("https.protocols", "TLSv1");
+	if (System.getProperty("java.version").startsWith("1.7.")) {
+	    System.setProperty("https.cipherSuites", "TLS_RSA_WITH_AES_128_CBC_SHA");
+	    log.info("Java 7 detected, HTTPS workaround will set cipher to: TLS_RSA_WITH_AES_128_CBC_SHA");
+	}
+	
+	
 	// If headless=true is set in jsonrpc.properties, let's launch in headless mode.
 	// If the java system property java.awt.headless is set manually, that works too. 
 	// Can also set in Netbeans config action for 'Run Project' like so:
 	// exec.args=-Djava.awt.headless=true
 	// But only the default config seems to execute, can't get other configs to run.
 	Properties jsonRPCProps = FileHandler.loadJSONRPCConfig(new ApplicationDataDirectoryLocator());
-	System.out.println(">>>> jsonRPCProps = " + jsonRPCProps);
+	log.info("jsonrpc.properties = " + jsonRPCProps);
 	boolean isHeadless = false;
 	if (Boolean.TRUE.toString().equals( jsonRPCProps.getProperty("headless"))) {
 	    System.setProperty("java.awt.headless","true");
@@ -147,13 +162,12 @@ public final class SparkBit {
 	// Go into headless mode IF the environment does not have window mode
 	try {
 	    boolean gfxEnvIsHeadless = java.awt.GraphicsEnvironment.isHeadless();
-	    System.out.println("gfxEnvIsHeadless: " + gfxEnvIsHeadless);
+	    log.info("java.awt.GraphicsEnvironment.isHeadless() = " + gfxEnvIsHeadless);
 	    if (gfxEnvIsHeadless) {
-		System.out.println("...we must run as headless");
 		isHeadless = true; // force ourselves into headless mode
 	    }
 	} catch (HeadlessException e) {
-	    System.out.println("CAUGHT EXCEPTION: " + e);
+	    log.error("HeadlessException caught: " + e);
 	    isHeadless = true;
 	}
 	
@@ -263,9 +277,16 @@ public final class SparkBit {
 //            Transaction.setAssetController(new CSAssetDatabaseController(model.getAssetsDatabase()));      /*CoinSpark*/
 			/* CoinSpark END */
 
-            // Trust all HTTPS certificates.
-            //ConnectHttps.trustAllCerts();
-
+            /*
+		Trust all HTTPS certificates.
+		Useful when testing against a server which has an expired SSL certificate
+		or self-signed certificate but not recommended for production.
+	    */
+	    if (Boolean.TRUE.toString().equalsIgnoreCase(userPreferences.getProperty(BitcoinModel.HTTPS_TRUST_ALL_CERTS))) {
+		log.info("httpsTrustAllCerts = true");
+                ConnectHttps.trustAllCerts();
+	    }
+	    
             // Initialise currency converter.
             CurrencyConverter.INSTANCE.initialise(finalController);
 

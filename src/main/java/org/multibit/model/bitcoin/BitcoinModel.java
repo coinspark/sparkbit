@@ -83,7 +83,7 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
     public static final String SHOW_PRIVATE_KEY_MENU = "showPrivateKeyMenu";
     public static final String CAN_SEND_INVALID_ASSETS = "canSendInvalidAssets";
     public static final String CAN_DELETE_INVALID_ASSETS = "canDeleteInvalidAssets";
-    
+    public static final String HTTPS_TRUST_ALL_CERTS = "httpsTrustAllCerts";
     
     // Send bitcoin and send bitcoin confirm.
     public static final String SEND_SPARK_ADDRESS = "sendSparkAddress";
