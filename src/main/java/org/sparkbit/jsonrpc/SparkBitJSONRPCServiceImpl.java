@@ -1282,7 +1282,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	}
 
 	
-	
+	Transaction sendTransaction = null;
 	boolean sendValidated = false;
 	boolean sendSuccessful = false;
 	String sendTxHash = null;
@@ -1307,7 +1307,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    log.info("The fee after completing the transaction was " + sendRequest.fee);
 	    // Let's do it for real now.
 
-	    Transaction sendTransaction = this.controller.getMultiBitService().sendCoins(wd, sendRequest, null);
+	    sendTransaction = this.controller.getMultiBitService().sendCoins(wd, sendRequest, null);
 	    if (sendTransaction == null) {
 		    // a null transaction returned indicates there was not
 		// enough money (in spite of our validation)
@@ -1347,6 +1347,13 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    } catch (WalletSaveException e) {
 //        log.error(e.getMessage(), e);
 	    }
+	    
+	    if (sendSuccessful) {
+		// This returns immediately if rpcsendassettimeout is 0.
+		JSONRPCController.INSTANCE.waitForTxSelectable(sendTransaction);
+//		JSONRPCController.INSTANCE.waitForTxBroadcast(sendTxHash);
+	    }
+	    
 	    // Declare that wallet is no longer busy with the task.
 	    wd.setBusyTaskKey(null);
 	    wd.setBusy(false);
@@ -1410,6 +1417,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    wd.setBusyTaskKey("sendasset_jsonrpc");
 	    this.controller.fireWalletBusyChange(true);
 	}
+	
+	Transaction sendTransaction = null;
 	
 	try {
 	    // -- boilerplate ends here....
@@ -1505,7 +1514,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    log.info("The fee after completing the transaction was " + sendRequest.fee);
 	    // Let's do it for real now.
 
-	    Transaction sendTransaction = this.controller.getMultiBitService().sendCoins(wd, sendRequest, null);
+	    sendTransaction = this.controller.getMultiBitService().sendCoins(wd, sendRequest, null);
 	    if (sendTransaction == null) {
 		    // a null transaction returned indicates there was not
 		// enough money (in spite of our validation)
@@ -1526,11 +1535,6 @@ WalletInfoData winfo = wd.getWalletInfo();
 			SparkBitMapDB.INSTANCE.getMapDB().commit();
 		    }
 		}
-		
-				
-		// This returns immediately if rpcsendassettimeout is 0.
-		JSONRPCController.INSTANCE.waitForTxSelectable(sendTransaction);
-//		JSONRPCController.INSTANCE.waitForTxBroadcast(sendTxHash);
 	    } else {
 		// There is not enough money
 	    }
@@ -1549,6 +1553,13 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    } catch (WalletSaveException e) {
 //        log.error(e.getMessage(), e);
 	    }
+	    	    		
+	    if (sendSuccessful) {
+		// This returns immediately if rpcsendassettimeout is 0.
+		JSONRPCController.INSTANCE.waitForTxSelectable(sendTransaction);
+//		JSONRPCController.INSTANCE.waitForTxBroadcast(sendTxHash);
+	    }
+	    
 	    // Declare that wallet is no longer busy with the task.
 	    wd.setBusyTaskKey(null);
 	    wd.setBusy(false);
