@@ -683,7 +683,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.WALLEY_IS_BUSY.raiseRpcException();
 	} else {
 	    wd.setBusy(true);
-	    wd.setBusyTaskKey("createaddress_jsonrpc");
+	    wd.setBusyTaskKey("jsonrpc.busy.createaddress");
 	    this.controller.fireWalletBusyChange(true);
 	}
 
@@ -1277,7 +1277,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.WALLEY_IS_BUSY.raiseRpcException();
 	} else {
 	    wd.setBusy(true);
-	    wd.setBusyTaskKey("sendbitcoin_jsonrpc");
+	    wd.setBusyTaskKey("jsonrpc.busy.sendbitcoin");
 	    this.controller.fireWalletBusyChange(true);
 	}
 
@@ -1414,7 +1414,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.WALLEY_IS_BUSY.raiseRpcException();
 	} else {
 	    wd.setBusy(true);
-	    wd.setBusyTaskKey("sendasset_jsonrpc");
+	    wd.setBusyTaskKey("jsonrpc.busy.sendasset");
 	    this.controller.fireWalletBusyChange(true);
 	}
 	
