@@ -468,6 +468,7 @@ public class JettyEmbeddedServer {
 	    server.start();
 	} catch (Exception e) {
 	    e.printStackTrace();
+	    if (server!=null) server.stop();
 	    this.server = null;
 	    throw e;
 	}
