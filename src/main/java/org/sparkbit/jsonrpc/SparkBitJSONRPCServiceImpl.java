@@ -1184,7 +1184,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    ab.setUnits(asset.getUnits());
 	    ab.setMultiple(asset.getMultiple());
 	    ab.setStatus(CSMiscUtils.getHumanReadableAssetState(asset.getAssetState()));
-	    boolean isValid = (asset.getAssetState()!=CSAsset.CSAssetState.VALID);
+	    boolean isValid = (asset.getAssetState()==CSAsset.CSAssetState.VALID);
 	// FIXME: Check num confirms too?
 	    ab.setValid(isValid);
 	    Date validCheckedDate = asset.getValidChecked();
