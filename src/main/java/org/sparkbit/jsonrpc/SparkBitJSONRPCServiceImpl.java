@@ -79,6 +79,7 @@ import org.sparkbit.SparkBitMapDB;
 import org.apache.commons.io.FileDeleteStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.net.URI;
 
 /**
  * For now, synchronized access to commands which mutate
@@ -1191,7 +1192,22 @@ WalletInfoData winfo = wd.getWalletInfo();
 		ab.setChecked_unixtime(validCheckedDate.getTime()/1000L);
 	    }
 	    ab.setContract_url(asset.getContractUrl());
-	    ab.setContract_file(asset.getContractPath());
+	    
+	    String contractPath = asset.getContractPath();
+	    if (contractPath!=null) {
+		 String appDirPath = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory();
+		File file = new File(contractPath);
+		File dir = new File(appDirPath);
+		try {
+		    URI absolute = file.toURI();
+		    URI base = dir.toURI();
+		    URI relative = base.relativize(absolute);
+		    contractPath = relative.getPath();
+		} catch (Exception e) {
+		    // do nothing, if error, just use full contractPath
+		}
+	    }	     
+	    ab.setContract_file(contractPath);
 	    ab.setGenesis_txid(asset.getGenTxID());
 	    Date creationDate = asset.getDateCreation();
 	    if (creationDate != null) {
