@@ -166,6 +166,9 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 	    for (WalletData wd : perWalletModelDataList) {
 		Wallet w = wd.getWallet();
 		long lastSeenBlock = w.getLastBlockSeenHeight();
+		// getLastBlockSeenHeight() returns -1 if the wallet doesn't have this data yet
+		if (lastSeenBlock==-1) lastSeenBlock = mostCommonChainHeight;
+		
 		boolean synced = (lastSeenBlock == mostCommonChainHeight);
 		
 		log.debug(">>>> *** description = " + wd.getWalletDescription());
