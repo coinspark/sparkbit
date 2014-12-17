@@ -219,6 +219,10 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 	    
 	}
 	
+	if (bitcoinController.getMultiBitService()==null) return null;
+	int numConnectedPeers = bitcoinController.getMultiBitService().getPeerGroup().numConnectedPeers();
+	int mostCommonChainHeight = bitcoinController.getMultiBitService().getPeerGroup().getMostCommonChainHeight();
+	// mostCommonChainHeight can be 0 when launching.
 	
 	int threshold = NUMBER_OF_CONFIRMATIONS_TO_SEND_ASSET_THRESHOLD;
 	String sendAssetWithJustOneConfirmation = controller.getModel().getUserPreference("sendAssetWithJustOneConfirmation");
@@ -226,16 +230,20 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 	    threshold = 1;
 	}
 	int lastHeight = 0;
-	if (wallet != null) lastHeight = wallet.getLastBlockSeenHeight();
+	if (wallet != null) {
+	    lastHeight = wallet.getLastBlockSeenHeight();
+	    // can be -1 if new wallet with no previously seen block, so use common height for now
+	    if (lastHeight == -1) lastHeight = mostCommonChainHeight;
+	}
 	int numConfirms = 0;
 	CoinSparkAssetRef assetRef = null;
 	if (asset != null) assetRef = asset.getAssetReference();
 	if (assetRef != null) {
 	    int blockIndex = (int) assetRef.getBlockNum();
-	    numConfirms = lastHeight - blockIndex + 1; // 0 means no confirmation, 1 is yes for sa
+	    numConfirms = mostCommonChainHeight - blockIndex + 1; // 0 means no confirmation, 1 is yes for sa
 	}
 	int numConfirmsStillRequired = threshold - numConfirms;
-
+	boolean isWalletSyncing = (mostCommonChainHeight > lastHeight);
 
 	// Switch on string, makes it easier for us to re-order columns without
 	// having to reorganize the case statements.
@@ -297,13 +305,18 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		// Replace asset spendable flag if new asset needs more confirmaions
 		// and this asset is almost ready to be sent i.e. has name, quantity.
 		// Does not make sense to show this if asset files need to be uploaded.
-		if (!isBitcoin && numConfirmsStillRequired>0 && asset!=null && asset.getName()!=null) {
+		if (!isBitcoin && numConfirmsStillRequired>0 && mostCommonChainHeight>0 && asset!=null && asset.getName()!=null) {
 		    int n = numConfirmsStillRequired;
 		    // we dont want to show high number if wallet is resyncing from start.
 		    if (n>NUMBER_OF_CONFIRMATIONS_TO_SEND_ASSET_THRESHOLD) {
 			n = NUMBER_OF_CONFIRMATIONS_TO_SEND_ASSET_THRESHOLD;
 		    }
-		    s = "(Waiting for " + n + " confirmation" + ((n>1) ? "s)" : ")");
+		    
+		    if (isWalletSyncing) {
+			s = "(Synchronizing...)";
+		    } else {
+			s = "(Waiting for " + n + " confirmation" + ((n>1) ? "s)" : ")");
+		    }
 		}
 		
 		map.put("label", s);
@@ -572,17 +585,25 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		    // Fix for... GDG Issue 8: If an asset does not yet have an asset ref, the reason can only be that it's a genesis that has not yet been confirmed. 
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.warning);
 		    tip = "Awaiting new asset confirmation...";
-		} else if (asset.getName() != null && numConfirmations < 0) { // <=
+		} else if (asset.getName() != null && numConfirmations < 0) {
+
+
+
+// <=
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.warning);
 		    
-		    // If the computer is not online, that should be the message
-		    StatusEnum state = this.multiBitFrame.getOnlineStatus();
-		    if (state!=StatusEnum.ONLINE) {
-			tip = "Waiting to connect to network";
+		    // If there are no connected peers, the network is probably down
+		    if (numConnectedPeers==0) {
+			tip = "Waiting to connect to Bitcoin network";
 		    } else {
 			int n = NUMBER_OF_CONFIRMATIONS_TO_SEND_ASSET_THRESHOLD;
 			if (numConfirmsStillRequired<n) n = numConfirmsStillRequired;
-			tip = "Waiting for wallet to sync blocks, need " + n + " more confirmations"; // tip is usually null now. : " + tip;
+			
+			if (isWalletSyncing) {
+			    tip = "Synchronizing...";
+			} else {
+			    tip = "Waiting for " + n + " confirmation" + ((n>1) ? "s" : "");
+			}
 		    }
 		} else if (assetState==CSAsset.CSAssetState.BLOCK_NOT_FOUND ||
 			assetState==CSAsset.CSAssetState.TX_NOT_FOUND) {
