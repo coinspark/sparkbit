@@ -1734,11 +1734,6 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
         }    
     }
     
-    public StatusEnum getOnlineStatus() {
-	return online; 
-    }
-    
-
     @Override
     public void walletBusyChange(boolean newWalletIsBusy) {
         if (EventQueue.isDispatchThread()) {
