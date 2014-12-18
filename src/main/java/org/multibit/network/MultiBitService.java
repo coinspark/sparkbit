@@ -266,8 +266,9 @@ public class MultiBitService {
     }
 
     // Use the larger of the installed checkpoints file and the user data checkpoint file (larger = more recent).
-    ApplicationDataDirectoryLocator applicationDataDirectoryLocator = new ApplicationDataDirectoryLocator();
-    String installedCheckpointsFilename = applicationDataDirectoryLocator.getInstallationDirectory() + File.separator + MultiBitService.getFilePrefix() + MultiBitService.CHECKPOINTS_SUFFIX;
+//    ApplicationDataDirectoryLocator applicationDataDirectoryLocator = new ApplicationDataDirectoryLocator();
+//    String installedCheckpointsFilename = applicationDataDirectoryLocator.getInstallationDirectory() + File.separator + MultiBitService.getFilePrefix() + MultiBitService.CHECKPOINTS_SUFFIX;
+    String installedCheckpointsFilename = bitcoinController.getFileHandler().getPathOfCheckpointsFromInstallationDirectory();
     log.debug("Installed checkpoints file = '" + installedCheckpointsFilename + "'.");
 
     File installedCheckpointsFile = new File(installedCheckpointsFilename);

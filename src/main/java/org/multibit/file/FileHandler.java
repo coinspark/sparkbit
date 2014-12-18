@@ -894,6 +894,27 @@ public class FileHandler {
         return userPreferences;
     }
 
+    /*
+    Convenience method to return path to the checkpoints file installed as part of application.
+    @return null if something went wrong
+    */
+    public String getPathOfCheckpointsFromInstallationDirectory() {
+	String filePrefix = MultiBitService.getFilePrefix();
+	String checkpointsFilename = filePrefix + MultiBitService.CHECKPOINTS_SUFFIX;
+	String sourceCheckpointsFilename = null;
+	URL checkpointURL = null;
+	try {
+	    checkpointURL = getClass().getResource("/" + checkpointsFilename);
+	    if (checkpointURL != null) {
+		sourceCheckpointsFilename = checkpointURL.toURI().getPath();
+	    }
+	    log.debug(">>>> sourceCheckpointsFilename = " + sourceCheckpointsFilename);
+	} catch (java.net.URISyntaxException e) {
+	    log.error("Error getting file path for: " + checkpointURL);
+	}
+	return sourceCheckpointsFilename;
+    }
+    
     /**
      * To support multiple users on the same machine, the checkpoints file is
      * installed into the program installation directory and is then copied to
@@ -917,19 +938,10 @@ public class FileHandler {
 //            String currentWorkingDirectory = directory.getCanonicalPath();
 
 	    // Load the checkpoints file which has been included in the resources folder of the app.
-	    
-            String filePrefix = MultiBitService.getFilePrefix();
-            String checkpointsFilename = filePrefix + MultiBitService.CHECKPOINTS_SUFFIX;
-	    String sourceCheckpointsFilename = "";
-	    URL checkpointURL = null;
-	    try {
-		checkpointURL = getClass().getResource("/" + checkpointsFilename);
-		if (checkpointURL!=null) {
-		    sourceCheckpointsFilename = checkpointURL.toURI().getPath();
-		}
-		log.debug(">>>> sourceCheckpointsFilename = " + sourceCheckpointsFilename);
-	    } catch (java.net.URISyntaxException e) {
-		log.error("Error getting file path for: " +  checkpointURL);
+
+	    String sourceCheckpointsFilename = getPathOfCheckpointsFromInstallationDirectory();
+	    if (sourceCheckpointsFilename == null) {
+		sourceCheckpointsFilename = "";
 	    }
 
             File sourceBlockcheckpoints = new File(sourceCheckpointsFilename);
