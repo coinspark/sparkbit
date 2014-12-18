@@ -47,7 +47,7 @@ public class CSOpenAssetContractURLAction extends AbstractAction {
 	WalletAssetSummaryTableModel model = (WalletAssetSummaryTableModel) table.getModel();
 	WalletAssetTableData data = model.getRow(row);
 	CSAsset asset = data.getAsset();
-
+//	System.out.println(">>> ASSET STATE: " + asset.getAssetState() + " , CONTRACT STATE: " + asset.getAssetContractState());
 	boolean cachedFlag = false;
 	String url = null;
 	// TODO: Maybe just use the asset state of VALID or REFRESH?
@@ -64,12 +64,12 @@ public class CSOpenAssetContractURLAction extends AbstractAction {
 	
 	if (url==null) return; // something went wrong, so do nothing.
 	
-	String msg = null;
-	if (!cachedFlag) {
-	    msg = "Would you like to open the asset contract\nat the following website with your browser?\n\n" + url;
-	} else {
-	    msg = "The asset has not been validated.\n\nWould you like to open the local copy of the asset contract?\n\n" + url;
-	}
+//	String msg = null;
+//	if (!cachedFlag) {
+//	    msg = "Would you like to open the asset contract\nat the following website with your browser?\n\n" + url;
+//	} else {
+//	    msg = "The asset has not been validated.\n\nWould you like to open the local copy of the asset contract?\n\n" + url;
+//	}
 	
 	try {
 	    // TODO: Show dialog to open external URL?

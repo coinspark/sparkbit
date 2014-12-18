@@ -638,7 +638,11 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.server_error);
 		}
 		else if (assetState==CSAsset.CSAssetState.HASH_MISMATCH) {
-		    tip = "Caution: asset details do not match what was encoded by issuer.<br><br>" + tip;
+		    tip = "Caution: contract does not match asset details encoded by issuer.<br><br>" + tip;
+		    //tip = "Caution: asset details do not match what was encoded by issuer.<br><br>" + tip;
+		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.warning);
+		} else if (assetState==CSAsset.CSAssetState.CONTRACT_INVALID) {
+		    tip = "Caution: contract is missing or damaged.<br><br>" + tip;
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.warning);
 		}
 		else if (assetState==CSAsset.CSAssetState.REFRESH) {
@@ -668,16 +672,57 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		String tip = null;
 		
 		String s = asset.getDescription();
+		if (s==null) {
+		    String domain = asset.getDomainURL();
+		    if (domain!=null) {
+			String host = CSMiscUtils.getDomainHost(domain);
+			s = "Unknown asset issued by " + host;
+		    } else {
+			// New asset without any files uploaded or genesis found
+			s = "Unknown asset";
+		    }
+		}
+
 		if (s != null && !"".equals(s)) {
 		    tip = s + "<br><br>";
 		}
+		
+		CSAsset.CSAssetContractState contractState = asset.getAssetContractState();
+		if (contractState==CSAsset.CSAssetContractState.UNKNOWN) {
+		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.page_white_find);
+		    tip = tip + "Contract not found on issuer's web-site";
 		    
-		if (assetState != CSAsset.CSAssetState.VALID && asset.getContractPath() != null) {
-		    //(asset.getName() == null &&
+		    // This might happen if file on server is deleted
+		    if (asset.getContractPath() != null) {
+			tip = tip + "<br><br>Click to read the cached copy of the contract";	
+		    }
+
+		} else if (contractState==CSAsset.CSAssetContractState.CANNOT_PARSE) {
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.page_white_error);
+		    tip = tip + "Contract is not a valid PDF document";
+		    
+		    // This might occur if file on server becomes corrupted
+		    if (asset.getContractPath() != null) {
+			tip = tip + "<br><br>Click to read the cached copy of the contract";	
+		    }
+		} else if (contractState==CSAsset.CSAssetContractState.EMBEDDED_URL) {
+		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.page_white_error);
+		    tip = tip + "Contract is not allowed to contain an embedded URL";
+		    
+		    // This might occur if file on server is changed
+		    if (asset.getContractPath() != null) {
+			tip = tip + "<br><br>Click to read the cached copy of the contract";	
+		    }
+		}
+		// If contract state POSSIBLE_EMBEDDED_URL or OK this means asset is valid.
+		// If the asset is invalid for any reason, and the contract exists, than
+		// show cached copy of contract.
+		else if (assetState != CSAsset.CSAssetState.VALID && asset.getContractPath() != null)
+		{
+		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.page_white_database);
 		    tip = tip + "Click to read the cached copy of the contract";
 		} else if (assetState == CSAsset.CSAssetState.VALID) {
-		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.page_white_text);
+		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.page_white_acrobat);
 		    tip = tip + "Click to read the contract at the web site of the issuer";
 		}
 

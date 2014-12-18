@@ -121,6 +121,9 @@ public final class ImageLoader {
 	information,
 	new_new, // renamed file from new as the java keyword new caused problems
 	page_white,
+	page_white_acrobat,
+	page_white_database,
+	page_white_find,
 	page_white_error,
 	page_white_text,
 	picture,
