@@ -79,9 +79,9 @@ public class ResetTransactionsSubmitAction extends MultiBitSubmitAction {
 
 	int n = JOptionPane.showConfirmDialog(
 			this.mainFrame,
-			"Are you sure you want to reset blocks, transactions and assets?\n\n" +
-			"If YES, the application will quit, and you must relaunch and wait\n" +
-			"for blocks, transactions and assets to synchronize with the network.\n",
+			"Are you sure you want to reset the blockchain, transactions and assets?\n\n" +
+			"If YES, you must wait anything from a few minutes to one hour\n" + 
+			"for blocks, transactions and assets to download and synchronize.\n",
 			"Confirm Reset",
 			JOptionPane.YES_NO_OPTION);
 	if (JOptionPane.NO_OPTION == n) {
@@ -140,8 +140,7 @@ public class ResetTransactionsSubmitAction extends MultiBitSubmitAction {
 	    }
 	}
 
-	// Still need to quit and relaunch otherwise spendable amount is 0.
-	// asset ref is xxx-0-xxx.
+	// .fbhchain is deleted and recrated when the new blockchain file is created.
 	
 	String walletFilename = activePerWalletModelData.getWalletFilename();
 	String csassets = walletFilename + ".csassets";
@@ -253,7 +252,8 @@ public class ResetTransactionsSubmitAction extends MultiBitSubmitAction {
 			
 			// After quitting, on launch, sync continues.
 			// If we quit before the replaytask is setup, nothing happens on relauch.
-			mainFrame.quitApplication();
+			// Note: We no longer need to quit.
+		//	mainFrame.quitApplication();
 
                     } else {
                         log.error(message);
