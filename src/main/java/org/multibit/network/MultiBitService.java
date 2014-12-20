@@ -93,6 +93,7 @@ public class MultiBitService {
   public static final String SPV_BLOCKCHAIN_SUFFIX = ".spvchain";
   public static final String CHECKPOINTS_SUFFIX = ".checkpoints";
   public static final String WALLET_SUFFIX = ".sparkwallet";
+  public static final String COMPRESSED_FULL_BLOCK_HASH_CHAIN_SUFFIX = ".fbhchain.xz";
 
   public static final String IRC_CHANNEL_TEST = "#bitcoinTEST";
   public static final String IRC_CHANNEL_TESTNET3 = "#bitcoinTEST3";
@@ -117,8 +118,8 @@ public class MultiBitService {
   private MultiBitCheckpointManager checkpointManager;
   private String checkpointsFilename;
 
-  private UpdateAssetBalanceService updateAssetsTimerTask;
-  private Timer updateAssetsTimer;
+//  private UpdateAssetBalanceService updateAssetsTimerTask;
+//  private Timer updateAssetsTimer;
   
   public static Date genesisBlockCreationDate;
 
@@ -174,11 +175,8 @@ public class MultiBitService {
 
 /* CoinSpark START */
       
-      log.debug("Loading/ creating headerstore ...");
-      String filePrefix=controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator+getFilePrefix();
-      String headerStoreFile = blockChain.setBlockHeaderStore(filePrefix);
-      log.debug("Headerstore is '" + headerStoreFile + "'");
-      
+	attachFullBlockHashChain(false, blockChain);
+
       log.debug("Initializing mapDB storage...");
       SparkBitMapDB.INSTANCE.initialize(this.bitcoinController);
 /* CoinSpark END */
@@ -616,6 +614,10 @@ public class MultiBitService {
     blockChain = new MultiBitBlockChain(bitcoinController.getModel().getNetworkParameters(), blockStore);
     log.debug("Created blockchain '" + blockChain + "'");
 
+    // Delete old FBHChain and create a new one to add to blockchain
+    attachFullBlockHashChain(true, blockChain);
+
+    
     // Hook up the wallets to the new blockchain.
     if (blockChain != null) {
       List<WalletData> perWalletModelDataList = bitcoinController.getModel().getPerWalletModelDataList();
@@ -794,4 +796,36 @@ public class MultiBitService {
   public boolean isTestNet3() {
       return (TESTNET3_GENESIS_HASH.equals(bitcoinController.getModel().getNetworkParameters().getGenesisBlock().getHashAsString()));
   }
+  
+  
+    public void attachFullBlockHashChain(boolean deleteIfExists, BlockChain blockChain) {
+	log.debug("Loading/ creating headerstore ...");
+	String filePrefix = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator + getFilePrefix();
+
+	// Ensure there is a fbhchain file to speed up first runs
+	String fbhchainFilename = filePrefix + ".fbhchain";
+	File fbhchainFile = new File(fbhchainFilename);
+	
+	// For blockchain replay, we want to delete the old fbhchain file
+	if (deleteIfExists && fbhchainFile.exists()) {
+	    log.debug("Deleting " + fbhchainFilename);
+	    fbhchainFile.delete();
+	}
+	
+	if (!fbhchainFile.exists()) {
+	    try {
+		bitcoinController.getFileHandler().copyFullBlockHashChainFromInstallationDirectory(fbhchainFilename);
+	    } catch (Exception e) {
+		// There was an error, so if the file exists partially, it is corrupted so best to remove
+		if (fbhchainFile.exists()) {
+		    log.debug("There was an exception decompressing and copying .fbhchain, so we will delete any output created");
+		    fbhchainFile.delete();
+		}
+	    }
+	}
+
+	String headerStoreFile = blockChain.setBlockHeaderStore(filePrefix);
+	log.debug("Headerstore is '" + headerStoreFile + "'");
+    }
+
 }

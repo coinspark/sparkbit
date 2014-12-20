@@ -45,6 +45,9 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 import java.net.URL;
 
+import org.apache.commons.compress.compressors.*;
+import org.tukaani.xz.*;
+
 /**
  * Class consolidating the File IO in MultiBit for wallets and wallet infos.
  * 
@@ -894,6 +897,91 @@ public class FileHandler {
         return userPreferences;
     }
 
+    
+    /*
+    Decompress sparkbit.fbhchain.xz to user data folder.
+    The decompressed file length is 10254368 at block height 320449 on sep 13.
+    The first 10,000,000 bytes are zero'ed, so upto height 312500 on july 26.
+    This helps compression and also no assets were issued before that date.
+    @return boolean true or false if operation successful
+    */
+    public boolean copyFullBlockHashChainFromInstallationDirectory(String destinationFilename) throws IOException
+    {
+        if (destinationFilename == null) {
+            return false;
+        }
+	
+	// if destination already exists, do nothing
+        File destinationFile = new File(destinationFilename);
+        if (destinationFile.exists()) {
+	    return false;
+	}
+	
+	String filePrefix = MultiBitService.getFilePrefix();
+	String xzFilename = filePrefix + MultiBitService.COMPRESSED_FULL_BLOCK_HASH_CHAIN_SUFFIX;
+	String sourceFilename = null;
+	URL sourceURL = null;
+	try {
+	    sourceURL = getClass().getResource("/" + xzFilename);
+	    if (sourceURL != null) {
+		sourceFilename = sourceURL.toURI().getPath();
+	    }
+	    log.debug("Compressed fbhchain path = " + sourceFilename);
+	} catch (java.net.URISyntaxException e) {
+	    log.error("Error getting file path for: " + sourceURL);
+	}
+	if (sourceFilename==null) sourceFilename = "";
+	File xzSource = new File(sourceFilename);
+	if (xzSource.exists() && !destinationFilename.equals(sourceFilename)) {
+            log.info("Copying and decompresing fbhchain from '" + sourceFilename + "' to '" + destinationFilename + "'");
+	    FileInputStream fin = null;
+	    FileOutputStream out = null;
+	    XZInputStream xzIn = null;
+	    int decompressedLength = 0;
+	    try {
+		fin = new FileInputStream(sourceFilename);
+		//BufferedInputStream in = new BufferedInputStream(fin);
+		out = new FileOutputStream(destinationFilename);
+		xzIn = new XZInputStream(fin);
+		decompressedLength = xzIn.available();
+		final byte[] buffer = new byte[4096];
+		int n = 0;
+		while (-1 != (n = xzIn.read(buffer))) {
+		    out.write(buffer, 0, n);
+		}
+	    } catch (IOException e) {
+		log.error("Error decompresing sparkbit.fbhchain.xz : " + e);
+		throw(e);
+	    } finally {
+		if (out != null) {
+		    out.close();
+		}
+		if (xzIn != null) {
+		    xzIn.close();
+		}
+		if (fin != null) {
+		    fin.close();
+		}
+	    }
+
+	    // Check all the data was copied.
+	    long sourceLength = decompressedLength;
+	    long destinationLength = destinationFile.length();
+	    if (sourceLength != destinationLength) {
+		String errorText = "fbhchain was not copied to user's application data directory correctly.\nThe decompressed source fbhchain '"
+			+ sourceFilename
+			+ "' is of length "
+			+ sourceLength
+			+ "\nbut the destination fbhchain '"
+			+ destinationFilename + "' is of length " + destinationLength;
+		log.error(errorText);
+		throw new IOException(errorText);
+	    }
+	}
+
+	return true;
+    }
+    
     /*
     Convenience method to return path to the checkpoints file installed as part of application.
     @return null if something went wrong
@@ -908,7 +996,7 @@ public class FileHandler {
 	    if (checkpointURL != null) {
 		sourceCheckpointsFilename = checkpointURL.toURI().getPath();
 	    }
-	    log.debug(">>>> sourceCheckpointsFilename = " + sourceCheckpointsFilename);
+//	    log.debug("sourceCheckpointsFilename = " + sourceCheckpointsFilename);
 	} catch (java.net.URISyntaxException e) {
 	    log.error("Error getting file path for: " + checkpointURL);
 	}
