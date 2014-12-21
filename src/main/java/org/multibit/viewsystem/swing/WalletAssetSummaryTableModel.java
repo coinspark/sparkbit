@@ -220,8 +220,10 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 	}
 	
 	if (bitcoinController.getMultiBitService()==null) return null;
-	int numConnectedPeers = bitcoinController.getMultiBitService().getPeerGroup().numConnectedPeers();
-	int mostCommonChainHeight = bitcoinController.getMultiBitService().getPeerGroup().getMostCommonChainHeight();
+	PeerGroup pg = bitcoinController.getMultiBitService().getPeerGroup();
+	if (pg == null) return null;
+	int numConnectedPeers = pg.numConnectedPeers();
+	int mostCommonChainHeight = pg.getMostCommonChainHeight();
 	// mostCommonChainHeight can be 0 when launching.
 	
 	int threshold = NUMBER_OF_CONFIRMATIONS_TO_SEND_ASSET_THRESHOLD;
