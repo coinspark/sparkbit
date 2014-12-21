@@ -2348,28 +2348,20 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
 	}
 	
 	// New asset from genesis transaction?  If yes, show dialog to upload files.
-	// Note that if the blockchain has been reset, all these insert events will be fired
-	// and it would be good if we could find a way to not show the dialog if we know
-	// the assets have the files uploaded.
+	// Unless the blockchain has been reset and this is a replay task.
 	if (t == CSEventType.ASSET_INSERTED) {
 	    final int assetId = (int) o;
 	    final CSAsset asset = this.bitcoinController.getModel().getActiveWallet().CS.getAsset(assetId);
 	    if (asset != null) {
-
 		if (asset.getAssetSource() == CSAsset.CSAssetSource.GENESIS) {
-		    
-//		    ReplayTask currentReplayTask = ReplayManager.INSTANCE.getCurrentReplayTask();
-//		    log.debug(">>>> replay task exists? " + currentReplayTask);
-//		    if (currentReplayTask == null) {
-		    
-		    SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-			    displayGenesisAssetDialog(asset);
-			}
-		    });
-		    
-//		    }
+		    if (this.bitcoinController.getModel().getActivePerWalletModelData().getReplayTaskUUID() == null) {
+			SwingUtilities.invokeLater(new Runnable() {
+			    @Override
+			    public void run() {
+				displayGenesisAssetDialog(asset);
+			    }
+			});
+		    }
 		}
 	    }
 	}
