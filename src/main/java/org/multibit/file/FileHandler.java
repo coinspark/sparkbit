@@ -45,8 +45,9 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 import java.net.URL;
 
-import org.apache.commons.compress.compressors.*;
 import org.tukaani.xz.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 /**
  * Class consolidating the File IO in MultiBit for wallets and wallet infos.
@@ -905,78 +906,62 @@ public class FileHandler {
     This helps compression and also no assets were issued before that date.
     @return boolean true or false if operation successful
     */
-    public boolean copyFullBlockHashChainFromInstallationDirectory(String destinationFilename) throws IOException
-    {
-        if (destinationFilename == null) {
-            return false;
-        }
-	
-	// if destination already exists, do nothing
-        File destinationFile = new File(destinationFilename);
-        if (destinationFile.exists()) {
+    public boolean copyFullBlockHashChainResource(String destinationFilename) throws IOException {
+	if (destinationFilename == null) {
 	    return false;
 	}
-	
-	String filePrefix = MultiBitService.getFilePrefix();
-	String xzFilename = filePrefix + MultiBitService.COMPRESSED_FULL_BLOCK_HASH_CHAIN_SUFFIX;
-	String sourceFilename = null;
-	URL sourceURL = null;
-	try {
-	    sourceURL = getClass().getResource("/" + xzFilename);
-	    if (sourceURL != null) {
-		sourceFilename = sourceURL.toURI().getPath();
-	    }
-	    log.debug("Compressed fbhchain path = " + sourceFilename);
-	} catch (java.net.URISyntaxException e) {
-	    log.error("Error getting file path for: " + sourceURL);
-	}
-	if (sourceFilename==null) sourceFilename = "";
-	File xzSource = new File(sourceFilename);
-	if (xzSource.exists() && !destinationFilename.equals(sourceFilename)) {
-            log.info("Copying and decompresing fbhchain from '" + sourceFilename + "' to '" + destinationFilename + "'");
-	    FileInputStream fin = null;
-	    FileOutputStream out = null;
-	    XZInputStream xzIn = null;
-	    int decompressedLength = 0;
-	    try {
-		fin = new FileInputStream(sourceFilename);
-		//BufferedInputStream in = new BufferedInputStream(fin);
-		out = new FileOutputStream(destinationFilename);
-		xzIn = new XZInputStream(fin);
-		decompressedLength = xzIn.available();
-		final byte[] buffer = new byte[4096];
-		int n = 0;
-		while (-1 != (n = xzIn.read(buffer))) {
-		    out.write(buffer, 0, n);
-		}
-	    } catch (IOException e) {
-		log.error("Error decompresing sparkbit.fbhchain.xz : " + e);
-		throw(e);
-	    } finally {
-		if (out != null) {
-		    out.close();
-		}
-		if (xzIn != null) {
-		    xzIn.close();
-		}
-		if (fin != null) {
-		    fin.close();
-		}
-	    }
 
-	    // Check all the data was copied.
-	    long sourceLength = decompressedLength;
-	    long destinationLength = destinationFile.length();
-	    if (sourceLength != destinationLength) {
-		String errorText = "fbhchain was not copied to user's application data directory correctly.\nThe decompressed source fbhchain '"
-			+ sourceFilename
-			+ "' is of length "
-			+ sourceLength
-			+ "\nbut the destination fbhchain '"
-			+ destinationFilename + "' is of length " + destinationLength;
-		log.error(errorText);
-		throw new IOException(errorText);
+	// if destination already exists, do nothing
+	File destinationFile = new File(destinationFilename);
+	if (destinationFile.exists()) {
+	    return false;
+	}
+
+	InputStream link = getClass().getResourceAsStream("/" + MultiBitService.getFilePrefix() + MultiBitService.COMPRESSED_FULL_BLOCK_HASH_CHAIN_SUFFIX);
+
+	log.info("Copying and decompresing bundled fbhchain to '" + destinationFilename + "'");
+	FileInputStream fin = null;
+	FileOutputStream out = null;
+	XZInputStream xzIn = null;
+	int decompressedLength = 0;
+	try {
+//		BufferedInputStream in = new BufferedInputStream(link);
+	    out = new FileOutputStream(destinationFilename);
+	    xzIn = new XZInputStream(link);
+	    final byte[] buffer = new byte[4096];
+	    int n = 0;
+	    while (-1 != (n = xzIn.read(buffer))) {
+		out.write(buffer, 0, n);
+		decompressedLength += n;
 	    }
+	} catch (IOException e) {
+	    log.error("Error decompresing sparkbit.fbhchain.xz : " + e);
+	    throw (e);
+	} finally {
+	    if (out != null) {
+		out.close();
+	    }
+	    if (xzIn != null) {
+		xzIn.close();
+	    }
+	    if (fin != null) {
+		fin.close();
+	    }
+	    if (link != null) {
+		link.close();
+	    }
+	}
+
+	// Check all the data was copied.
+	long sourceLength = decompressedLength;
+	long destinationLength = destinationFile.length();
+	if (sourceLength != destinationLength) {
+	    String errorText = "fbhchain was not copied to user's application data directory correctly.\nThe decompressed bundled fbhchain is of length "
+		    + sourceLength
+		    + "\nbut the destination fbhchain '"
+		    + destinationFilename + "' is of length " + destinationLength;
+	    log.error(errorText);
+	    throw new IOException(errorText);
 	}
 
 	return true;
@@ -986,82 +971,78 @@ public class FileHandler {
     Convenience method to return path to the checkpoints file installed as part of application.
     @return null if something went wrong
     */
-    public String getPathOfCheckpointsFromInstallationDirectory() {
-	String filePrefix = MultiBitService.getFilePrefix();
-	String checkpointsFilename = filePrefix + MultiBitService.CHECKPOINTS_SUFFIX;
-	String sourceCheckpointsFilename = null;
-	URL checkpointURL = null;
-	try {
-	    checkpointURL = getClass().getResource("/" + checkpointsFilename);
-	    if (checkpointURL != null) {
-		sourceCheckpointsFilename = checkpointURL.toURI().getPath();
-	    }
-//	    log.debug("sourceCheckpointsFilename = " + sourceCheckpointsFilename);
-	} catch (java.net.URISyntaxException e) {
-	    log.error("Error getting file path for: " + checkpointURL);
-	}
-	return sourceCheckpointsFilename;
+//    public String getPathOfCheckpointsFromInstallationDirectory() {
+//	String filePrefix = MultiBitService.getFilePrefix();
+//	String checkpointsFilename = filePrefix + MultiBitService.CHECKPOINTS_SUFFIX;
+//	String sourceCheckpointsFilename = null;
+//	URL checkpointURL = null;
+//	try {
+//	    checkpointURL = getClass().getResource("/" + checkpointsFilename);
+//	    if (checkpointURL != null) {
+//		sourceCheckpointsFilename = checkpointURL.toURI().getPath();
+//	    }
+////	    log.debug("sourceCheckpointsFilename = " + sourceCheckpointsFilename);
+//	} catch (java.net.URISyntaxException e) {
+//	    log.error("Error getting file path for: " + checkpointURL);
+//	}
+//	return sourceCheckpointsFilename;
+//    }
+    
+    
+    
+    /*
+    Return the length of the checkpoints resource
+    */
+    public int getCheckpointsResourceLength() throws IOException {
+	InputStream link = getClass().getResourceAsStream("/" + MultiBitService.getFilePrefix() + MultiBitService.CHECKPOINTS_SUFFIX); //sparkbit.checkpoints");
+	int bytesAvailable = link.available();
+	link.close();
+	return bytesAvailable;
     }
+    
+    /*
+    Return the length of the fbhchain resource
+    */
+//    public int getFullBlockHashChainResourceLength() throws IOException {
+//	InputStream link = getClass().getResourceAsStream("/" + MultiBitService.getFilePrefix() + MultiBitService.COMPRESSED_FULL_BLOCK_HASH_CHAIN_SUFFIX); //sparkbit.checkpoints");
+//	XZInputStream xzIn = new XZInputStream(link);
+//	int bytesAvailable = xzIn.available();
+//	xzIn.close();
+//	link.close();
+//	return bytesAvailable;
+//    }
     
     /**
      * To support multiple users on the same machine, the checkpoints file is
-     * installed into the program installation directory and is then copied to
-     * the user's application data directory when MultiBit is first used.
+     * copied to the user's application data directory when SparkBit is first used.
      * 
      * Thus each user has their own copy of the blockchain.
      */
-    public void copyCheckpointsFromInstallationDirectory(String destinationCheckpointsFilename) throws IOException {
-        if (destinationCheckpointsFilename == null) {
-            return;
-        }
+    public void copyCheckpointsResource(String destinationCheckpointsFilename) throws IOException {
+	if (destinationCheckpointsFilename == null) {
+	    return;
+	}
 
-        // See if the block chain in the user's application data directory
-        // exists.
-        File destinationCheckpoints = new File(destinationCheckpointsFilename);
+	File destinationCheckpoints = new File(destinationCheckpointsFilename);
+	log.info("Copying bundled sparkbit.checkpoints to '" + destinationCheckpointsFilename + "'");
+	InputStream link = getClass().getResourceAsStream("/" + MultiBitService.getFilePrefix() + MultiBitService.CHECKPOINTS_SUFFIX); //sparkbit.checkpoints");
+	int bytesAvailable = link.available();
+	long bytesCopied = Files.copy(link, destinationCheckpoints.getAbsoluteFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
+	link.close();
 
-        if (!destinationCheckpoints.exists()) {
-            // Work out the source checkpoints (put into the program
-            // installation directory by the installer).
-//            File directory = new File(".");
-//            String currentWorkingDirectory = directory.getCanonicalPath();
-
-	    // Load the checkpoints file which has been included in the resources folder of the app.
-
-	    String sourceCheckpointsFilename = getPathOfCheckpointsFromInstallationDirectory();
-	    if (sourceCheckpointsFilename == null) {
-		sourceCheckpointsFilename = "";
-	    }
-
-            File sourceBlockcheckpoints = new File(sourceCheckpointsFilename);
-            if (sourceBlockcheckpoints.exists() && !destinationCheckpointsFilename.equals(sourceCheckpointsFilename)) {
-                // It should exist since installer puts them in.
-                log.info("Copying checkpoints from '" + sourceCheckpointsFilename + "' to '" + destinationCheckpointsFilename + "'");
-                copyFile(sourceBlockcheckpoints, destinationCheckpoints);
-
-                // Check all the data was copied.
-                long sourceLength = sourceBlockcheckpoints.length();
-                long destinationLength = destinationCheckpoints.length();
-                if (sourceLength != destinationLength) {
-                    String errorText = "Checkpoints were not copied to user's application data directory correctly.\nThe source checkpoints '"
-                            + sourceCheckpointsFilename
-                            + "' is of length "
-                            + sourceLength
-                            + "\nbut the destination checkpoints '"
-                            + destinationCheckpointsFilename + "' is of length " + destinationLength;
-                    log.error(errorText);
-                    throw new FileHandlerException(errorText);
-                }
-            }
-        }
+	// Check all the data was copied.
+	long destinationLength = destinationCheckpoints.length();
+	if (bytesAvailable != destinationLength) {
+	    String errorText = "Checkpoints were not copied to user's application data directory correctly.\nThe source checkpoints is of length "
+		    + bytesAvailable
+		    + "\nbut the destination checkpoints '"
+		    + destinationCheckpointsFilename + "' is of length " + destinationLength;
+	    log.error(errorText);
+	    throw new FileHandlerException(errorText);
+	}
     }
 
-    /**
-     * To support multiple users on the same machine, the block chain is
-     * installed into the program installation directory and is then copied to
-     * the user's application data directory when MultiBit is first used.
-     * 
-     * Thus each user has their own copy of the blockchain.
-     */
+    @Deprecated
     public void copyBlockChainFromInstallationDirectory(String destinationBlockChainFilename, boolean alwaysOverWrite)
             throws IOException {
         if (destinationBlockChainFilename == null) {

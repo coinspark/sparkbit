@@ -174,8 +174,9 @@ public class MultiBitService {
       log.debug("Created blockchain '" + blockChain + "' with height " + blockChain.getBestChainHeight());
 
 /* CoinSpark START */
-      
-	attachFullBlockHashChain(false, blockChain);
+      // Add .fbhchain to blockchain, create if necessary
+      log.debug("Attaching .fbhchain to blockchain...");
+    attachFullBlockHashChain(false, blockChain);
 
       log.debug("Initializing mapDB storage...");
       SparkBitMapDB.INSTANCE.initialize(this.bitcoinController);
@@ -259,29 +260,21 @@ public class MultiBitService {
 
     // Ensure there is a checkpoints file.
     File checkpointsFile = new File(checkpointsFilename);
-    if (!checkpointsFile.exists()) {
-      bitcoinController.getFileHandler().copyCheckpointsFromInstallationDirectory(checkpointsFilename);
-    }
+      if (!checkpointsFile.exists()) {
+	  bitcoinController.getFileHandler().copyCheckpointsResource(checkpointsFilename);
+      } else {
+	  // Use the larger of the installed checkpoints file and the user data checkpoint file (larger = more recent).
+	  long sizeOfUserDataCheckpointsFile = checkpointsFile.length();
 
-    // Use the larger of the installed checkpoints file and the user data checkpoint file (larger = more recent).
-//    ApplicationDataDirectoryLocator applicationDataDirectoryLocator = new ApplicationDataDirectoryLocator();
-//    String installedCheckpointsFilename = applicationDataDirectoryLocator.getInstallationDirectory() + File.separator + MultiBitService.getFilePrefix() + MultiBitService.CHECKPOINTS_SUFFIX;
-    String installedCheckpointsFilename = bitcoinController.getFileHandler().getPathOfCheckpointsFromInstallationDirectory();
-    log.debug("Installed checkpoints file = '" + installedCheckpointsFilename + "'.");
+	  int resourceLength = bitcoinController.getFileHandler().getCheckpointsResourceLength();
 
-    File installedCheckpointsFile = new File(installedCheckpointsFilename);
-    long sizeOfUserDataCheckpointsFile = 0;
-    if (checkpointsFile.exists()) {
-      sizeOfUserDataCheckpointsFile = checkpointsFile.length();
-    }
-    if (installedCheckpointsFile.exists() && installedCheckpointsFile.length() > sizeOfUserDataCheckpointsFile) {
-      // The installed checkpoints file is longer (more checkpoints) so use that.
-      checkpointsFilename = installedCheckpointsFilename;
-      checkpointsFile = installedCheckpointsFile;
-      log.debug("Using installed checkpoints file as it is longer than user data checkpoints - " + installedCheckpointsFile.length() + " bytes versus " + sizeOfUserDataCheckpointsFile + " bytes.");
-    } else {
-      log.debug("Using user data checkpoints file as it is longer/same size as installed checkpoints - " + sizeOfUserDataCheckpointsFile + " bytes versus " + installedCheckpointsFile.length() + " bytes.");
-    }
+	  if (resourceLength > sizeOfUserDataCheckpointsFile) {
+	      log.debug("Using bundled checkpoints file as it is longer than user data checkpoints - " + resourceLength + " bytes versus " + sizeOfUserDataCheckpointsFile + " bytes.");
+	      bitcoinController.getFileHandler().copyCheckpointsResource(checkpointsFilename);
+	  } else {
+	      log.debug("Using user data checkpoints file as it is longer/same size as bundled checkpoints - " + sizeOfUserDataCheckpointsFile + " bytes versus " + resourceLength + " bytes.");
+	  }
+      }
 
     // If the spvBlockStore is to be created new
     // or its size is 0 bytes delete the file so that it is recreated fresh (fix for issue 165).
@@ -616,7 +609,6 @@ public class MultiBitService {
 
     // Delete old FBHChain and create a new one to add to blockchain
     attachFullBlockHashChain(true, blockChain);
-
     
     // Hook up the wallets to the new blockchain.
     if (blockChain != null) {
@@ -814,7 +806,7 @@ public class MultiBitService {
 	
 	if (!fbhchainFile.exists()) {
 	    try {
-		bitcoinController.getFileHandler().copyFullBlockHashChainFromInstallationDirectory(fbhchainFilename);
+		bitcoinController.getFileHandler().copyFullBlockHashChainResource(fbhchainFilename);
 	    } catch (Exception e) {
 		// There was an error, so if the file exists partially, it is corrupted so best to remove
 		if (fbhchainFile.exists()) {
