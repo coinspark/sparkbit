@@ -150,13 +150,15 @@ public final class SparkBitInExecutableJar {
 	    if (customLevel == true) {
 		Logger l = (Logger) LoggerFactory.getLogger("org.multibit");
 		l.setLevel(root.getLevel());
+		l = (Logger) LoggerFactory.getLogger("org.sparkbit");
+		l.setLevel(root.getLevel());
 		l = (Logger) LoggerFactory.getLogger("com.google.bitcoin");
 		l.setLevel(root.getLevel());
 		l = (Logger) LoggerFactory.getLogger("com.google.bitcoin.core.Wallet");
 		l.setLevel(root.getLevel());
 		l = (Logger) LoggerFactory.getLogger("com.google.bitcoin.utils.Threading");
 		l.setLevel(root.getLevel());
-		l = (Logger) LoggerFactory.getLogger("org.coinspark.core.CSUtils");
+		l = (Logger) LoggerFactory.getLogger("org.coinspark");
 		l.setLevel(root.getLevel());
 		// If CSLogger has a null filename, we can set the level and filter
 		// otherwise it just writes to a specified file.
