@@ -93,6 +93,7 @@
         <finalName>sparkbit</finalName>
         <resources>
             <!-- filter properties files e.g. version.properties -->
+            <!-- http://maven.apache.org/plugins/maven-resources-plugin/examples/filter.html -->
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
@@ -105,12 +106,7 @@
                 <filtering>false</filtering>
                 <excludes>
                     <exclude>**/*.properties</exclude>
-                    <exclude>**/*.blockchain</exclude>
                 </excludes>
-                <includes>
-                    <include>**/*.checkpoints</include>
-                    <include>**/*.fbhchain.xz</include>
-                </includes>
             </resource>
         </resources>
         <plugins>
