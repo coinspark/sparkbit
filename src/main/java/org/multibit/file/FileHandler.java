@@ -49,6 +49,12 @@ import org.tukaani.xz.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import java.nio.file.Paths;
+import org.apache.commons.io.FileUtils;
+
+
 /**
  * Class consolidating the File IO in MultiBit for wallets and wallet infos.
  * 
@@ -1011,6 +1017,49 @@ public class FileHandler {
 //	link.close();
 //	return bytesAvailable;
 //    }
+    
+    /*
+    Install the packaged keystore_localhost_sample.jks to the user's application data directory.
+    If the file already exists, do nothing
+    */
+    public void installJSONRPCSampleKeystore(String targetFilename) throws IOException {
+	if (targetFilename==null) return;
+	File targetFile = new File(targetFilename);
+	if (targetFile.exists()) return;
+	InputStream is = getClass().getResourceAsStream("/keystore_localhost_sample.jks");
+	try {
+	    long n = Files.copy(is, Paths.get(targetFilename));
+	} catch (Exception e) {
+	    log.error("installJSONRPCSampleKeystore error = " + e);
+	} finally {
+	    is.close();
+	}
+    }
+    
+    /*
+    Install the packaged jsonrpc.properties to the user's application data directory.
+    If the file already exists, do nothing.
+    @param targetFilename full path of where to make the copy
+    @param autogenRPCPassword of true, replaces the default password with an auto generated one
+    */
+    public void installJSONRPCProperties(String targetFilename, boolean autogenRPCPassword) throws IOException {
+	if (targetFilename==null) return;
+	File targetFile = new File(targetFilename);
+	if (targetFile.exists()) return;
+	InputStream is = getClass().getResourceAsStream("/jsonrpc.properties");
+	try {
+	    String s = IOUtils.toString(is, "UTF-8");
+	    String pwd = RandomStringUtils.randomAlphanumeric(16);
+	    s = s.replace("rpcpassword=password", "rpcpassword="+pwd);
+	    Files.write(Paths.get(targetFilename), s.getBytes());
+//	    FileUtils.writeStringToFile(targetFile, s, "UTF-8");
+	    log.info("Installed " + targetFilename);
+	} catch (Exception e) {
+	    log.error("copyJSONRPCProperties error = " + e);
+	} finally {
+	    is.close();
+	}
+    }
     
     /**
      * To support multiple users on the same machine, the checkpoints file is

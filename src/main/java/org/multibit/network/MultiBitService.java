@@ -214,6 +214,16 @@ public class MultiBitService {
     }
 
       /* Launch JSON-RPC Service START */
+      String jsonRPCBaseFilename = bitcoinController.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator;
+      String jsonRPCPropertiesFilename = jsonRPCBaseFilename + "jsonrpc.properties";
+      String jsonRPCKeystoreSampleFilename = jsonRPCBaseFilename + "keystore_localhost_sample.jks";
+      try {
+	  bitcoinController.getFileHandler().installJSONRPCProperties(jsonRPCPropertiesFilename, true);
+	  bitcoinController.getFileHandler().installJSONRPCSampleKeystore(jsonRPCKeystoreSampleFilename);
+      } catch (Exception e) {
+	  // just carry on as normal, as user can install themselves
+      }
+    
       JSONRPCController jc = JSONRPCController.INSTANCE;
       JSONRPCController.INSTANCE.initialize(bitcoinController);
       if (!jc.shouldRunServer()) {
