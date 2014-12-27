@@ -1049,10 +1049,10 @@ public class FileHandler {
 	InputStream is = getClass().getResourceAsStream("/jsonrpc.properties");
 	try {
 	    String s = IOUtils.toString(is, "UTF-8");
-	    String pwd = RandomStringUtils.randomAlphanumeric(16);
+	    String pwd = RandomStringUtils.randomAlphanumeric(30);
 	    s = s.replace("rpcpassword=password", "rpcpassword="+pwd);
-	    Files.write(Paths.get(targetFilename), s.getBytes());
-//	    FileUtils.writeStringToFile(targetFile, s, "UTF-8");
+//	    Files.write(Paths.get(targetFilename), s.getBytes());
+	    FileUtils.writeStringToFile(targetFile, s, "UTF-8");
 	    log.info("Installed " + targetFilename);
 	} catch (Exception e) {
 	    log.error("copyJSONRPCProperties error = " + e);
