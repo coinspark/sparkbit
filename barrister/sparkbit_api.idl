@@ -62,7 +62,7 @@ struct JSONRPCBalance {
 	units string [optional]
 	multiple float [optional]
 	status string [optional]
-	valid bool [optional]
+	valid bool
 	checked_unixtime int [optional]
 	contract_url string [optional]
 	contract_file string [optional]
@@ -77,7 +77,7 @@ struct JSONRPCBalance {
 	image_url string [optional]
 	feed_url string [optional]
 	redemption_url string [optional]
-	visible bool [optional]
+	visible bool
 }
 
 interface sparkbit {

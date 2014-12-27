@@ -1127,6 +1127,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 	btcAssetBalance.setAsset_ref("bitcoin");
 	btcAssetBalance.setBalance(bitcoinBalanceAmount);
 	btcAssetBalance.setSpendable(bitcoinSpendableAmount);
+	btcAssetBalance.setVisible(true);
+	btcAssetBalance.setValid(true);
 	resultList.add(btcAssetBalance);
 
 	
