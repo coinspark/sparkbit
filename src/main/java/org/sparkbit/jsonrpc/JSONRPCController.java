@@ -70,8 +70,8 @@ public enum JSONRPCController {
     public static final int DEFAULT_SSL_TIMEOUT = 500000;
     public static final int DEFAULT_SEND_ASSET_TIMEOUT = 20000;
     
-    // Default ciphers, comma separated
-    public static final String DEFAULT_SSL_CIPHERS = "TLS_ECDHE_.*,TLS_DHE_.*";
+    // Default ciphers, comma separated e.g. TLS_ECDHE_.*,TLS_DHE_.*
+    public static final String DEFAULT_SSL_CIPHERS = "TLS_ECDHE_RSA_.*";
     
     // Config properties
     public static final String RPC_SERVER = "rpcserver";
