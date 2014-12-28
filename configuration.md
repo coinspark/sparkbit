@@ -92,6 +92,12 @@ Allow sending a new asset which has just been issued after just one blockchain.
 Useful when you are creating new assets to test issuance and transfer.  SparkBit 0.9 and later.
 
 ```
+showMultipleWallets=true
+```
+
+Show a sidebar containing multiple wallets and enable options in the File menu to open and close wallets.  Sparkbit 0.9 and later.
+
+```
 showPrivateKeyMenu=true
 ```
 
