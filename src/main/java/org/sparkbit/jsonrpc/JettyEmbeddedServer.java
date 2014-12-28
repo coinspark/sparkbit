@@ -69,6 +69,9 @@ import static org.sparkbit.jsonrpc.JSONRPCController.*;
 // GRACEFUL SHUTDOWN
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 
+import javax.net.ssl.SSLEngine;
+
+
 /**
  * Example of configuring multiple connectors:
  * http://git.eclipse.org/c/jetty/org.eclipse.jetty.project.git/tree/examples/embedded/src/main/java/org/eclipse/jetty/embedded/ManyConnectors.java
@@ -119,11 +122,18 @@ public class JettyEmbeddedServer {
 	sb.append(" require SSL = " + this.useSSL + "\n");
 	sb.append(" allow tls 1.0 = " + this.allowTLS10 + "\n");
 	sb.append(" allow tls 1.1 = " + this.allowTLS11 + "\n");
-	 String[] enabledCiphers = sslContextFactory.newSSLEngine().getEnabledCipherSuites();
-	 String[] enabledProtocols = sslContextFactory.newSSLEngine().getEnabledProtocols();
-	 sb.append(" requested ciphers = " + Arrays.toString(ciphersArray) + "\n");
-	 sb.append(" enabled ciphers = " + Arrays.toString(enabledCiphers) + "\n");
-	 sb.append(" enabled protocols = " + Arrays.toString(enabledProtocols) + "\n");
+	sb.append(" requested ciphers = " + Arrays.toString(ciphersArray) + "\n");
+
+	SSLEngine engine = sslContextFactory.newSSLEngine();
+	if (engine != null) {
+	    String[] enabledCiphers = sslContextFactory.newSSLEngine().getEnabledCipherSuites();
+	    String[] enabledProtocols = sslContextFactory.newSSLEngine().getEnabledProtocols();
+	    sb.append(" enabled ciphers = " + Arrays.toString(enabledCiphers) + "\n");
+	    sb.append(" enabled protocols = " + Arrays.toString(enabledProtocols) + "\n");
+	} else {
+	    sb.append(" enabled ciphers = ? ...newSSLEngine() returned null\n");
+	    sb.append(" enabled protocols = ? ...newSSLEngine() returned null\n");
+	}
 
 	sb.append(" keystore filename = " + this.keystoreFilename + "\n");
 	sb.append(" keystore password = " + this.keyStorePassword + "\n");
