@@ -1018,6 +1018,18 @@ public class FileHandler {
 //	return bytesAvailable;
 //    }
     
+    public boolean isLauncedFromJWrapper() {
+	boolean result = false;
+	try {
+	    Class.forName("jwrapper.jwutils.JWSystem");
+	    // it exists on the classpath
+	    result = true;
+	} catch (ClassNotFoundException e) {
+	    // it does not exist on the classpath
+	}
+	return result;
+
+    }
     /*
     Install the packaged keystore_localhost_sample.jks to the user's application data directory.
     If the file already exists, do nothing
@@ -1052,6 +1064,13 @@ public class FileHandler {
 	    String pwd = RandomStringUtils.randomAlphanumeric(30);
 	    s = s.replace("rpcpassword=password", "rpcpassword="+pwd);
 //	    Files.write(Paths.get(targetFilename), s.getBytes());
+	    
+	    // If launched from JWrapper, set the recommended cipher to TLS_RSA_.*
+	    // so that JSON-RPC works "out of the box".
+	    if (isLauncedFromJWrapper()) {
+		s = s.replace("rpcsslciphers=TLS_ECDHE_RSA_.*", "rpcsslciphers=TLS_RSA_.*");
+	    }
+	    
 	    FileUtils.writeStringToFile(targetFile, s, "UTF-8");
 	    log.info("Installed " + targetFilename);
 	} catch (Exception e) {
