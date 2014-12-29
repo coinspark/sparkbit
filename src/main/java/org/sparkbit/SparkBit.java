@@ -165,10 +165,12 @@ public final class SparkBit {
 	    log.info("java.awt.GraphicsEnvironment.isHeadless() = " + gfxEnvIsHeadless);
 	    if (gfxEnvIsHeadless) {
 		isHeadless = true; // force ourselves into headless mode
+		System.setProperty("java.awt.headless","true");
 	    }
 	} catch (HeadlessException e) {
 	    log.error("HeadlessException caught: " + e);
 	    isHeadless = true;
+	    System.setProperty("java.awt.headless","true");
 	}
 	
 	

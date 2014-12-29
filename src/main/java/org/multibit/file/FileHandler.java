@@ -1071,6 +1071,12 @@ public class FileHandler {
 		s = s.replace("rpcsslciphers=TLS_ECDHE_RSA_.*", "rpcsslciphers=TLS_RSA_.*");
 	    }
 	    
+	    // If in headless mode, set headless to true
+	    boolean isHeadless = Boolean.TRUE.toString().equals( System.getProperty("java.awt.headless"));
+	    if (isHeadless) {
+		s = s.replace("#headless=true", "headless=true");
+	    }
+	    
 	    FileUtils.writeStringToFile(targetFile, s, "UTF-8");
 	    log.info("Installed " + targetFilename);
 	} catch (Exception e) {
