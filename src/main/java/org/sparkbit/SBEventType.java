@@ -24,4 +24,6 @@ public enum SBEventType {
     ADDRESS_CREATED,	// no payload
     ADDRESS_UPDATED,	// no payload
     TX_CONFIDENCE_CHANGED, // payload is the Transaction object
+    JSONRPC_SERVER_STARTED, // no payload
+    JSONRPC_SERVER_STOPPED, // no payload
 }

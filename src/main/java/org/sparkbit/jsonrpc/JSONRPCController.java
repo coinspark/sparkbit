@@ -241,6 +241,13 @@ public enum JSONRPCController {
 	return server!=null;
     }
     
+    public boolean isServerRunning() {
+	if (this.jetty==null) return false;
+	Server server = this.jetty.getServer();
+	if (server==null) return false;
+	return server.isRunning();
+    }
+    
     public boolean startServer() {	
 	boolean result = false;
 	try {
@@ -254,6 +261,8 @@ public enum JSONRPCController {
 	    // Register ourselves as a listener the CSEventBus
 	    //subscribeToEvents();
 	    log.info("JSON-RPC server started:\n" + this.jetty);
+	    
+	    CSEventBus.INSTANCE.postAsync(new SBEvent(SBEventType.JSONRPC_SERVER_STARTED));
 	    
 	} catch (java.net.BindException bindexception) {
 	    log.error("Failed to start JSON-RPC server, socket already in use: " + bindexception);
@@ -271,6 +280,9 @@ public enum JSONRPCController {
 	    }
 	    result = true;
 	    log.info("Stopped JSON-RPC server");
+	    
+	    CSEventBus.INSTANCE.postAsync(new SBEvent(SBEventType.JSONRPC_SERVER_STOPPED));
+
 	} catch (Exception e) {
 	    log.error("Failed to stop JSON-RPC server, exception: " + e);	    
 	}	
@@ -320,7 +332,25 @@ public enum JSONRPCController {
 	    sb.append("   " + key + " = " + config.getProperty(key) + "\n");
 	}
 	sb.append("\n");
-	sb.append(this.jetty.toString());
+	if (this.jetty!=null) {
+	    sb.append(this.jetty.toString());
+	}
 	return sb.toString();
     }
+    
+     /**
+     * Return a tooltip
+     */
+     public String toToolTipString() {
+	if (this.jetty==null || !isServerRunning()) {
+	    return "Server is not running";
+	}
+	StringBuilder sb = new StringBuilder();
+	sb.append("Accepting ");
+	if (this.jetty.useSSL) sb.append("SSL ");
+	sb.append("connections on port " + this.jetty.port);
+	return sb.toString();
+     }
+     
+     
 }

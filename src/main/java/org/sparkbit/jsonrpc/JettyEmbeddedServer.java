@@ -124,16 +124,26 @@ public class JettyEmbeddedServer {
 	sb.append(" allow tls 1.1 = " + this.allowTLS11 + "\n");
 	sb.append(" requested ciphers = " + Arrays.toString(ciphersArray) + "\n");
 
-	SSLEngine engine = sslContextFactory.newSSLEngine();
+	SSLEngine engine = null;
+	try {
+	    if (server.isRunning()) {
+		engine = sslContextFactory.newSSLEngine();
+	    }
+	} catch (Exception e) {
+	    // IllegalStateException if sslContextFactory is not running and newSSLEngine() invoked
+	    //e.printStackTrace();
+	}
 	if (engine != null) {
 	    String[] enabledCiphers = sslContextFactory.newSSLEngine().getEnabledCipherSuites();
 	    String[] enabledProtocols = sslContextFactory.newSSLEngine().getEnabledProtocols();
 	    sb.append(" enabled ciphers = " + Arrays.toString(enabledCiphers) + "\n");
 	    sb.append(" enabled protocols = " + Arrays.toString(enabledProtocols) + "\n");
-	} else {
-	    sb.append(" enabled ciphers = ? ...newSSLEngine() returned null\n");
-	    sb.append(" enabled protocols = ? ...newSSLEngine() returned null\n");
 	}
+//	else {
+//	    sb.append(" enabled ciphers = ? ...newSSLEngine() returned null\n");
+//	    sb.append(" enabled protocols = ? ...newSSLEngine() returned null\n");
+//	}
+
 
 	sb.append(" keystore filename = " + this.keystoreFilename + "\n");
 	sb.append(" keystore password = " + this.keyStorePassword + "\n");

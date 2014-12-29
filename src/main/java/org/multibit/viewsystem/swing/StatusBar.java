@@ -37,6 +37,7 @@ package org.multibit.viewsystem.swing;
  */
 
 import com.google.bitcoin.core.Block;
+import com.google.common.eventbus.Subscribe;
 import org.multibit.controller.Controller;
 import org.multibit.controller.bitcoin.BitcoinController;
 import org.multibit.message.Message;
@@ -62,7 +63,11 @@ import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Timer;
+import org.coinspark.wallet.CSEventBus;
 import org.multibit.viewsystem.swing.view.components.MultiBitLabel;
+import org.sparkbit.SBEvent;
+import org.sparkbit.SBEventType;
+import org.sparkbit.jsonrpc.JSONRPCController;
 
 /**
  * StatusBar. <BR>
@@ -93,6 +98,8 @@ public class StatusBar extends JPanel implements MessageListener {
   final private MultiBitLabel statusLabel;
   private StatusEnum statusEnum;
 
+  private JLabel jsonRPCLabel;
+  
   public static final long TIMER_REPEAT_TIME = 5000; // millisecond
   public static final int NUMBER_OF_REPEATS = 12;
 
@@ -168,6 +175,20 @@ public class StatusBar extends JPanel implements MessageListener {
       }
     });
 
+      jsonRPCLabel = new JLabel(""); // addZone() sets label to " " so set text later
+      jsonRPCLabel.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
+      jsonRPCLabel.setBackground(ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR);
+      jsonRPCLabel.setOpaque(true);
+      jsonRPCLabel.setHorizontalAlignment(SwingConstants.CENTER);
+      jsonRPCLabel.applyComponentOrientation(ComponentOrientation.getOrientation(controller.getLocaliser().getLocale()));
+      jsonRPCLabel.setForeground(new Color(0, 100, 0));
+      jsonRPCLabel.addMouseListener(new MouseAdapter() {
+	  @Override
+	  public void mouseEntered(MouseEvent arg0) {
+	      jsonRPCLabel.setToolTipText(JSONRPCController.INSTANCE.toToolTipString());
+	  }
+      });
+   
     statusLabel = new MultiBitLabel(""); //  Button("");
     statusLabel.setBackground(ColorAndFontConstants.MID_BACKGROUND_COLOR);
     statusLabel.setOpaque(true);
@@ -204,6 +225,12 @@ public class StatusBar extends JPanel implements MessageListener {
     int onlineHeight = getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() + ONLINE_LABEL_HEIGHT_DELTA;
 
     onlineLabel.setPreferredSize(new Dimension(onlineWidth, onlineHeight));
+    
+    
+    int jsonRPCWidth = getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).stringWidth("JSON-RPC OFF");
+    jsonRPCLabel.setPreferredSize(new Dimension(jsonRPCWidth, onlineHeight));
+    
+    
     int statusBarHeight = Math.max(STATUSBAR_HEIGHT, onlineHeight);
     setMaximumSize(new Dimension(A_LARGE_NUMBER_OF_PIXELS, statusBarHeight));
     setMaximumSize(new Dimension(A_SMALL_NUMBER_OF_PIXELS, statusBarHeight));
@@ -224,17 +251,41 @@ public class StatusBar extends JPanel implements MessageListener {
     addZone("progressBar", syncProgressBar, "" + 200, "left");
     addZone("network", statusLabel, "*", "");
     addZone("filler2", filler, "0", "right");
+    addZone("jsonrpc", jsonRPCLabel, "" + jsonRPCWidth, ""); // Border is updated later, so no tweak argument
 
     statusClearTimer = new java.util.Timer();
     statusClearTimer.schedule(new StatusClearTask(statusLabel), TIMER_REPEAT_TIME, TIMER_REPEAT_TIME);
-  }
+    
+    // Listen for updates to JSON-RPC Server status
+    	CSEventBus.INSTANCE.registerAsyncSubscriber(this);
 
+  }
+  
+    @Subscribe
+    public void listen(SBEvent event) throws Exception {
+	SBEventType t = event.getType();
+	if (t == SBEventType.JSONRPC_SERVER_STARTED || t == SBEventType.JSONRPC_SERVER_STOPPED) {
+	    final boolean enabled = (t == SBEventType.JSONRPC_SERVER_STARTED);
+	    if (EventQueue.isDispatchThread()) {
+		updateJSONRPCLabel(enabled);
+	    } else {
+		SwingUtilities.invokeLater(new Runnable() {
+		    @Override
+		    public void run() {
+			updateJSONRPCLabel(enabled);
+		    }
+		});
+	    }
+	}
+    }
+    
   /**
    * initialise the statusbar;
    */
   public void initialise() {
     updateOnlineStatusText(StatusEnum.CONNECTING);
     updateStatusLabel("", true);
+    updateJSONRPCLabel();
   }
 
   /**
@@ -257,11 +308,30 @@ public class StatusBar extends JPanel implements MessageListener {
         @Override
         public void run() {
           updateOnlineStatusTextOnSwingThread(finalStatusEnum);
+	  updateJSONRPCLabel();
         }
       });
     }
   }
 
+    /**
+     * Update json-rpc server status
+     */
+     public void updateJSONRPCLabel() {
+	    updateJSONRPCLabel(JSONRPCController.INSTANCE.isServerRunning());
+     }
+     
+    public void updateJSONRPCLabel(boolean enabled) {
+	if (enabled) {
+	    jsonRPCLabel.setText("JSON-RPC");
+	    jsonRPCLabel.setBorder(onlineLabel.getBorder()); // show box border
+	} else {
+	    // This is the border when there is no tweak, i.e. empty border
+	    jsonRPCLabel.setText(" ");
+	    jsonRPCLabel.setBorder(new CompoundBorder(zoneBorder, new EmptyBorder(0, 2, 0, 2)));
+	}
+    }
+  
   /**
    * Update online status text with new value.
    *
