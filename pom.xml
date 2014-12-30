@@ -132,8 +132,13 @@
                         <descriptor>src/assemble/exe.xml</descriptor>
                     </descriptors>
                     <archive>
-                        <manifestFile>src/main/resources/META-INF/MANIFEST.MF
-                        </manifestFile>
+                        <manifest>
+                            <mainClass>org.sparkbit.SparkBitInExecutableJar</mainClass>
+                        </manifest>
+                        <!-- Default Built-By: value in manifest is variable ${user.name} -->
+                        <manifestEntries>
+                            <Built-By>coinspark.org</Built-By>
+                        </manifestEntries>
                     </archive>
                 </configuration>
                 <executions>
