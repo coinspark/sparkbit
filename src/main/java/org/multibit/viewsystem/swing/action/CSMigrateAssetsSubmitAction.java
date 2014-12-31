@@ -40,6 +40,7 @@ import com.google.bitcoin.core.Wallet.SendRequest;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.ArrayList;
+import org.coinspark.core.CSExceptions;
 
 /**
  * This {@link Action} signs a message
@@ -247,7 +248,9 @@ public class CSMigrateAssetsSubmitAction extends MultiBitSubmitAction implements
             ex.printStackTrace();
         } catch (InsufficientMoneyException ex) {
             ex.printStackTrace();
-        }
+        } catch (CSExceptions.CannotEncode ex) {
+            ex.printStackTrace();	    
+	}
 
     }
     

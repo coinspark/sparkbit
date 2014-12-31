@@ -61,6 +61,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
+import org.coinspark.core.CSExceptions;
 import org.multibit.model.bitcoin.WalletAddressBookData;
 import org.multibit.utils.CSMiscUtils;
 import org.multibit.viewsystem.swing.UpdateAssetBalanceService;
@@ -705,6 +706,8 @@ public class MultiBitService {
     } catch (VerificationException e1) {
       // TODO Auto-generated catch block
       e1.printStackTrace();
+    } catch (CSExceptions.CannotEncode ex) {
+	ex.printStackTrace();
     }
 
     Transaction sendTransaction = sendRequest.tx;
