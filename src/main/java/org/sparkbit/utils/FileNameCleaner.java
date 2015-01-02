@@ -43,4 +43,15 @@ public class FileNameCleaner {
     }
     return cleanName.toString();
   }
+  
+  /**
+   * Valid Characters: a-z, A-z, 0-9, -, _
+   * Must start with: a-z, A-z, 0-9 
+   * @param s
+   * @return
+   */
+  public static String cleanFileNameForWallet(String s) {
+      String sane = s.replaceAll("[^a-zA-Z0-9\\-_]+", "");
+      return sane;
+  }
 }

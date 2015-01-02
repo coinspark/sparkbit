@@ -239,8 +239,8 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 	if (!isNameSane) {
 	    JSONRPCError.WALLET_NAME_BAD_CHARS.raiseRpcException();
 	}
-	if (name.startsWith(".") || name.endsWith(".")) {
-	    JSONRPCError.WALLET_NAME_PERIOD_START_END.raiseRpcException();
+	if (name.startsWith("-") || name.startsWith("_")) {
+	    JSONRPCError.WALLET_NAME_BEGINS_WITH_SYMBOL.raiseRpcException();
 	}
 	
 
@@ -434,7 +434,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     Check to see if a name gets cleaned or not because it contains characters bad for a filename
     */
     private boolean sanityCheckName(String name) {
-	String cleaned = FileNameCleaner.cleanFileName(name);
+	String cleaned = FileNameCleaner.cleanFileNameForWallet(name);
 	return (cleaned.equals(name));
     }
 	

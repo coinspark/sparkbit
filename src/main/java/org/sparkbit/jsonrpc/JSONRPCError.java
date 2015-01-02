@@ -50,7 +50,7 @@ public enum JSONRPCError {
   ASSET_INSUFFICIENT_BALANCE(20, "Insufficient funds to send asset"),
   CREATE_WALLET_FAILED(21, "Could not create wallet"),
   WALLET_NAME_BAD_CHARS(22, "Wallet name should not contain illegal characters"),
-  WALLET_NAME_PERIOD_START_END(23, "Wallet name cannot start or end with a period character"),
+  WALLET_NAME_BEGINS_WITH_SYMBOL(23, "Wallet name must start with a letter or number"),
   DELETE_ASSET_FAILED(24, "Could not delete asset"),
   DELETE_ASSET_NONZERO_BALANCE(25, "Cannot delete asset because it still has a balance"),
   ASSETREF_INVALID(26, "Asset reference is not valid"),
