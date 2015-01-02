@@ -80,6 +80,17 @@ struct JSONRPCBalance {
 	visible bool
 }
 
+// bitcoind has an 'account' field
+struct JSONRPCUnspentTransactionOutput {
+    txid string
+    vout int
+    bitcoin_address string
+    coinspark_address string [optional]
+    scriptPubKey string
+    amounts []JSONRPCBalance
+    confirmations int
+}
+
 interface sparkbit {
 	createwallet(walletname string) bool
   	sendasset(walletname string, address string, assetref string, quantity float, senderpays bool) string
@@ -102,5 +113,8 @@ interface sparkbit {
   	stop() bool
 
   	// stop() can only be invoked from same computer as sparkbit
+
+// onlyvisible bool <--- would be useful
+	listunspent(walletname string, minconf int, maxconf int, addresses []string) []JSONRPCUnspentTransactionOutput
 }
 

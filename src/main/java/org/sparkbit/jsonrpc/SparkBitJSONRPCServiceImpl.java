@@ -47,6 +47,7 @@ import java.io.*;
 import org.multibit.file.BackupManager;
 import com.google.bitcoin.crypto.KeyCrypterException;
 import com.google.bitcoin.script.Script;
+import com.google.bitcoin.wallet.DefaultCoinSelector;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
@@ -80,6 +81,11 @@ import org.apache.commons.io.FileDeleteStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Set;
+import org.coinspark.wallet.CSBalance;
+import org.coinspark.wallet.CSTransactionOutput;
+import java.util.HashSet;
 
 /**
  * For now, synchronized access to commands which mutate
@@ -1097,6 +1103,363 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    resultList.add(amount);
 	
 	return resultList;
+    }
+    
+    /**
+     * Returns an array of unspent transaction outputs, detailing the Bitcoin and
+     * asset balances tied to that UTXO.
+     * 
+     * Behavior is modeled from bitcoin: https://bitcoin.org/en/developer-reference#listunspent
+     * minconf "Default is 1; use 0 to count unconfirmed transactions."
+     * maxconf "Default is 9,999,999; use 0 to count unconfirmed transactions."
+     * As minconf and maxconf are not optional, the default values above are ignored.
+     * 
+     * @param walletname
+     * @param minconf
+     * @param maxconf
+     * @param addresses	    List of CoinSpark or Bitcoin addresses
+     * @return
+     * @throws com.bitmechanic.barrister.RpcException 
+     */
+    @Override
+    public JSONRPCUnspentTransactionOutput[] listunspent(String walletname, Long minconf, Long maxconf, String[] addresses) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("LIST UNSPENT TRANSACTION OUTPUTS");
+	log.info("wallet name  = " + walletname);
+	log.info("min number of confirmations = " + minconf);
+	log.info("max number of confirmations = " + maxconf);
+	log.info("addresses = " + Arrays.toString(addresses));
+	
+	Wallet w = getWalletForWalletName(walletname);
+	if (w==null) {
+	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
+	}
+	
+	if (minconf<0 || maxconf<0) {
+	    JSONRPCError.CONFIRMATIONS_TOO_LOW.raiseRpcException();
+	}
+	
+	NetworkParameters networkParams = this.controller.getModel().getNetworkParameters();
+	int mostCommonChainHeight = this.controller.getMultiBitService().getPeerGroup().getMostCommonChainHeight();
+	
+	boolean skipAddresses = addresses.length == 0;
+	
+	// Parse the list of addresses
+	// If CoinSpark, convert to BTC.
+	Set<String> setOfAddresses = new HashSet<String>();
+	for (String address: addresses) {
+	    address = address.trim();
+	    if (address.length()==0) {
+		continue; // ignore empty string
+	    }
+	    String btcAddress = null;
+	    String csAddress = null;
+	    if (address.startsWith("s")) {
+		csAddress = address;
+		btcAddress = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(address);
+		if (btcAddress == null) {
+		    // Invalid CoinSpark address, so throw exception
+		    JSONRPCError.COINSPARK_ADDRESS_INVALID.raiseRpcException(csAddress);
+		}
+	    } else {
+		btcAddress = address;
+	    }
+	    boolean b = CSMiscUtils.validateBitcoinAddress(btcAddress, this.controller);
+	    if (b) {
+		setOfAddresses.add(btcAddress);
+		// convenience to add coinspark address for lookup
+//		if (csAddress != null) setOfAddresses.add(csAddress);
+	    } else {
+		if (csAddress != null) {
+		    // Invalid Bitcoin address from decoded CoinSpark address so throw exception.
+		    JSONRPCError.COINSPARK_ADDRESS_INVALID.raiseRpcException(csAddress + " --> decoded btc address " + btcAddress);
+		} else {
+		    // Invalid Bitcoin address
+		    JSONRPCError.BITCOIN_ADDRESS_INVALID.raiseRpcException(btcAddress);
+		}
+	    }
+	}
+	
+	// If the set of addresses is empty, list of addresses probably whitespace etc.
+	// Let's treat as skipping addresses.
+	if (setOfAddresses.size()==0) {
+	    skipAddresses = true;
+	}
+	
+	Map<String, String> csAddressMap = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
+	
+	ArrayList<JSONRPCUnspentTransactionOutput> resultList = new ArrayList<>();
+
+	Map<CSTransactionOutput, Map<Integer,CSBalance>> map = w.CS.getAllAssetTxOuts();
+//	Set<CSTransactionOutput> keys = map.keySet();
+	Iterator it = map.entrySet().iterator();
+	while (it.hasNext()) {
+	    Map.Entry entry = (Map.Entry) it.next();
+	    CSTransactionOutput cstxout = (CSTransactionOutput) entry.getKey();
+
+	    // Only process if txout belongs to our wallet and is unspent
+	    Transaction tx = cstxout.getParentTransaction();
+	    TransactionOutput txout = tx.getOutput(cstxout.getIndex());
+	    if (!txout.isAvailableForSpending() || !txout.isMine(w)) {
+		continue;
+	    }
+
+
+	    int txAppearedAtChainHeight = tx.getConfidence().getAppearedAtChainHeight();
+	    int numConfirmations = mostCommonChainHeight - txAppearedAtChainHeight + 1; // if same, then it means 1 confirmation
+	    // NOTE: if we are syncing, result could be 0 or negative?
+	    
+	    // Only process if number of confirmations is within range.
+	    if (minconf==0 || maxconf==0) {
+		// Unconfirmed transactions are okay, so do nothing.
+	    } else if (numConfirmations < minconf || numConfirmations > maxconf) {
+		// Skip if outside of range
+		continue;
+	    }
+	    
+	    
+	    // Only process if the BTC address for this tx is in the list of addresses
+	    String btcAddress = txout.getScriptPubKey().getToAddress(networkParams).toString();
+	    if (!skipAddresses && !setOfAddresses.contains(btcAddress)) {
+		continue;
+	    }
+	    
+	    // Get the bitcoin and asset balances on this utxo
+	    Map<Integer,CSBalance> balances = (Map<Integer,CSBalance>) entry.getValue();
+	    
+	    // FIXME: Debugging
+	    log.info(">>>> balances = " + balances);
+	    if (balances.isEmpty()) {
+		Map<Integer, BigInteger> receiveMap = w.CS.getAssetsSentToMe(tx);
+		Map<Integer, BigInteger> sendMap = w.CS.getAssetsSentFromMe(tx);
+		log.info(">>>> ...receiveMap = " + receiveMap);
+		log.info(">>>> ...sendMap = " + sendMap);
+	    }
+	    // END FIXME:
+	    
+	    boolean hasAssets = false;
+	    ArrayList<JSONRPCBalance> balancesList = new ArrayList<>();
+
+	    for (Map.Entry<Integer, CSBalance> balanceEntry : balances.entrySet()) {
+		Integer assetID = balanceEntry.getKey();
+		CSBalance balance = balanceEntry.getValue();
+		BigInteger qty = balance.getQty();
+		
+		boolean isSelectable = DefaultCoinSelector.isSelectable(tx);
+
+		log.info(">>>> assetID = " + assetID + " , qty = " + qty);
+		
+		// Handle Bitcoin specially
+		if (assetID==0) {
+		    JSONRPCBalance bal = null;
+		    if (isSelectable) {
+			bal = createBitcoinBalance(w, qty, qty);
+		    } else {
+			bal = createBitcoinBalance(w, qty, BigInteger.ZERO);
+		    }
+		    System.out.println(">>> bal = " + bal.toString());
+		    balancesList.add(bal);
+		    continue;
+		}
+		
+		// Other assets
+		hasAssets = true;
+		
+		if (qty.compareTo(BigInteger.ZERO)>0) {
+		    JSONRPCBalance bal = null;
+		    if (isSelectable) {
+			bal = createAssetBalance(w, assetID, qty, qty);
+		    } else {
+			bal = createAssetBalance(w, assetID, qty, BigInteger.ZERO);
+		    }
+		    balancesList.add(bal);
+		}
+	    }
+	    JSONRPCBalance[] balancesArray = balancesList.toArray(new JSONRPCBalance[0]); 
+
+	    String scriptPubKeyHexString = Utils.bytesToHexString( txout.getScriptBytes() );
+
+	    
+	    // Build the object to return
+	    JSONRPCUnspentTransactionOutput utxo = new JSONRPCUnspentTransactionOutput();
+	    utxo.setTxid(tx.getHashAsString());
+	    utxo.setVout((long)cstxout.getIndex());
+	    utxo.setScriptPubKey(scriptPubKeyHexString);
+	    utxo.setAmounts(balancesArray); //new JSONRPCBalance[0]);
+	    utxo.setConfirmations((long)numConfirmations);
+	    
+	    utxo.setBitcoin_address(btcAddress);
+	    
+	    if (hasAssets) {
+		String sparkAddress = null;
+	    // First let's see if we have stored the recipient in our map and use it instead
+		// of generating a new one from bitcoin address
+		try {
+		    if (csAddressMap != null) {
+			String spk = csAddressMap.get(tx.getHashAsString());
+			String btc = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(spk);
+			if (btc.equals(btcAddress)) {
+			    sparkAddress = spk;
+			}
+		    }
+		} catch (Exception e) {
+		}
+		if (sparkAddress == null) {
+		    sparkAddress = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(btcAddress);
+		}
+		utxo.setCoinspark_address(sparkAddress);
+	    }
+	    
+	    utxo.setAmounts(balancesArray);
+	    
+	    resultList.add(utxo);
+	}
+
+	JSONRPCUnspentTransactionOutput[] resultArray = resultList.toArray(new JSONRPCUnspentTransactionOutput[0]);
+	return resultArray;
+    }
+
+    /**
+     * Create a JSONRPCBalance object for Bitcoin asset
+     * @param w
+     * @return 
+     */
+    private JSONRPCBalance createBitcoinBalance(Wallet w) {
+	BigInteger rawBalanceSatoshi = w.getBalance(Wallet.BalanceType.ESTIMATED);
+	BigInteger rawSpendableSatoshi = w.getBalance(Wallet.BalanceType.AVAILABLE);
+	return createBitcoinBalance(w, rawSpendableSatoshi, rawBalanceSatoshi);
+    }
+    
+    /**
+     * Create a JSONRPCBalance object for Bitcoin asset
+     * @param w
+     * @param rawBalanceSatoshi   In BitcoinJ terms, this is the estimated total balance
+     * @param rawSpendableSatoshi       In BitcoinJ terms, this is the available amount to spend
+     * @return 
+     */
+    private JSONRPCBalance createBitcoinBalance(Wallet w, BigInteger rawBalanceSatoshi, BigInteger rawSpendableSatoshi) {
+	BigDecimal rawBalanceBTC = new BigDecimal(rawBalanceSatoshi).divide(new BigDecimal(Utils.COIN));
+	BigDecimal rawSpendableBTC = new BigDecimal(rawSpendableSatoshi).divide(new BigDecimal(Utils.COIN));
+	String rawBalanceDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
+	String rawSpendableDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
+
+	JSONRPCBalanceAmount bitcoinBalanceAmount = new JSONRPCBalanceAmount(rawBalanceSatoshi.longValue(), rawBalanceBTC.doubleValue(), rawBalanceDisplay);
+	JSONRPCBalanceAmount bitcoinSpendableAmount = new JSONRPCBalanceAmount(rawSpendableSatoshi.longValue(), rawSpendableBTC.doubleValue(), rawSpendableDisplay);	
+	JSONRPCBalance btcAssetBalance = new JSONRPCBalance();
+	btcAssetBalance.setAsset_ref("bitcoin");
+	btcAssetBalance.setBalance(bitcoinBalanceAmount);
+	btcAssetBalance.setSpendable(bitcoinSpendableAmount);
+	btcAssetBalance.setVisible(true);
+	btcAssetBalance.setValid(true);
+	return btcAssetBalance;
+    }
+    
+    /**
+     * Create and populate a JSONRPCBalance object given an assetID and balance
+     * @param w
+     * @param assetID
+     * @param totalRaw
+     * @param spendableRaw
+     * @return 
+     */
+    private JSONRPCBalance createAssetBalance(Wallet w, int assetID, BigInteger totalRaw, BigInteger spendableRaw) {
+	//Wallet.CoinSpark.AssetBalance assetBalance;
+	CSAsset asset = w.CS.getAsset(assetID);
+
+	String name = asset.getName();
+	String nameShort = asset.getNameShort();
+
+	if (name == null) {
+	    CoinSparkGenesis genesis = asset.getGenesis();
+	    if (genesis != null) {
+		name = "Asset from " + genesis.getDomainName();
+		nameShort = name;
+	    } else {
+		// No genesis block found yet
+		name = "Other Asset";
+		nameShort = "Other Asset";
+	    }
+	}
+
+	String assetRef = CSMiscUtils.getHumanReadableAssetRef(asset);
+	if (assetRef == null) {
+	    assetRef = "Awaiting new asset confirmation...";
+	}
+
+	Double spendableQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, spendableRaw).doubleValue();
+	String spendableDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, spendableRaw);
+	JSONRPCBalanceAmount spendableAmount = new JSONRPCBalanceAmount(spendableRaw.longValue(), spendableQty, spendableDisplay);
+	Double balanceQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, totalRaw).doubleValue();
+	String balanceDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, totalRaw);
+
+	JSONRPCBalanceAmount balanceAmount = new JSONRPCBalanceAmount(totalRaw.longValue(), balanceQty, balanceDisplay);
+	JSONRPCBalance ab = new JSONRPCBalance();
+	ab.setAsset_ref(assetRef);
+	ab.setBalance(balanceAmount);
+	ab.setSpendable(spendableAmount);
+
+	ab.setName(name);
+	ab.setName_short(nameShort);
+	String domain = CSMiscUtils.getDomainHost(asset.getDomainURL());
+	ab.setDomain(domain);
+	ab.setUrl(asset.getAssetWebPageURL());
+	ab.setIssuer(asset.getIssuer());
+	ab.setDescription(asset.getDescription());
+	ab.setUnits(asset.getUnits());
+	ab.setMultiple(asset.getMultiple());
+	ab.setStatus(CSMiscUtils.getHumanReadableAssetState(asset.getAssetState()));
+	boolean isValid = (asset.getAssetState() == CSAsset.CSAssetState.VALID);
+	// FIXME: Check num confirms too?
+	ab.setValid(isValid);
+	Date validCheckedDate = asset.getValidChecked();
+	if (validCheckedDate != null) {
+	    ab.setChecked_unixtime(validCheckedDate.getTime() / 1000L);
+	}
+	ab.setContract_url(asset.getContractUrl());
+
+	String contractPath = asset.getContractPath();
+	if (contractPath != null) {
+	    String appDirPath = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory();
+	    File file = new File(contractPath);
+	    File dir = new File(appDirPath);
+	    try {
+		URI absolute = file.toURI();
+		URI base = dir.toURI();
+		URI relative = base.relativize(absolute);
+		contractPath = relative.getPath();
+	    } catch (Exception e) {
+		// do nothing, if error, just use full contractPath
+	    }
+	}
+	ab.setContract_file(contractPath);
+	ab.setGenesis_txid(asset.getGenTxID());
+	Date creationDate = asset.getDateCreation();
+	if (creationDate != null) {
+	    ab.setAdded_unixtime(creationDate.getTime() / 1000L);
+	}
+	// 3 October 2014, 1:47 am
+	SimpleDateFormat sdf = new SimpleDateFormat("d MMMM yyyy, h:mm");
+	sdf.setTimeZone(TimeZone.getTimeZone("UTC")); // CoinSpark asset web page shows GMT/UTC.
+	SimpleDateFormat ampmdf = new SimpleDateFormat(" a");  // by default is uppercase and we need lower to match website
+	Date issueDate = asset.getIssueDate();
+	if (issueDate != null) {
+	    ab.setIssue_date(sdf.format(issueDate) + ampmdf.format(issueDate).toLowerCase());
+	    ab.setIssue_unixtime(issueDate.getTime() / 1000L);
+	}
+
+	// Never expires
+	Date expiryDate = asset.getExpiryDate();
+	if (expiryDate != null) {
+	    ab.setExpiry_date(sdf.format(expiryDate) + ampmdf.format(expiryDate).toLowerCase());
+	    ab.setExpiry_unixtime(expiryDate.getTime() / 1000L);
+	}
+	ab.setTracker_urls(asset.getCoinsparkTrackerUrls());
+	ab.setIcon_url(asset.getIconUrl());
+	ab.setImage_url(asset.getImageUrl());
+	ab.setFeed_url(asset.getFeedUrl());
+	ab.setRedemption_url(asset.getRedemptionUrl());
+	ab.setVisible(asset.isVisible());
+	return ab;
     }
     
     @Override

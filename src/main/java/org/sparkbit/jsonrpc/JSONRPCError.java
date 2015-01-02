@@ -55,7 +55,7 @@ public enum JSONRPCError {
   DELETE_ASSET_NONZERO_BALANCE(25, "Cannot delete asset because it still has a balance"),
   ASSETREF_INVALID(26, "Asset reference is not valid"),
   DELETE_INVALID_ASSET_FAILED(27,"Cannot delete an invalid asset with a non-zero balance"),
-  
+  CONFIRMATIONS_TOO_LOW(28,"Number of confirmations cannot be negative"),
   
   THROW_EXCEPTION(99999, ""); // RESERVED. For wrapping up a general exception and throwing it.
   
@@ -87,6 +87,12 @@ public enum JSONRPCError {
     public void raiseRpcException() throws RpcException {
 	log.error(this.toString());
 	throw new RpcException(this.code, this.description);
+    }
+    
+    // Convenience function, raise predefined exception with extra info.
+    public void raiseRpcException(String message) throws RpcException {
+	log.error(this.toString() + " : " + message);
+	throw new RpcException(this.code, this.description + " : " + message);
     }
 
     public static void throwAsRpcException(String message) throws RpcException {

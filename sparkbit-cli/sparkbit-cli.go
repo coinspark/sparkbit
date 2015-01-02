@@ -126,6 +126,7 @@ Available JSON-RPC commands:
  listwallets, createwallet, deletewallet
  listbalances, listtransactions
  listaddresses, createaddresses, setaddresslabel
+ listunspent
  addasset, setassetvisible, refreshasset, deleteasset
  sendbitcoin, sendasset
 `);
@@ -372,6 +373,27 @@ func main() {
 			os.Exit(1)
 		}
 		res, err = sparkbit.Listtransactions(params[0], i64)
+	case "listunspent":
+		validateParams(4, method, "WALLETNAME MINCONF MAXCONF ADDRESSES\n* Set MINCONF or MAXCONF to 0 if you want to include unconfirmed transactions.\n* Set ADDRESSES to \"\" or - if you want all UTXOs")
+		minconf, perr := strconv.ParseInt(params[1], 10, 64)
+		maxconf, perr2 := strconv.ParseInt(params[2], 10, 64)
+		if perr != nil {
+			fmt.Println("Minimum number of confirmations must be a valid number")
+		}
+		if perr2 != nil {
+			fmt.Println("Maximum number of confirmations must be a valid number")
+		}
+		if perr != nil || perr2 != nil {
+			os.Exit(1)
+		}
+		z := strings.TrimSpace(params[3])
+		var addresses []string
+		if z == "-" {
+			addresses = []string{}
+		} else {
+			addresses = strings.Split(z, ",")
+		}
+		res, err = sparkbit.Listunspent(params[0], minconf, maxconf, addresses)
 	case "listwallets":
 		validateParams(0, method, "")
 		res, err = sparkbit.Listwallets()
