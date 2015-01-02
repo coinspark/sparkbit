@@ -1337,7 +1337,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	JSONRPCBalanceAmount bitcoinSpendableAmount = new JSONRPCBalanceAmount(rawSpendableSatoshi.longValue(), rawSpendableBTC.doubleValue(), rawSpendableDisplay);	
 	JSONRPCBalance btcAssetBalance = new JSONRPCBalance();
 	btcAssetBalance.setAsset_ref("bitcoin");
-	btcAssetBalance.setBalance(bitcoinBalanceAmount);
+	btcAssetBalance.setTotal(bitcoinBalanceAmount);
 	btcAssetBalance.setSpendable(bitcoinSpendableAmount);
 	btcAssetBalance.setVisible(true);
 	btcAssetBalance.setValid(true);
@@ -1385,7 +1385,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	JSONRPCBalanceAmount balanceAmount = new JSONRPCBalanceAmount(totalRaw.longValue(), balanceQty, balanceDisplay);
 	JSONRPCBalance ab = new JSONRPCBalance();
 	ab.setAsset_ref(assetRef);
-	ab.setBalance(balanceAmount);
+	ab.setTotal(balanceAmount);
 	ab.setSpendable(spendableAmount);
 
 	ab.setName(name);

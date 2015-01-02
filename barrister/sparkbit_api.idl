@@ -51,7 +51,7 @@ struct JSONRPCBalanceAmount {
 // If we subclass with JSONRPCAssetBalance, the returned json is treated as parent class so fields are missing
 struct JSONRPCBalance {
 	asset_ref string
-	balance JSONRPCBalanceAmount
+	total JSONRPCBalanceAmount
 	spendable JSONRPCBalanceAmount
 	name string [optional]
 	name_short string [optional]
