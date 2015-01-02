@@ -1227,16 +1227,6 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    // Get the bitcoin and asset balances on this utxo
 	    Map<Integer,CSBalance> balances = (Map<Integer,CSBalance>) entry.getValue();
 	    
-	    // FIXME: Debugging
-	    log.info(">>>> balances = " + balances);
-	    if (balances.isEmpty()) {
-		Map<Integer, BigInteger> receiveMap = w.CS.getAssetsSentToMe(tx);
-		Map<Integer, BigInteger> sendMap = w.CS.getAssetsSentFromMe(tx);
-		log.info(">>>> ...receiveMap = " + receiveMap);
-		log.info(">>>> ...sendMap = " + sendMap);
-	    }
-	    // END FIXME:
-	    
 	    boolean hasAssets = false;
 	    ArrayList<JSONRPCBalance> balancesList = new ArrayList<>();
 
@@ -1477,21 +1467,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	ArrayList<JSONRPCBalance> resultList = new ArrayList<>();
 
 	// Add entry for BTC balances
-	BigInteger rawBalanceSatoshi = w.getBalance(Wallet.BalanceType.ESTIMATED);
-	BigInteger rawSpendableSatoshi = w.getBalance(Wallet.BalanceType.AVAILABLE);
-	BigDecimal rawBalanceBTC = new BigDecimal(rawBalanceSatoshi).divide(new BigDecimal(Utils.COIN));
-	BigDecimal rawSpendableBTC = new BigDecimal(rawSpendableSatoshi).divide(new BigDecimal(Utils.COIN));
-	String rawBalanceDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
-	String rawSpendableDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
-
-	JSONRPCBalanceAmount bitcoinBalanceAmount = new JSONRPCBalanceAmount(rawBalanceSatoshi.longValue(), rawBalanceBTC.doubleValue(), rawBalanceDisplay);
-	JSONRPCBalanceAmount bitcoinSpendableAmount = new JSONRPCBalanceAmount(rawSpendableSatoshi.longValue(), rawSpendableBTC.doubleValue(), rawSpendableDisplay);	
-	JSONRPCBalance btcAssetBalance = new JSONRPCBalance();
-	btcAssetBalance.setAsset_ref("bitcoin");
-	btcAssetBalance.setBalance(bitcoinBalanceAmount);
-	btcAssetBalance.setSpendable(bitcoinSpendableAmount);
-	btcAssetBalance.setVisible(true);
-	btcAssetBalance.setValid(true);
+	JSONRPCBalance btcAssetBalance = createBitcoinBalance(w);
 	resultList.add(btcAssetBalance);
 
 	
@@ -1527,8 +1503,12 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    
 	    String assetRef = CSMiscUtils.getHumanReadableAssetRef(asset);
 	    if (assetRef==null) assetRef = "Awaiting new asset confirmation...";
-	    
+	    	    
 	    assetBalance = w.CS.getAssetBalance(id);
+	    
+	    JSONRPCBalance ab = createAssetBalance(w, id, assetBalance.total, assetBalance.spendable);
+/*
+	    
 	    Long spendableRaw = assetBalance.spendable.longValue();
 	    Double spendableQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, assetBalance.spendable).doubleValue();
 	    String spendableDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, assetBalance.spendable);
@@ -1603,6 +1583,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    ab.setFeed_url(asset.getFeedUrl());
 	    ab.setRedemption_url(asset.getRedemptionUrl());
 	    ab.setVisible(asset.isVisible());
+	    */
 	    resultList.add(ab);
 	}
 	
