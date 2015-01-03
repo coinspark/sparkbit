@@ -1206,7 +1206,12 @@ WalletInfoData winfo = wd.getWalletInfo();
 		continue;
 	    }
 
-
+	    // If confidence is not building, don't list it as it is pending, dead or unknown.
+	    if (tx.getConfidence().getConfidenceType()!=TransactionConfidence.ConfidenceType.BUILDING) {
+		continue;
+	    }
+	    
+	    // getAppearedAtChainHeight() will throw illegalstate exception if confidence is not building
 	    int txAppearedAtChainHeight = tx.getConfidence().getAppearedAtChainHeight();
 	    int numConfirmations = mostCommonChainHeight - txAppearedAtChainHeight + 1; // if same, then it means 1 confirmation
 	    // NOTE: if we are syncing, result could be 0 or negative?
