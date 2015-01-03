@@ -86,6 +86,8 @@ import java.util.Set;
 import org.coinspark.wallet.CSBalance;
 import org.coinspark.wallet.CSTransactionOutput;
 import java.util.HashSet;
+import java.util.LinkedList;
+import org.spongycastle.util.encoders.Hex;
 
 /**
  * For now, synchronized access to commands which mutate
@@ -1592,6 +1594,34 @@ WalletInfoData winfo = wd.getWalletInfo();
     }
     
     
+    private synchronized boolean isTxOutSpendable(Wallet w, Sha256Hash hash, int vout) throws com.bitmechanic.barrister.RpcException {
+	Transaction tx = w.getTransaction(hash);
+	if (tx == null) {
+	    // Transaction is not in wallet
+	    JSONRPCError.TX_NOT_FOUND_IN_WALLET.raiseRpcException();
+	}
+	
+	TransactionOutput txout = null;
+	try {
+	    txout = tx.getOutput(vout);
+	} catch (IndexOutOfBoundsException e) {
+	    // Output not found on transaction
+	    JSONRPCError.TXOUT_INDEX_INVALID.raiseRpcException();
+	}
+	
+	if (!txout.isMine(w)) {
+	    // not my wallet - this should not happen if transaction is found in wallet.
+	    JSONRPCError.TXOUT_NOT_MINE.raiseRpcException();
+	}
+	
+	if (!txout.isAvailableForSpending()) {
+	    // not available for spending
+	    JSONRPCError.TXOUT_IS_NOT_AVAILABLE_FOR_SPENDING.raiseRpcException();
+	}
+	
+	return true;
+    }
+
     @Override
     public synchronized String sendbitcoin(String walletID, String address, Double amount) throws com.bitmechanic.barrister.RpcException
     {
@@ -1599,13 +1629,42 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("wallet name = " + walletID);
 	log.info("address     = " + address);
 	log.info("amount      = " + amount);
-	
+	return sendbitcoinwith_impl(walletID, null, 0L, address, amount);
+    }
+    
+    @Override
+    public synchronized String sendbitcoinwith(String walletID, String txid, Long vout, String address, Double amount) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND BITCOIN WITH");
+	log.info("wallet name = " + walletID);
+	log.info("txid        = " + txid);
+	log.info("vout        = " + vout);
+	log.info("address     = " + address);
+	log.info("amount      = " + amount);
+	return sendbitcoinwith_impl(walletID, txid, vout, address, amount);
+    }
+    
+    private synchronized String sendbitcoinwith_impl(String walletID, String txid, Long vout, String address, Double amount) throws com.bitmechanic.barrister.RpcException
+    {    
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
 	if (amount<=0.0) {
 	    JSONRPCError.SEND_BITCOIN_AMOUNT_TOO_LOW.raiseRpcException();
+	}
+	
+	// Check send with txid and vout
+	Sha256Hash sendWithTxidHash = null;
+	boolean canSpendSendWithTxOut = false;
+	if (txid != null) {
+	    try {
+		sendWithTxidHash = new Sha256Hash(txid);
+	    } catch (IllegalArgumentException e) {
+		// Not a valid tx hash string
+		JSONRPCError.INVALID_TXID_HASH.raiseRpcException();
+	    }
+	    canSpendSendWithTxOut = isTxOutSpendable(w, sendWithTxidHash, vout.intValue());
 	}
 	
 	String bitcoinAddress = address;
@@ -1647,6 +1706,16 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    sendRequest.fee = BigInteger.ZERO;
 	    sendRequest.feePerKb = BitcoinModel.SEND_FEE_PER_KB_DEFAULT;
 
+	    // Send with txout vout
+	    if (canSpendSendWithTxOut) {
+		boolean addedInput = sendRequest.addInput(w, new CSTransactionOutput(sendWithTxidHash, vout.intValue()));
+		if (!addedInput) {
+		    // Failed to add input, so throw exception
+		    JSONRPCError.SEND_WITH_TXID_VOUT_FAILED.raiseRpcException();
+		}
+	    }
+
+	    
 	    // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
 	    // Complete it (which works out the fee) but do not sign it yet.
 	    log.info("Just about to complete the tx (and calculate the fee)...");
@@ -1724,7 +1793,25 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("asset ref   = " + assetRef);
 	log.info("quantity    = " + quantity);
 	log.info("sender pays = " + senderPays);
-	
+	return sendassetwith_impl(walletID, null, 0L, address, assetRef, quantity, senderPays);
+    }
+    
+    @Override
+    public synchronized String sendassetwith(String walletID, String txid, Long vout, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND ASSET WITH");
+	log.info("wallet name = " + walletID);
+	log.info("txid        = " + txid);
+	log.info("vout        = " + vout);
+	log.info("address     = " + address);
+	log.info("asset ref   = " + assetRef);
+	log.info("quantity    = " + quantity);
+	log.info("sender pays = " + senderPays);
+	return sendassetwith_impl(walletID, txid, vout, address, assetRef, quantity, senderPays);
+    }
+    
+    private synchronized String sendassetwith_impl(String walletID, String txid, Long vout, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
+    {
 	String sendTxHash = null;
 	boolean sendValidated = false;
 	boolean sendSuccessful = false;
@@ -1733,6 +1820,20 @@ WalletInfoData winfo = wd.getWalletInfo();
 	if (w==null) {
 	    JSONRPCError.WALLET_NOT_FOUND.raiseRpcException();
 	}
+	
+	// Check send with txid and vout
+	Sha256Hash sendWithTxidHash = null;
+	boolean canSpendSendWithTxOut = false;
+	if (txid != null) {
+	    try {
+		sendWithTxidHash = new Sha256Hash(txid);
+	    } catch (IllegalArgumentException e) {
+		// Not a valid tx hash string
+		JSONRPCError.INVALID_TXID_HASH.raiseRpcException();
+	    }
+	    canSpendSendWithTxOut = isTxOutSpendable(w, sendWithTxidHash, vout.intValue());
+	}
+	
 	
 	if (quantity<=0.0) {
 	    JSONRPCError.SEND_ASSET_AMOUNT_TOO_LOW.raiseRpcException();
@@ -1853,6 +1954,15 @@ WalletInfoData winfo = wd.getWalletInfo();
                 sendRequest.feePerKb = BitcoinModel.SEND_FEE_PER_KB_DEFAULT;
 
                 // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
+		
+		// Send with txout vout
+		if (canSpendSendWithTxOut) {
+		    boolean addedInput = sendRequest.addInput(w, new CSTransactionOutput(sendWithTxidHash, vout.intValue()));
+		    if (!addedInput) {
+			// Failed to add input, so throw exception
+			JSONRPCError.SEND_WITH_TXID_VOUT_FAILED.raiseRpcException();
+		    }
+		}
 
                 // Complete it (which works out the fee) but do not sign it yet.
                 log.info("Just about to complete the tx (and calculate the fee)...");

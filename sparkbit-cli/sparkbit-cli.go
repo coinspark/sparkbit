@@ -128,7 +128,7 @@ Available JSON-RPC commands:
  listaddresses, createaddresses, setaddresslabel
  listunspent
  addasset, setassetvisible, refreshasset, deleteasset
- sendbitcoin, sendasset
+ sendbitcoin, sendbitcoinwith, sendasset, sendassetwith
 `);
 }
 
@@ -424,6 +424,40 @@ func main() {
 			os.Exit(1)
 		}
 		res, err = sparkbit.Sendbitcoin(params[0], params[1], f64)
+	case "sendassetwith":
+		validateParams(7, method, "WALLETNAME TXID VOUT ADDRESS ASSETREF QUANTITY SENDERPAYS")
+		vout, perr := strconv.ParseInt(params[2], 10, 64)
+		if perr != nil {
+			fmt.Println("Vout must be a valid number")
+			os.Exit(1)
+		}
+		f64, perr := strconv.ParseFloat(params[5], 64)
+		if perr != nil {
+			fmt.Println("Quantity must be a valid number")
+			os.Exit(1)
+		}
+		flag, perr := strconv.ParseBool(params[6])
+		if perr != nil {
+			fmt.Println("Sender pays flag must be true or false")
+			os.Exit(1)
+		}
+		res, err = sparkbit.Sendassetwith(params[0], params[1], vout, params[3], params[4], f64, flag)
+	case "sendbitcoinwith":
+		validateParams(5, method, "WALLETNAME TXID VOUT ADDRESS AMOUNT")
+		vout, perr := strconv.ParseInt(params[2], 10, 64)
+		if perr != nil {
+			fmt.Println("Vout must be a valid number")
+			os.Exit(1)
+		}
+
+		f64, perr := strconv.ParseFloat(params[4], 64)
+		if perr != nil {
+			fmt.Println("Amount is not a valid number")
+			os.Exit(1)
+		}
+		res, err = sparkbit.Sendbitcoinwith(params[0], params[1], vout, params[3], f64)
+	
+	
 	case "setaddresslabel":
 		validateParams(3, method, "WALLETNAME ADDRESS LABEL")
 		res, err = sparkbit.Setaddresslabel(params[0], params[1], params[2])

@@ -56,6 +56,12 @@ public enum JSONRPCError {
   ASSETREF_INVALID(26, "Asset reference is not valid"),
   DELETE_INVALID_ASSET_FAILED(27,"Cannot delete an invalid asset with a non-zero balance"),
   CONFIRMATIONS_TOO_LOW(28,"Number of confirmations cannot be negative"),
+  INVALID_TXID_HASH(29, "Transaction hash is invalid"),
+  SEND_WITH_TXID_VOUT_FAILED(30, "Could not transaction output to send request"),
+  TX_NOT_FOUND_IN_WALLET(31, "Could not find transaction in wallet"),
+  TXOUT_INDEX_INVALID(32, "Transaction output index is invalid"),
+  TXOUT_IS_NOT_AVAILABLE_FOR_SPENDING(33, "Transaction output is not available for spending"),
+  TXOUT_NOT_MINE(34, "Transaction output does not belong to wallet"),
   
   THROW_EXCEPTION(99999, ""); // RESERVED. For wrapping up a general exception and throwing it.
   
