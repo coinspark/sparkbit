@@ -1598,7 +1598,15 @@ WalletInfoData winfo = wd.getWalletInfo();
 	return resultArray;
     }
     
-    
+    /**
+     * Returns true if transaction output can be spent and belongs to the wallet.
+     * 
+     * @param w
+     * @param hash
+     * @param vout
+     * @return
+     * @throws com.bitmechanic.barrister.RpcException 
+     */
     private synchronized boolean isTxOutSpendable(Wallet w, Sha256Hash hash, int vout) throws com.bitmechanic.barrister.RpcException {
 	Transaction tx = w.getTransaction(hash);
 	if (tx == null) {
