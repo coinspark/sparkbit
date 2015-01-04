@@ -1268,11 +1268,12 @@ WalletInfoData winfo = wd.getWalletInfo();
 		
 		if (qty.compareTo(BigInteger.ZERO)>0) {
 		    JSONRPCBalance bal = null;
-		    if (isSelectable) {
-			bal = createAssetBalance(w, assetID, qty, qty);
-		    } else {
-			bal = createAssetBalance(w, assetID, qty, BigInteger.ZERO);
-		    }
+		    bal = createAssetBalance(w, assetID, qty, null);
+//		    if (isSelectable) {
+//			bal = createAssetBalance(w, assetID, qty, qty);
+//		    } else {
+//			bal = createAssetBalance(w, assetID, qty, BigInteger.ZERO);
+//		    }
 		    balancesList.add(bal);
 		}
 	    }
@@ -1360,7 +1361,7 @@ WalletInfoData winfo = wd.getWalletInfo();
      * @param w
      * @param assetID
      * @param totalRaw
-     * @param spendableRaw
+     * @param spendableRaw If null, we set the amount field, instead of total and spendable.
      * @return 
      */
     private JSONRPCBalance createAssetBalance(Wallet w, int assetID, BigInteger totalRaw, BigInteger spendableRaw) {
@@ -1387,17 +1388,25 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    assetRef = "Awaiting new asset confirmation...";
 	}
 
-	Double spendableQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, spendableRaw).doubleValue();
-	String spendableDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, spendableRaw);
-	JSONRPCBalanceAmount spendableAmount = new JSONRPCBalanceAmount(spendableRaw.longValue(), spendableQty, spendableDisplay);
-	Double balanceQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, totalRaw).doubleValue();
-	String balanceDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, totalRaw);
-
-	JSONRPCBalanceAmount balanceAmount = new JSONRPCBalanceAmount(totalRaw.longValue(), balanceQty, balanceDisplay);
+	
 	JSONRPCBalance ab = new JSONRPCBalance();
 	ab.setAsset_ref(assetRef);
-	ab.setTotal(balanceAmount);
-	ab.setSpendable(spendableAmount);
+	
+	// Compute total balance
+	Double balanceQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, totalRaw).doubleValue();
+	String balanceDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, totalRaw);
+	JSONRPCBalanceAmount balanceAmount = new JSONRPCBalanceAmount(totalRaw.longValue(), balanceQty, balanceDisplay);
+	
+	if (spendableRaw != null) {
+	    Double spendableQty = CSMiscUtils.getDisplayUnitsForRawUnits(asset, spendableRaw).doubleValue();
+	    String spendableDisplay = CSMiscUtils.getFormattedDisplayStringForRawUnits(asset, spendableRaw);
+	    JSONRPCBalanceAmount spendableAmount = new JSONRPCBalanceAmount(spendableRaw.longValue(), spendableQty, spendableDisplay);
+	
+	    ab.setTotal(balanceAmount);
+	    ab.setSpendable(spendableAmount);
+	} else {
+	    ab.setAmount(balanceAmount);
+	}
 
 	ab.setName(name);
 	ab.setName_short(nameShort);
