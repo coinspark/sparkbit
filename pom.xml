@@ -23,7 +23,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.sparkbit</groupId>
     <artifactId>sparkbit</artifactId>
-    <version>0.9.2</version>
+    <version>0.9.3</version>
     <name>SparkBit</name>
     <description>A Java Swing client for Bitcoin and CoinSpark</description>
     <url>https://sparkbit.org</url>
