@@ -84,6 +84,7 @@ struct JSONRPCBalance {
 	feed_url string [optional]
 	redemption_url string [optional]
 	visible bool
+        refreshing bool
 }
 
 // bitcoind has an 'account' field

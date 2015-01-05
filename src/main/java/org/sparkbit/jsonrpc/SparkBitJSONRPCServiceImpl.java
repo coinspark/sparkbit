@@ -1423,9 +1423,16 @@ WalletInfoData winfo = wd.getWalletInfo();
 	ab.setDescription(asset.getDescription());
 	ab.setUnits(asset.getUnits());
 	ab.setMultiple(asset.getMultiple());
-	ab.setStatus(CSMiscUtils.getHumanReadableAssetState(asset.getAssetState()));
 	boolean isValid = (asset.getAssetState() == CSAsset.CSAssetState.VALID);
-	// FIXME: Check num confirms too?
+	
+	if (asset.getAssetState()==CSAsset.CSAssetState.REFRESH) {
+	    ab.setRefreshing(true);
+	    ab.setStatus(CSMiscUtils.getHumanReadableAssetState(asset.getAssetStateBeforeRefresh())));
+	} else {
+	    ab.setRefreshing(false);
+	    ab.setStatus(CSMiscUtils.getHumanReadableAssetState(asset.getAssetState()));
+	}
+	
 	ab.setValid(isValid);
 	Date validCheckedDate = asset.getValidChecked();
 	if (validCheckedDate != null) {
