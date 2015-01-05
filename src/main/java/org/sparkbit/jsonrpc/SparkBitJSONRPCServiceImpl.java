@@ -1254,9 +1254,9 @@ WalletInfoData winfo = wd.getWalletInfo();
 		if (assetID==0) {
 		    JSONRPCBalance bal = null;
 		    if (isSelectable) {
-			bal = createBitcoinBalance(w, qty, qty);
+			bal = createBitcoinBalance(w, qty, null);
 		    } else {
-			bal = createBitcoinBalance(w, qty, BigInteger.ZERO);
+			bal = createBitcoinBalance(w, qty, null);
 		    }
 		    System.out.println(">>> bal = " + bal.toString());
 		    balancesList.add(bal);
@@ -1337,23 +1337,29 @@ WalletInfoData winfo = wd.getWalletInfo();
      * @param w
      * @param rawBalanceSatoshi   In BitcoinJ terms, this is the estimated total balance
      * @param rawSpendableSatoshi       In BitcoinJ terms, this is the available amount to spend
+     *                                  If null, will set amount instead of total and spendable.
      * @return 
      */
     private JSONRPCBalance createBitcoinBalance(Wallet w, BigInteger rawBalanceSatoshi, BigInteger rawSpendableSatoshi) {
-	BigDecimal rawBalanceBTC = new BigDecimal(rawBalanceSatoshi).divide(new BigDecimal(Utils.COIN));
-	BigDecimal rawSpendableBTC = new BigDecimal(rawSpendableSatoshi).divide(new BigDecimal(Utils.COIN));
-	String rawBalanceDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
-	String rawSpendableDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
+	JSONRPCBalance balance = new JSONRPCBalance();
+	balance.setAsset_ref("bitcoin");
 
+	BigDecimal rawBalanceBTC = new BigDecimal(rawBalanceSatoshi).divide(new BigDecimal(Utils.COIN));
+	String rawBalanceDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
 	JSONRPCBalanceAmount bitcoinBalanceAmount = new JSONRPCBalanceAmount(rawBalanceSatoshi.longValue(), rawBalanceBTC.doubleValue(), rawBalanceDisplay);
-	JSONRPCBalanceAmount bitcoinSpendableAmount = new JSONRPCBalanceAmount(rawSpendableSatoshi.longValue(), rawSpendableBTC.doubleValue(), rawSpendableDisplay);	
-	JSONRPCBalance btcAssetBalance = new JSONRPCBalance();
-	btcAssetBalance.setAsset_ref("bitcoin");
-	btcAssetBalance.setTotal(bitcoinBalanceAmount);
-	btcAssetBalance.setSpendable(bitcoinSpendableAmount);
-	btcAssetBalance.setVisible(true);
-	btcAssetBalance.setValid(true);
-	return btcAssetBalance;
+
+	if (rawSpendableSatoshi != null) {
+	    BigDecimal rawSpendableBTC = new BigDecimal(rawSpendableSatoshi).divide(new BigDecimal(Utils.COIN));
+	    String rawSpendableDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
+	    JSONRPCBalanceAmount bitcoinSpendableAmount = new JSONRPCBalanceAmount(rawSpendableSatoshi.longValue(), rawSpendableBTC.doubleValue(), rawSpendableDisplay);
+	    balance.setTotal(bitcoinBalanceAmount);
+	    balance.setSpendable(bitcoinSpendableAmount);
+	} else {
+	    balance.setAmount(bitcoinBalanceAmount);
+	}
+	balance.setVisible(true);
+	balance.setValid(true);
+	return balance;
     }
     
     /**
