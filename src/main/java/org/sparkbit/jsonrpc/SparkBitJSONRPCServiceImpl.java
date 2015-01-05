@@ -179,11 +179,11 @@ public class SparkBitJSONRPCServiceImpl implements sparkbit {
 		
 		boolean synced = (lastSeenBlock == mostCommonChainHeight);
 		
-		log.debug(">>>> *** description = " + wd.getWalletDescription());
-		log.debug(">>>> last block = " + lastSeenBlock);
-		log.debug(">>>> mostCommonChainHeight = " + mostCommonChainHeight);
-		log.debug(">>>> replay UUID = " + wd.getReplayTaskUUID());
-		log.debug(">>>> busy key = " + wd.getBusyTaskKey());
+//		log.debug(">>>> *** description = " + wd.getWalletDescription());
+//		log.debug(">>>> last block = " + lastSeenBlock);
+//		log.debug(">>>> mostCommonChainHeight = " + mostCommonChainHeight);
+//		log.debug(">>>> replay UUID = " + wd.getReplayTaskUUID());
+//		log.debug(">>>> busy key = " + wd.getBusyTaskKey());
 		if (wd.getReplayTaskUUID() != null) {
 		    synced = false;
 		} else if (wd.isBusy()) {
@@ -1248,7 +1248,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		
 		boolean isSelectable = DefaultCoinSelector.isSelectable(tx);
 
-		log.info(">>>> assetID = " + assetID + " , qty = " + qty);
+//		log.info(">>>> assetID = " + assetID + " , qty = " + qty);
 		
 		// Handle Bitcoin specially
 		if (assetID==0) {

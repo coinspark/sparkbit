@@ -391,7 +391,6 @@ public class CSMiscUtils {
     public static BigInteger calcTotalRawCharge(CSAsset asset, BigInteger numRawUnits) {
 	BigInteger interestCharge = calcRawPercentageCharge(asset, numRawUnits);
 	BigInteger flatCharge = calcRawFlatCharge(asset);
-	System.out.println(">>>>> raw flat charge = " + flatCharge);
 	return interestCharge.add(flatCharge);
     }
     

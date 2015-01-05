@@ -792,7 +792,7 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
 
         BasicSplitPaneDivider divider = ( ( javax.swing.plaf.basic.BasicSplitPaneUI)splitPane.getUI()).getDivider();
         divider.setDividerSize(WIDTH_OF_SPLIT_PANE_DIVIDER);
-       log.debug(">>>> showMultipleWallets = " + showMultipleWallets);
+
 	// Do not show multiple wallets, unless setting in .properties file is set.
 	if (!showMultipleWallets) {
 	    splitPane.setEnabled(false);
