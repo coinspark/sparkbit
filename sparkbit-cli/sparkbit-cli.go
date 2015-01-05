@@ -126,9 +126,9 @@ Available JSON-RPC commands:
  listwallets, createwallet, deletewallet
  listbalances, listtransactions
  listaddresses, createaddresses, setaddresslabel
- listunspent
  addasset, setassetvisible, refreshasset, deleteasset
- sendbitcoin, sendbitcoinwith, sendasset, sendassetwith
+ sendbitcoin, sendasset
+ listunspent, sendbitcoinwith, sendassetwith
 `);
 }
 
