@@ -1359,6 +1359,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	}
 	balance.setVisible(true);
 	balance.setValid(true);
+	balance.setRefreshing(false);
 	return balance;
     }
     
@@ -1427,7 +1428,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	
 	if (asset.getAssetState()==CSAsset.CSAssetState.REFRESH) {
 	    ab.setRefreshing(true);
-	    ab.setStatus(CSMiscUtils.getHumanReadableAssetState(asset.getAssetStateBeforeRefresh())));
+	    ab.setStatus(CSMiscUtils.getHumanReadableAssetState(asset.getAssetStateBeforeRefresh()));
 	} else {
 	    ab.setRefreshing(false);
 	    ab.setStatus(CSMiscUtils.getHumanReadableAssetState(asset.getAssetState()));
