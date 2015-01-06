@@ -27,6 +27,7 @@ import javax.swing.JTable;
 import org.multibit.model.bitcoin.WalletAssetTableData;
 import org.multibit.viewsystem.swing.WalletAssetSummaryTableModel;
 import org.coinspark.wallet.CSAsset;
+import sun.util.logging.resources.logging;
 	
 /**
  *
@@ -50,16 +51,17 @@ public class CSOpenAssetContractURLAction extends AbstractAction {
 //	System.out.println(">>> ASSET STATE: " + asset.getAssetState() + " , CONTRACT STATE: " + asset.getAssetContractState());
 	boolean cachedFlag = false;
 	String url = null;
-	// TODO: Maybe just use the asset state of VALID or REFRESH?
 	if (asset.getValidChecked() != null && asset.getValidFailures()==0) {
 	    url = asset.getContractUrl();
 	} else {
-	    String path = data.getAsset().getContractPath();
-	    File f = new File(path);
-	    if (f.exists()) {
-		url = f.toURI().toString();
+	    String path = asset.getValidContractPath();
+	    if (path != null) {
+		File f = new File(path);
+		if (f.exists()) {
+		    url = f.toURI().toString();
+		}
+		cachedFlag = true;
 	    }
-	    cachedFlag = true;
 	}
 	
 	if (url==null) return; // something went wrong, so do nothing.

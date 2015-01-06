@@ -695,7 +695,7 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		    tip = tip + "Contract not found on issuer's web-site";
 		    
 		    // This might happen if file on server is deleted
-		    if (asset.getContractPath() != null) {
+		    if (asset.getValidContractPath() != null) {
 			tip = tip + "<br><br>Click to read the cached copy of the contract";	
 		    }
 
@@ -704,7 +704,7 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		    tip = tip + "Contract is not a valid PDF document";
 		    
 		    // This might occur if file on server becomes corrupted
-		    if (asset.getContractPath() != null) {
+		    if (asset.getValidContractPath() != null) {
 			tip = tip + "<br><br>Click to read the cached copy of the contract";	
 		    }
 		} else if (contractState==CSAsset.CSAssetContractState.EMBEDDED_URL) {
@@ -712,13 +712,21 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		    tip = tip + "Contract is not allowed to contain an embedded URL";
 		    
 		    // This might occur if file on server is changed
-		    if (asset.getContractPath() != null) {
+		    if (asset.getValidContractPath() != null) {
 			tip = tip + "<br><br>Click to read the cached copy of the contract";	
 		    }
+		} else if (contractState==CSAsset.CSAssetContractState.POSSIBLE_EMBEDDED_URL) {
+		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.page_white_error);
+		    tip = tip + "Contract may contain an embedded URL which is not allowed";
+		    
+		    // This might occur if file on server is changed
+		    if (asset.getValidContractPath()!= null) {
+			tip = tip + "<br><br>Click to read the cached copy of the contract";	
+		    }		    
 		}
-		// If contract state POSSIBLE_EMBEDDED_URL or OK this means asset is valid.
-		// If the asset is invalid for any reason, and the contract exists, than
-		// show cached copy of contract.
+		// At this point, the contract state is VALID, so...
+		// ...if the asset is invalid for any reason but the contract exists locally,
+		//    show the cached contract.
 		else if (assetState != CSAsset.CSAssetState.VALID && asset.getContractPath() != null)
 		{
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.page_white_database);
