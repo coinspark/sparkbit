@@ -506,7 +506,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Version of BitCoinJ to use (multiple uses) -->
-        <bitcoinj.version>0.1-CS-0.11.2-MB-ALICE</bitcoinj.version>
+        <bitcoinj.version>0.2-CS-0.11.2-MB-ALICE</bitcoinj.version>
 
         <!-- Version of XChange to use (multiple uses) -->
         <xchange.version>1.10.0</xchange.version>
