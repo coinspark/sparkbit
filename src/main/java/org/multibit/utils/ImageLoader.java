@@ -104,6 +104,7 @@ public final class ImageLoader {
 	add,
 	arrow_refresh,
 	arrow_refresh_small,
+	attach,
 	baggage_cart_box,
 	ceo,
 	clock,
