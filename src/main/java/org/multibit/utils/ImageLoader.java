@@ -121,6 +121,7 @@ public final class ImageLoader {
 	hourglass,
 	information,
 	new_new, // renamed file from new as the java keyword new caused problems
+	note_pin,
 	page_white,
 	page_white_acrobat,
 	page_white_database,
