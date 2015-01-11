@@ -139,11 +139,10 @@ public class CSMiscUtils {
     */
     public static String convertBitcoinAddressToCoinSparkAddress(String bitcoinAddress) {
 	CoinSparkAddress csa = new CoinSparkAddress();
-        int flags=CoinSparkAddress.COINSPARK_ADDRESS_FLAG_ASSETS;
-	//| CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS;
+        int flags=CoinSparkAddress.COINSPARK_ADDRESS_FLAG_ASSETS | CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS;
 	csa.setAddressFlags(flags);
 	csa.setBitcoinAddress(bitcoinAddress);
-	//csa.setPaymentRef(new CoinSparkPaymentRef(0));
+	csa.setPaymentRef(new CoinSparkPaymentRef(0));
 
 	String s = csa.encode();
 	return s;

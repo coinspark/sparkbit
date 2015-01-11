@@ -38,7 +38,10 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.CharBuffer;
-
+import org.coinspark.protocol.CoinSparkPaymentRef;
+import org.coinspark.wallet.CSEventBus;
+import org.coinspark.wallet.CSEventType;
+import java.util.Map;
 import org.mapdb.*;
 import org.sparkbit.SparkBitMapDB;
 
@@ -213,6 +216,20 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
         } else {
           sendWasSuccessful = Boolean.TRUE;
           log.debug("Sent transaction was:\n" + transaction.toString());
+	  
+	    CoinSparkPaymentRef paymentRef = sendRequest.getPaymentRef();
+		// Insert payment ref into txid-paymentref map
+		if (paymentRef != null) {
+		    String sendTxHash = transaction.getHashAsString();
+		    Map<String, Long> paymentRefMap = SparkBitMapDB.INSTANCE.getTransactionPaymentRefMap();
+		    paymentRefMap.put(sendTxHash, paymentRef.getRef());
+		    SparkBitMapDB.INSTANCE.getMapDB().commit();
+		    
+		    CSEventBus.INSTANCE.postAsyncEvent(CSEventType.TRANSACTION_PAYMENT_REFERENCE_INSERTED, sendTxHash);
+
+		}	    
+	  
+	  
         }
       }
     } catch (KeyCrypterException e) {

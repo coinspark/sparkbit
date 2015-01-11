@@ -40,6 +40,7 @@ import java.math.BigInteger;
 import org.multibit.utils.CSMiscUtils;
 import org.coinspark.protocol.CoinSparkAddress;
 import org.coinspark.protocol.CoinSparkGenesis;
+import org.coinspark.protocol.CoinSparkPaymentRef;
 
 import org.multibit.viewsystem.dataproviders.AssetFormDataProvider;
 import org.multibit.viewsystem.swing.view.dialogs.SendAssetConfirmDialog;
@@ -129,12 +130,22 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
             AssetValidator validator = new AssetValidator(super.bitcoinController);
             if (validator.validate(sendAddress, sendAmount, assetId, assetAmountRawUnits.toString() )) {
 		/* CoinSpark START */
+		CoinSparkPaymentRef paymentRef = null;
+
 		// We have already validated that the coinspark address and underlying bitcoin are good
 		// and that the transfer flag is set on the coinspark address.  We just want the actual
 		// underlying bitcoin address to send assets to, which is used to create SendRequest object.
-		CoinSparkAddress sparkAddress = CSMiscUtils.decodeCoinSparkAddress(sendAddress);
-		String btcAddress = CSMiscUtils.getBitcoinAddressStringFromCoinSparkAddress(sparkAddress);
+		CoinSparkAddress csa = CSMiscUtils.decodeCoinSparkAddress(sendAddress);
+		String btcAddress = CSMiscUtils.getBitcoinAddressStringFromCoinSparkAddress(csa);
 		sendAddress = btcAddress;
+		
+				
+		// Does a payment ref exist?
+		int flags = csa.getAddressFlags();
+		if ((flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS) > 0) {
+		    paymentRef = csa.getPaymentRef();
+		    log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
+		}
 		/* CoinSpark END */
 		
                 // Create a SendRequest.
@@ -153,6 +164,12 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
                 sendRequest.feePerKb = BitcoinModel.SEND_FEE_PER_KB_DEFAULT;
 
                 // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
+		
+		// Send with payment ref - if it exists
+		if (paymentRef != null) {
+		    sendRequest.setPaymentRef(paymentRef);
+		}
+
 
                 // Complete it (which works out the fee) but do not sign it yet.
                 log.debug("Just about to complete the tx (and calculate the fee)...");

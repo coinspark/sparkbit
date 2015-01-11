@@ -48,6 +48,7 @@ import java.awt.*;
 /* CoinSpark START */
 // Get values from the asset validator map, rather than wallet prefs, if sending an asset
 import org.multibit.viewsystem.swing.action.AssetValidator;
+import org.coinspark.protocol.CoinSparkPaymentRef;
 /* CoinSpark END */
 
 /**
@@ -366,12 +367,43 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         constraints2.gridwidth = 1;
         constraints2.anchor = GridBagConstraints.LINE_START;
         detailPanel.add(sendAddressText, constraints2);
+	
+	// Show payment reference if it exists and is not 0
+	CoinSparkPaymentRef paymentRef = null;
+	paymentRef = sendRequest.getPaymentRef();
+	if (paymentRef!=null) {
+	    long x = paymentRef.getRef();
+	    if (x > 0) {
+		MultiBitLabel paymentRefLabel = new MultiBitLabel("");
+		paymentRefLabel.setText("Payment Reference:");
+			//controller.getLocaliser().getString("sendBitcoinPanel.addressLabel"));
+		constraints2.fill = GridBagConstraints.NONE;
+		constraints2.gridx = 0;
+		constraints2.gridy = 2;
+		constraints2.weightx = 0.3;
+		constraints2.weighty = 0.1;
+		constraints2.gridwidth = 1;
+		constraints2.anchor = GridBagConstraints.LINE_END;
+		detailPanel.add(paymentRefLabel, constraints2);
+
+		MultiBitLabel paymentRefText = new MultiBitLabel("");
+		paymentRefText.setText("" + x);
+		constraints2.fill = GridBagConstraints.NONE;
+		constraints2.gridx = 2;
+		constraints2.gridy = 2;
+		constraints2.weightx = 0.3;
+		constraints2.weighty = 0.1;
+		constraints2.gridwidth = 1;
+		constraints2.anchor = GridBagConstraints.LINE_START;
+		detailPanel.add(paymentRefText, constraints2);
+	    }
+	}
 
         MultiBitLabel sendLabelLabel = new MultiBitLabel("");
         sendLabelLabel.setText(controller.getLocaliser().getString("sendBitcoinPanel.labelLabel"));
         constraints2.fill = GridBagConstraints.NONE;
         constraints2.gridx = 0;
-        constraints2.gridy = 2;
+        constraints2.gridy = 3;
         constraints2.weightx = 0.3;
         constraints2.weighty = 0.1;
         constraints2.gridwidth = 1;
@@ -382,7 +414,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         sendLabelText.setText(sendLabel);
         constraints2.fill = GridBagConstraints.NONE;
         constraints2.gridx = 2;
-        constraints2.gridy = 2;
+        constraints2.gridy = 3;
         constraints2.weightx = 0.3;
         constraints2.weighty = 0.1;
         constraints2.gridwidth = 1;
@@ -395,7 +427,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
 	    sendAssetAmountLabel.setText(controller.getLocaliser().getString("sendAssetPanel.assetAmountLabel"));
 	    constraints2.fill = GridBagConstraints.NONE;
 	    constraints2.gridx = 0;
-	    constraints2.gridy = 3;
+	    constraints2.gridy = 4;
 	    constraints2.weightx = 0.3;
 	    constraints2.weighty = 0.1;
 	    constraints2.gridwidth = 1;
@@ -406,7 +438,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
 	    sendAssetAmountText.setText(sendAssetAmountLocalised);
 	    constraints2.fill = GridBagConstraints.NONE;
 	    constraints2.gridx = 2;
-	    constraints2.gridy = 3;
+	    constraints2.gridy = 4;
 	    constraints2.weightx = 0.3;
 	    constraints2.weighty = 0.1;
 	    constraints2.gridwidth = 1;
@@ -420,7 +452,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         //sendAmountLabel.setText(controller.getLocaliser().getString("sendBitcoinPanel.amountLabel"));
         constraints2.fill = GridBagConstraints.NONE;
         constraints2.gridx = 0;
-        constraints2.gridy = 4; // CoinSpark, used to be 3
+        constraints2.gridy = 5;
         constraints2.weightx = 0.3;
         constraints2.weighty = 0.1;
         constraints2.gridwidth = 1;
@@ -431,7 +463,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         sendAmountText.setText(sendAmountLocalised);
         constraints2.fill = GridBagConstraints.NONE;
         constraints2.gridx = 2;
-        constraints2.gridy = 4; // CoinSpark, used to be 3
+        constraints2.gridy = 5;
         constraints2.weightx = 0.3;
         constraints2.weighty = 0.1;
         constraints2.gridwidth = 1;
@@ -442,7 +474,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         sendFeeLabel.setText(controller.getLocaliser().getString("showPreferencesPanel.feeLabel.text"));
         constraints2.fill = GridBagConstraints.NONE;
         constraints2.gridx = 0;
-        constraints2.gridy = 5; // CoinSpark, used to be 4
+        constraints2.gridy = 6;
         constraints2.weightx = 0.3;
         constraints2.weighty = 0.1;
         constraints2.gridwidth = 1;
@@ -453,7 +485,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         sendFeeText.setText(sendFeeLocalised);
         constraints2.fill = GridBagConstraints.NONE;
         constraints2.gridx = 2;
-        constraints2.gridy = 5; // CoinSpark, used to be 4
+        constraints2.gridy = 6;
         constraints2.weightx = 0.3;
         constraints2.weighty = 0.1;
         constraints2.gridwidth = 1;
@@ -462,7 +494,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
 
         constraints2.fill = GridBagConstraints.HORIZONTAL;
         constraints2.gridx = 0;
-        constraints2.gridy = 6; // CoinSpark, used to be 5
+        constraints2.gridy = 7;
         constraints2.weightx = 0.3;
         constraints2.weighty = 0.05;
         constraints2.gridwidth = 1;
@@ -471,7 +503,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
 
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridx = 3;
-        constraints.gridy = 7;
+        constraints.gridy = 8;
         constraints.weightx = 0.3;
         constraints.weighty = 0.3;
         constraints.gridheight = 1;
@@ -483,7 +515,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         walletPasswordPromptLabel = new MultiBitLabel(controller.getLocaliser().getString("showExportPrivateKeysPanel.walletPasswordPrompt"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 3;
-        constraints.gridy = 8;
+        constraints.gridy = 9;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridheight = 1;
@@ -495,7 +527,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
 
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridx = 4;
-        constraints.gridy = 7;
+        constraints.gridy = 8;
         constraints.weightx = 0.05;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
@@ -507,7 +539,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         forcer2.setOpaque(false);
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 5;
-        constraints.gridy = 7;
+        constraints.gridy = 8;
         constraints.weightx = 10;
         constraints.weighty = 0.05;
         constraints.gridwidth = 1;
@@ -519,7 +551,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         filler4.setOpaque(false);
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 3;
-        constraints.gridy = 7;
+        constraints.gridy = 8;
         constraints.weightx = 0.3;
         constraints.weighty = 0.01;
         constraints.gridheight = 1;
@@ -531,7 +563,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         walletPasswordField.setMinimumSize(new Dimension(200, 20));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 5;
-        constraints.gridy = 8;
+        constraints.gridy = 9;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridheight = 1;
@@ -544,7 +576,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         filler4.setOpaque(false);
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 3;
-        constraints.gridy = 9;
+        constraints.gridy = 10;
         constraints.weightx = 0.3;
         constraints.weighty = 0.01;
         constraints.gridheight = 1;
@@ -569,7 +601,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         //buttonPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 3;
-        constraints.gridy = 10;
+        constraints.gridy = 11;
         constraints.weightx = 0.8;
         constraints.weighty = 0.1;
         constraints.gridwidth = 4;
@@ -589,7 +621,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         confirmText1.setText(" ");
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 1;
-        constraints.gridy = 11;
+        constraints.gridy = 12;
         constraints.weightx = 0.8;
         constraints.weighty = 0.15;
         constraints.gridwidth = 6;
@@ -599,7 +631,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         JLabel filler3 = new JLabel();
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridx = 7;
-        constraints.gridy = 11;
+        constraints.gridy = 12;
         constraints.weightx = 0.05;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
@@ -609,7 +641,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         confirmText2 = new MultiBitLabel(" ");
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 1;
-        constraints.gridy = 12;
+        constraints.gridy = 13;
         constraints.weightx = 0.8;
         constraints.weighty = 0.15;
         constraints.gridwidth = 6;
@@ -619,7 +651,7 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         JLabel filler6 = new JLabel();
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridx = 7;
-        constraints.gridy = 12;
+        constraints.gridy = 13;
         constraints.weightx = 0.05;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;

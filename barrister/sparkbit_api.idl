@@ -40,6 +40,7 @@ struct JSONRPCTransaction {
 	fee float [optional]
 	txid string
 	address string
+	payment_ref int
 	}
 
 struct JSONRPCBalanceAmount {

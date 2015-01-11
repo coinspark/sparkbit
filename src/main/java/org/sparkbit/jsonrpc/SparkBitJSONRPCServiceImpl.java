@@ -82,12 +82,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Set;
 import org.coinspark.wallet.CSBalance;
 import org.coinspark.wallet.CSTransactionOutput;
 import java.util.HashSet;
 import java.util.LinkedList;
 import org.spongycastle.util.encoders.Hex;
+import org.coinspark.protocol.*;
 
 /**
  * For now, synchronized access to commands which mutate
@@ -948,7 +950,14 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    
 	    String category = (incoming) ? "receive" : "send";
 
-	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, category, amountsArray, fee, txid, address);
+	    // get the payment ref
+	    Map<String, Long> paymentRefMap = SparkBitMapDB.INSTANCE.getTransactionPaymentRefMap();
+	    Long paymentRefLong = paymentRefMap.get(txid);
+	    if (paymentRefLong == null) {
+		paymentRefLong = 0L;
+	    }
+	    
+	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, category, amountsArray, fee, txid, address, paymentRefLong);
 	    resultList.add(atx);
 	}
 	
@@ -1707,11 +1716,21 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    canSpendSendWithTxOut = isTxOutSpendable(w, sendWithTxidHash, vout.intValue());
 	}
 	
+	CoinSparkPaymentRef paymentRef = null;
+	
 	String bitcoinAddress = address;
 	if (address.startsWith("s")) {
 	    bitcoinAddress = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(address);
 	    if (bitcoinAddress==null) {
 		JSONRPCError.COINSPARK_ADDRESS_INVALID.raiseRpcException();
+	    } else {
+		CoinSparkAddress csa = new CoinSparkAddress();
+		csa.decode(address);
+		int flags = csa.getAddressFlags();
+		if ((flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS) > 0) {
+		    paymentRef = csa.getPaymentRef();
+		    log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
+		}
 	    }
 	}
 	boolean isValid = CSMiscUtils.validateBitcoinAddress(bitcoinAddress, controller);
@@ -1754,6 +1773,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 		    JSONRPCError.SEND_WITH_TXID_VOUT_FAILED.raiseRpcException();
 		}
 	    }
+	    
+	    // Send with payment ref - if it exists
+	    if (paymentRef != null) {
+		sendRequest.setPaymentRef(paymentRef);
+	    }
 
 	    
 	    // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
@@ -1786,6 +1810,16 @@ WalletInfoData winfo = wd.getWalletInfo();
 			m.put(sendTxHash, address);
 			SparkBitMapDB.INSTANCE.getMapDB().commit();
 		    }
+		}
+		
+		// Insert payment ref into txid-paymentref map
+		if (paymentRef != null) {
+		    Map<String, Long> paymentRefMap = SparkBitMapDB.INSTANCE.getTransactionPaymentRefMap();
+		    paymentRefMap.put(sendTxHash, paymentRef.getRef());
+		    SparkBitMapDB.INSTANCE.getMapDB().commit();
+		    
+CSEventBus.INSTANCE.postAsyncEvent(CSEventType.TRANSACTION_PAYMENT_REFERENCE_INSERTED, sendTxHash);
+
 		}
 		
 	    } else {
@@ -1879,6 +1913,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.SEND_ASSET_AMOUNT_TOO_LOW.raiseRpcException();
 	}
 	
+	CoinSparkPaymentRef paymentRef = null;
 	String bitcoinAddress = address;
 	if (!address.startsWith("s")) {
 	    JSONRPCError.ADDRESS_NOT_COINSPARK_ADDRESS.raiseRpcException();
@@ -1891,6 +1926,13 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    CoinSparkAddress csa = CSMiscUtils.decodeCoinSparkAddress(address);
 	    if (!CSMiscUtils.canSendAssetsToCoinSparkAddress(csa)) {
 		JSONRPCError.COINSPARK_ADDRESS_MISSING_ASSET_FLAG.raiseRpcException();
+	    }
+	    
+	    // payment ref?
+	    int flags = csa.getAddressFlags();
+	    if ((flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS) > 0) {
+		paymentRef = csa.getPaymentRef();
+		log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
 	    }
 	}
 	boolean isValid = CSMiscUtils.validateBitcoinAddress(bitcoinAddress, controller);
@@ -2004,6 +2046,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 		    }
 		}
 
+	    // Send with payment ref - if it exists
+	    if (paymentRef != null) {
+		sendRequest.setPaymentRef(paymentRef);
+	    }
+
                 // Complete it (which works out the fee) but do not sign it yet.
                 log.info("Just about to complete the tx (and calculate the fee)...");
 
@@ -2034,6 +2081,17 @@ WalletInfoData winfo = wd.getWalletInfo();
 			SparkBitMapDB.INSTANCE.getMapDB().commit();
 		    }
 		}
+		
+		// Insert payment ref into txid-paymentref map
+		if (paymentRef != null) {
+		    Map<String, Long> paymentRefMap = SparkBitMapDB.INSTANCE.getTransactionPaymentRefMap();
+		    paymentRefMap.put(sendTxHash, paymentRef.getRef());
+		    SparkBitMapDB.INSTANCE.getMapDB().commit();
+		    
+CSEventBus.INSTANCE.postAsyncEvent(CSEventType.TRANSACTION_PAYMENT_REFERENCE_INSERTED, sendTxHash);
+
+		}
+		
 	    } else {
 		// There is not enough money
 	    }

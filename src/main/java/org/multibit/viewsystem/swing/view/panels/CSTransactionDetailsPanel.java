@@ -52,7 +52,9 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 
 import com.google.bitcoin.script.Script;
+import java.util.Map;
 import org.multibit.utils.CSMiscUtils;
+import org.sparkbit.SparkBitMapDB;
 
 /**
  * The transaction details dialog.
@@ -81,6 +83,7 @@ public class CSTransactionDetailsPanel extends JPanel {
     private MultiBitLabel amountText;
     private MultiBitLabel feeText;
     private MultiBitLabel sizeText;
+    private MultiBitLabel paymentRefText;
     
     private MultiBitLabel txidText;
 
@@ -387,18 +390,49 @@ public class CSTransactionDetailsPanel extends JPanel {
         constraints.anchor = GridBagConstraints.LINE_START;
         detailPanel.add(labelScrollPane, constraints);
 
+	//
+	// Show Payment Reference if it exists
+	//
+	String txid = rowTableData.getTransaction().getHashAsString();
+
+	Map<String, Long> paymentRefMap = SparkBitMapDB.INSTANCE.getTransactionPaymentRefMap();
+	Long paymentRefLong = paymentRefMap.get(txid);
+	if (paymentRefLong != null && paymentRefLong>0) {
+	    MultiBitLabel paymentRefLabel = new MultiBitLabel("");
+	    paymentRefLabel.setText("Payment Ref:"); //controller.getLocaliser().getString("showPreferencesPanel.feeLabel.text"));
+	    //feeLabel.setToolTipText(controller.getLocaliser().getString("transactionDetailsDialog.feeLabel.tooltip"));
+	    constraints.fill = GridBagConstraints.NONE;
+	    constraints.gridx = 0;
+	    constraints.gridy = 7;
+	    constraints.weightx = 0.3;
+	    constraints.weighty = 0.1;
+	    constraints.gridwidth = 1;
+	    constraints.anchor = GridBagConstraints.LINE_END;
+	    detailPanel.add(paymentRefLabel, constraints);
+
+	    paymentRefText = new MultiBitLabel("" + paymentRefLong);
+	    constraints.fill = GridBagConstraints.NONE;
+	    constraints.gridx = 2;
+	    constraints.gridy = 7;
+	    constraints.weightx = 0.3;
+	    constraints.weighty = 0.1;
+	    constraints.gridwidth = 3;
+	    constraints.anchor = GridBagConstraints.LINE_START;
+	    detailPanel.add(paymentRefText, constraints);
+	}
+	
 	        MultiBitLabel txidLabel = new MultiBitLabel("Transaction ID:");
 //        txidLabel.setText(controller.getLocaliser().getString("transactionDetailsDialog.transactionDetailText"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 0;
-        constraints.gridy = 6;
+        constraints.gridy = 8;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
         constraints.anchor = GridBagConstraints.ABOVE_BASELINE_TRAILING;
         detailPanel.add(txidLabel, constraints);
 	
-	String txid = rowTableData.getTransaction().getHashAsString();
+//	String txid = rowTableData.getTransaction().getHashAsString();
 	//MultiBitLabel txidText = new MultiBitLabel(txid);
 	// http://stackoverflow.com/questions/997942/selecting-text-from-a-jlabel
         JTextField f = new JTextField(txid);
@@ -408,7 +442,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 	f.setFont( FontSizer.INSTANCE.getAdjustedDefaultFont());
 	constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 2;
-        constraints.gridy = 6;
+        constraints.gridy = 8;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 3;
@@ -464,7 +498,7 @@ public class CSTransactionDetailsPanel extends JPanel {
         feeLabel.setToolTipText(controller.getLocaliser().getString("transactionDetailsDialog.feeLabel.tooltip"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 0;
-        constraints.gridy = 7;
+        constraints.gridy = 9;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
@@ -476,7 +510,7 @@ public class CSTransactionDetailsPanel extends JPanel {
         sizeLabel.setToolTipText(controller.getLocaliser().getString("transactionDetailsDialog.sizeLabel.tooltip"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 2;
-        constraints.gridy = 7;
+        constraints.gridy = 9;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 3;
@@ -509,7 +543,7 @@ public class CSTransactionDetailsPanel extends JPanel {
             
             constraints.fill = GridBagConstraints.NONE;
             constraints.gridx = 2;
-            constraints.gridy = 8;
+            constraints.gridy = 10;
             constraints.weightx = 0.4;
             constraints.weighty = 0.1;
             constraints.gridwidth = 1;
@@ -531,7 +565,7 @@ public class CSTransactionDetailsPanel extends JPanel {
             
             constraints.fill = GridBagConstraints.NONE;
             constraints.gridx = 3;
-            constraints.gridy = 8;
+            constraints.gridy = 10;
             constraints.weightx = 0.4;
             constraints.weighty = 0.1;
             constraints.gridwidth = 1;

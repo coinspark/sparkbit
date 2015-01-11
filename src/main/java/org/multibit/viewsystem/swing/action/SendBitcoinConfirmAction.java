@@ -39,6 +39,9 @@ import java.math.BigInteger;
 import org.coinspark.protocol.CoinSparkAddress;
 /* CoinSpark START */
 import org.multibit.utils.CSMiscUtils;
+import org.coinspark.protocol.*;
+import org.sparkbit.SparkBitMapDB;
+import java.util.*;
 /* CoinSpark END */
 
 /**
@@ -82,6 +85,8 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
             String sendAmount = dataProvider.getAmount();
 
 	    /*CoinSpark START */
+	    CoinSparkPaymentRef paymentRef = null;
+
 	    /*
 	     If the address is a coinspark address, retrieve the bitcoin address and let the validator check it.
 	     The SendRequest object will use the bitcoin address, while the confirmation dialog will use
@@ -94,6 +99,13 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 		String btcAddress = CSMiscUtils.getBitcoinAddressStringFromCoinSparkAddress(csa);
 		if (btcAddress != null) {
 		    sendAddress = btcAddress; // the validator will check the btcAddress like normal.
+		}
+		
+		// Does a payment ref exist?
+		int flags = csa.getAddressFlags();
+		if ((flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS) > 0) {
+		    paymentRef = csa.getPaymentRef();
+		    log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
 		}
 	    }
 	    /*CoinSpark END */
@@ -113,6 +125,11 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
                 sendRequest.feePerKb = BitcoinModel.SEND_FEE_PER_KB_DEFAULT;
 
                 // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
+		
+		// Send with payment ref - if it exists
+		if (paymentRef != null) {
+		    sendRequest.setPaymentRef(paymentRef);
+		}
 
                 // Complete it (which works out the fee) but do not sign it yet.
                 log.debug("Just about to complete the tx (and calculate the fee)...");
