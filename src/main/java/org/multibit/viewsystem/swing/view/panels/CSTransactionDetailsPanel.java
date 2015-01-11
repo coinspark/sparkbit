@@ -395,12 +395,11 @@ public class CSTransactionDetailsPanel extends JPanel {
 	//
 	String txid = rowTableData.getTransaction().getHashAsString();
 
-	Map<String, Long> paymentRefMap = SparkBitMapDB.INSTANCE.getTransactionPaymentRefMap();
-	Long paymentRefLong = paymentRefMap.get(txid);
-	if (paymentRefLong != null && paymentRefLong>0) {
+	long paymentRef = CSMiscUtils.getPaymentRefFromTx(wallet, txid);
+	if (paymentRef > 0) {
 	    MultiBitLabel paymentRefLabel = new MultiBitLabel("");
-	    paymentRefLabel.setText("Payment Ref:"); //controller.getLocaliser().getString("showPreferencesPanel.feeLabel.text"));
-	    //feeLabel.setToolTipText(controller.getLocaliser().getString("transactionDetailsDialog.feeLabel.tooltip"));
+	    paymentRefLabel.setText(controller.getLocaliser().getString("transactionDetailsDialog.paymentRefLabel.text"));
+	    paymentRefLabel.setToolTipText(controller.getLocaliser().getString("transactionDetailsDialog.paymentRefLabel.tooltip"));
 	    constraints.fill = GridBagConstraints.NONE;
 	    constraints.gridx = 0;
 	    constraints.gridy = 7;
@@ -410,7 +409,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 	    constraints.anchor = GridBagConstraints.LINE_END;
 	    detailPanel.add(paymentRefLabel, constraints);
 
-	    paymentRefText = new MultiBitLabel("" + paymentRefLong);
+	    paymentRefText = new MultiBitLabel("" + paymentRef);
 	    constraints.fill = GridBagConstraints.NONE;
 	    constraints.gridx = 2;
 	    constraints.gridy = 7;

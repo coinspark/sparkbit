@@ -90,6 +90,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import org.spongycastle.util.encoders.Hex;
 import org.coinspark.protocol.*;
+import org.coinspark.wallet.CSMessage;
+import org.coinspark.wallet.CSMessageDatabase;
+
 
 /**
  * For now, synchronized access to commands which mutate
@@ -950,14 +953,9 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    
 	    String category = (incoming) ? "receive" : "send";
 
-	    // get the payment ref
-	    Map<String, Long> paymentRefMap = SparkBitMapDB.INSTANCE.getTransactionPaymentRefMap();
-	    Long paymentRefLong = paymentRefMap.get(txid);
-	    if (paymentRefLong == null) {
-		paymentRefLong = 0L;
-	    }
+	    long paymentRef = CSMiscUtils.getPaymentRefFromTx(w, txid);
 	    
-	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, category, amountsArray, fee, txid, address, paymentRefLong);
+	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, category, amountsArray, fee, txid, address, paymentRef);
 	    resultList.add(atx);
 	}
 	
@@ -1811,17 +1809,6 @@ WalletInfoData winfo = wd.getWalletInfo();
 			SparkBitMapDB.INSTANCE.getMapDB().commit();
 		    }
 		}
-		
-		// Insert payment ref into txid-paymentref map
-		if (paymentRef != null) {
-		    Map<String, Long> paymentRefMap = SparkBitMapDB.INSTANCE.getTransactionPaymentRefMap();
-		    paymentRefMap.put(sendTxHash, paymentRef.getRef());
-		    SparkBitMapDB.INSTANCE.getMapDB().commit();
-		    
-CSEventBus.INSTANCE.postAsyncEvent(CSEventType.TRANSACTION_PAYMENT_REFERENCE_INSERTED, sendTxHash);
-
-		}
-		
 	    } else {
 		// There is not enough money
 	    }
@@ -2080,18 +2067,7 @@ CSEventBus.INSTANCE.postAsyncEvent(CSEventType.TRANSACTION_PAYMENT_REFERENCE_INS
 			m.put(sendTxHash, address);
 			SparkBitMapDB.INSTANCE.getMapDB().commit();
 		    }
-		}
-		
-		// Insert payment ref into txid-paymentref map
-		if (paymentRef != null) {
-		    Map<String, Long> paymentRefMap = SparkBitMapDB.INSTANCE.getTransactionPaymentRefMap();
-		    paymentRefMap.put(sendTxHash, paymentRef.getRef());
-		    SparkBitMapDB.INSTANCE.getMapDB().commit();
-		    
-CSEventBus.INSTANCE.postAsyncEvent(CSEventType.TRANSACTION_PAYMENT_REFERENCE_INSERTED, sendTxHash);
-
-		}
-		
+		}		
 	    } else {
 		// There is not enough money
 	    }

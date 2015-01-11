@@ -56,6 +56,7 @@ import org.multibit.viewsystem.swing.view.components.MultiBitLabel;
 
 import org.multibit.controller.bitcoin.BitcoinController;
 import com.google.bitcoin.core.Wallet.SendRequest;
+import org.coinspark.wallet.CSMessage;
 import org.joda.time.LocalDateTime;
 import org.multibit.model.bitcoin.BitcoinModel;
 
@@ -738,5 +739,24 @@ public class CSMiscUtils {
             return true;
         }
 	return false;
+    }
+    
+    /**
+     * Get the payment reference from a transaction, given it's hash.
+     * 
+     * @param w Wallet
+     * @param txid Transaction hash, lower case.
+     * @return 0 if no payment reference exists.
+     */
+    public static long getPaymentRefFromTx(Wallet w, String txid) {
+	CSMessage message = w.CS.getMessageDB().getMessage(txid);
+	long l = 0L;
+	if (message != null) {
+	    CoinSparkPaymentRef pref = message.getPaymentRef();
+	    if (pref != null) {
+		l = pref.getRef();
+	    }
+	}
+	return l;
     }
 }

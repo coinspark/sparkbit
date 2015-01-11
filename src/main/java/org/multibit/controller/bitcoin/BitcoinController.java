@@ -104,9 +104,10 @@ public class BitcoinController extends AbstractController<CoreController> implem
         
         this.addEventHandler(this.getEventHandler());
 	
-	CSEventBus.INSTANCE.registerAsyncSubscriber(this);
+//	CSEventBus.INSTANCE.registerAsyncSubscriber(this);
     }
     
+    /*
     @Subscribe
     public void listen(CSEvent event) throws Exception {	
 	CSEventType t = event.getType();
@@ -127,6 +128,7 @@ public class BitcoinController extends AbstractController<CoreController> implem
 	    }
 	}
     }
+    */
     
     
     @Override

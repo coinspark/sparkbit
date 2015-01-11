@@ -37,7 +37,7 @@ public enum SparkBitMapDB {
     public static final String MAP_FILENAME = "sparkbit.mapdb";
     public static final String SPARKBITDB_SEND_TX_TO_COINSPARK_ADDRESS_MAP_NAME = "sendTxToCoinSparkAddressMap";
     public static final String SPARKBITDB_WALLETINFODATA = "walletInfoDataMap";
-    public static final String SPARKBITDB_TXID_PAYMENTREF_MAP_NAME = "txidPaymentRefMap";
+//    public static final String SPARKBITDB_TXID_PAYMENTREF_MAP_NAME = "txidPaymentRefMap";
     
     
     private DB mapDB;
@@ -65,10 +65,11 @@ public enum SparkBitMapDB {
   public Map getSendTransactionToCoinSparkAddressMap() {
       return mapDB.getHashMap(SPARKBITDB_SEND_TX_TO_COINSPARK_ADDRESS_MAP_NAME);
   }
-  
+  /*
     public Map getTransactionPaymentRefMap() {
 	return mapDB.getHashMap(SPARKBITDB_TXID_PAYMENTREF_MAP_NAME);
     }
+  */
   
   public HTreeMap<String, byte[]> getWalletInfoDataMap() {
       return mapDB.getHashMap(SPARKBITDB_WALLETINFODATA);
