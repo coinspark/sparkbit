@@ -24,6 +24,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import javax.swing.ImageIcon;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -34,6 +36,7 @@ import org.multibit.exchange.CurrencyConverter;
 import org.multibit.exchange.CurrencyInfo;
 import org.multibit.model.bitcoin.WalletTableData;
 import org.multibit.utils.CSMiscUtils;
+import org.multibit.utils.ImageLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +47,7 @@ public class WalletTableModel extends AbstractTableModel {
     public static final String[] COLUMN_HEADER_KEYS = new String[]{
 	"walletTransactionTableColumn.status",
 	"walletTransactionTableColumn.date",
+	"walletTransactionTableColumn.paymentRef",
 	"walletTransactionTableColumn.description",
 //	"walletTransactionTableColumn.btcAmount",
 //	"walletTransactionTableColumn.type",
@@ -117,6 +121,24 @@ public class WalletTableModel extends AbstractTableModel {
 
 	String name = COLUMN_HEADER_KEYS[column];
         switch (name) {
+	    case "walletTransactionTableColumn.paymentRef": {
+		HashMap<String, Object> map = new HashMap<>();
+		ImageIcon icon = null;
+		String tip = null;
+		if (walletDataRow.getTransaction() != null) {
+		    String txid = walletDataRow.getTransaction().getHashAsString();
+		    Wallet w = this.bitcoinController.getModel().getActiveWallet();
+		    long l = CSMiscUtils.getPaymentRefFromTx(w, txid);
+		    if (l>0) {
+			icon = ImageLoader.fatCow16(ImageLoader.FATCOW.note_pin);
+			tip = "Payment reference " + l;
+		    }
+		}
+		map.put("tooltip", tip);
+		map.put("icon", icon);
+		log.debug(">>>> icon = " + icon);
+		return map;
+	    }
         case "walletTransactionTableColumn.status": {
             if (walletDataRow.getTransaction() != null && walletDataRow.getTransaction().getConfidence() != null) {
                 return walletDataRow.getTransaction();

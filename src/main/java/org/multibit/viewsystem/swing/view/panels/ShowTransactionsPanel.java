@@ -60,6 +60,8 @@ import java.util.*;
 import java.util.List;
 import java.util.Timer;
 import org.multibit.utils.CSMiscUtils;
+import org.multibit.viewsystem.swing.WalletAssetSummaryTableModel;
+import org.multibit.viewsystem.swing.view.components.CSButtonColumnCellRenderer;
 
 
 public class ShowTransactionsPanel extends JPanel implements Viewable {
@@ -212,6 +214,7 @@ public class ShowTransactionsPanel extends JPanel implements Viewable {
 	// Set up table columns for easy use
 	TableColumnModel columnModel = table.getColumnModel();
 	TableColumn statusColumn = columnModel.getColumn(walletTableModel.getColumnIndex("status"));
+	TableColumn paymentRefColumn = columnModel.getColumn(walletTableModel.getColumnIndex("paymentRef"));
 	TableColumn dateColumn = columnModel.getColumn(walletTableModel.getColumnIndex("date"));
 	TableColumn descriptionColumn = columnModel.getColumn(walletTableModel.getColumnIndex("description"));
 //	TableColumn btcAmountColumn = columnModel.getColumn(walletTableModel.getColumnIndex("btcAmount"));
@@ -220,7 +223,17 @@ public class ShowTransactionsPanel extends JPanel implements Viewable {
 //	TableColumn assetAmountColumn = columnModel.getColumn(walletTableModel.getColumnIndex("assetAmount"));
 	TableColumn descriptionOfAssetChangesColumn = columnModel.getColumn(walletTableModel.getColumnIndex("descriptionOfAssetChanges"));
 	
-		
+	// Set up the payment ref column
+	final int BUTTON_ICON_COLUMN_WIDTH = 20;
+
+	CSButtonColumnCellRenderer paymentRefCellRenderer = new CSButtonColumnCellRenderer(table, null);
+	paymentRefCellRenderer.useAlternateRowColors = true;
+	paymentRefColumn.setCellRenderer(paymentRefCellRenderer);
+	paymentRefColumn.setMinWidth(BUTTON_ICON_COLUMN_WIDTH);
+	paymentRefColumn.setMaxWidth(BUTTON_ICON_COLUMN_WIDTH);
+	paymentRefColumn.setWidth(BUTTON_ICON_COLUMN_WIDTH);
+	paymentRefColumn.setPreferredWidth(BUTTON_ICON_COLUMN_WIDTH);
+	
 	// Use status icons.
 	statusColumn.setCellRenderer(new ImageRenderer());
 	table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);

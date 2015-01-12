@@ -32,6 +32,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
 import java.awt.Font;
+import org.multibit.viewsystem.swing.ColorAndFontConstants;
 
 
 /**
@@ -47,6 +48,7 @@ public class CSButtonColumnCellRenderer extends AbstractCellEditor implements Ta
     Action action;
     Object editorValue;
     boolean isEditing;
+    public boolean useAlternateRowColors;  // set this to true to stripe based on table colors.
 
     public CSButtonColumnCellRenderer(JTable table, Action action) {
 	this.table = table;
@@ -103,6 +105,22 @@ public class CSButtonColumnCellRenderer extends AbstractCellEditor implements Ta
 	    renderButton.setText(text);
 	    renderButton.setToolTipText(tooltip);
 	}
+	
+	if (useAlternateRowColors) {
+	    if (isSelected) {
+		renderButton.setBackground(table.getSelectionBackground());
+		renderButton.setForeground(table.getSelectionForeground());
+	    } else {
+		renderButton.setForeground(table.getForeground());
+		if (row % 2 == 1) {
+		    renderButton.setBackground(ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR);
+		} else {
+		    renderButton.setBackground(ColorAndFontConstants.ALTERNATE_TABLE_COLOR);
+		    renderButton.setOpaque(true);
+		}
+	    }
+	}
+	
 	return renderButton;
     }
 
