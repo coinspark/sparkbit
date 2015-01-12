@@ -262,9 +262,9 @@
 					<urn>org.coinspark.library:coinspark-library:2.0.0:jar:null:compile:a3968497e2cb071e6d992e36257f5c7940300687</urn>
 					<!--
 					<urn>org.coinspark.library:coinspark-library:1.0-SNAPSHOT:jar:null:compile:6f7ec6ed6dfbdddcb834175cae416d8cb34025a2</urn>
--->
-					<urn>com.google:bitcoinj:0.2-CS-0.11.2-MB-ALICE:jar:null:compile:c8e2f33eefcad366954eb7f39180b18c9b802666</urn>
 
+					<urn>com.google:bitcoinj:0.2-CS-0.11.2-MB-ALICE:jar:null:compile:c8e2f33eefcad366954eb7f39180b18c9b802666</urn>
+					-->
 					<!-- A check for the rules themselves -->
                     <urn>uk.co.froot.maven.enforcer:digest-enforcer-rules:0.0.1:jar:null:runtime:16a9e04f3fe4bb143c42782d07d5faf65b32106f</urn>
                   </urns>
