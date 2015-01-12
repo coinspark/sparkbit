@@ -131,7 +131,7 @@ public class WalletTableModel extends AbstractTableModel {
 		    long l = CSMiscUtils.getPaymentRefFromTx(w, txid);
 		    if (l>0) {
 			icon = ImageLoader.fatCow16(ImageLoader.FATCOW.note_pin);
-			tip = "Payment reference " + l;
+			tip = "Transaction payment reference: " + l;
 		    }
 		}
 		map.put("tooltip", tip);
