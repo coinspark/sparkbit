@@ -4,9 +4,11 @@ Developers:
 -----------
 Coin Sciences Ltd
 
+Fugue icons by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/ , Creative Commons Attribution 3.0 License, http://creativecommons.org/licenses/by/3.0/ 
+Fatcow icons by FatCow, http://www.fatcow.com/free-icons , Creative Commons Attribution 3.0 License, http://creativecommons.org/licenses/by/3.0/
 
 SparkBit is based on a fork of MultiBit.
-
+
 MultiBit Developers:
 --------------------
 Gary Rowe
