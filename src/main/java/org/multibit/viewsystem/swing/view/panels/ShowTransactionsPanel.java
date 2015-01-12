@@ -214,7 +214,7 @@ public class ShowTransactionsPanel extends JPanel implements Viewable {
 	// Set up table columns for easy use
 	TableColumnModel columnModel = table.getColumnModel();
 	TableColumn statusColumn = columnModel.getColumn(walletTableModel.getColumnIndex("status"));
-	TableColumn paymentRefColumn = columnModel.getColumn(walletTableModel.getColumnIndex("paymentRef"));
+	TableColumn extrasColumn = columnModel.getColumn(walletTableModel.getColumnIndex("extras"));
 	TableColumn dateColumn = columnModel.getColumn(walletTableModel.getColumnIndex("date"));
 	TableColumn descriptionColumn = columnModel.getColumn(walletTableModel.getColumnIndex("description"));
 //	TableColumn btcAmountColumn = columnModel.getColumn(walletTableModel.getColumnIndex("btcAmount"));
@@ -226,13 +226,13 @@ public class ShowTransactionsPanel extends JPanel implements Viewable {
 	// Set up the payment ref column
 	final int BUTTON_ICON_COLUMN_WIDTH = 20;
 
-	CSButtonColumnCellRenderer paymentRefCellRenderer = new CSButtonColumnCellRenderer(table, null);
-	paymentRefCellRenderer.useAlternateRowColors = true;
-	paymentRefColumn.setCellRenderer(paymentRefCellRenderer);
-	paymentRefColumn.setMinWidth(BUTTON_ICON_COLUMN_WIDTH);
-	paymentRefColumn.setMaxWidth(BUTTON_ICON_COLUMN_WIDTH);
-	paymentRefColumn.setWidth(BUTTON_ICON_COLUMN_WIDTH);
-	paymentRefColumn.setPreferredWidth(BUTTON_ICON_COLUMN_WIDTH);
+	CSButtonColumnCellRenderer extrasCellRenderer = new CSButtonColumnCellRenderer(table, null);
+	extrasCellRenderer.useAlternateRowColors = true;
+	extrasColumn.setCellRenderer(extrasCellRenderer);
+	extrasColumn.setMinWidth(BUTTON_ICON_COLUMN_WIDTH);
+	extrasColumn.setMaxWidth(BUTTON_ICON_COLUMN_WIDTH);
+	extrasColumn.setWidth(BUTTON_ICON_COLUMN_WIDTH);
+	extrasColumn.setPreferredWidth(BUTTON_ICON_COLUMN_WIDTH);
 	
 	// Use status icons.
 	statusColumn.setCellRenderer(new ImageRenderer());

@@ -47,13 +47,13 @@ public class WalletTableModel extends AbstractTableModel {
     public static final String[] COLUMN_HEADER_KEYS = new String[]{
 	"walletTransactionTableColumn.status",
 	"walletTransactionTableColumn.date",
-	"walletTransactionTableColumn.paymentRef",
 	"walletTransactionTableColumn.description",
 //	"walletTransactionTableColumn.btcAmount",
 //	"walletTransactionTableColumn.type",
 //	"walletTransactionTableColumn.domain",
 //	"walletTransactionTableColumn.assetAmount",
-	"walletTransactionTableColumn.descriptionOfAssetChanges"
+	"walletTransactionTableColumn.descriptionOfAssetChanges",
+	"walletTransactionTableColumn.extras",
 	};
 
     private static final long serialVersionUID = -937886012854496208L;
@@ -121,7 +121,7 @@ public class WalletTableModel extends AbstractTableModel {
 
 	String name = COLUMN_HEADER_KEYS[column];
         switch (name) {
-	    case "walletTransactionTableColumn.paymentRef": {
+	    case "walletTransactionTableColumn.extras": {
 		HashMap<String, Object> map = new HashMap<>();
 		ImageIcon icon = null;
 		String tip = null;
@@ -130,13 +130,12 @@ public class WalletTableModel extends AbstractTableModel {
 		    Wallet w = this.bitcoinController.getModel().getActiveWallet();
 		    long l = CSMiscUtils.getPaymentRefFromTx(w, txid);
 		    if (l>0) {
-			icon = ImageLoader.fatCow16(ImageLoader.FATCOW.note_pin);
+			icon = ImageLoader.fugue(ImageLoader.FUGUE.edit_number);
 			tip = "Transaction payment reference: " + l;
 		    }
 		}
 		map.put("tooltip", tip);
 		map.put("icon", icon);
-		log.debug(">>>> icon = " + icon);
 		return map;
 	    }
         case "walletTransactionTableColumn.status": {

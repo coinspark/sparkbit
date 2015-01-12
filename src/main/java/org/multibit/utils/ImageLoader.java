@@ -100,6 +100,11 @@ public final class ImageLoader {
     
     public static final String CS_FILE_EXTENSION_ICON_FILE_FORMAT_STRING = "/images-coinspark/fatcow/file_extension_%s.png";
     
+    // Rename icon files, if they have a hypen - replace with underscore
+    public enum FUGUE {
+	edit_number,
+    }
+    
     public enum FATCOW {
 	add,
 	arrow_refresh,
@@ -170,6 +175,10 @@ public final class ImageLoader {
     }
     
     /*CoinSpark START*/
+    
+    public static ImageIcon fugue(FUGUE fc) {
+	return createImageIcon("/images-coinspark/fugue/"+fc.toString()+".png");	
+    }
     
     public static ImageIcon fatCow16(FATCOW fc) {
 	return createImageIcon("/images-coinspark/fatcow/16/"+fc.toString()+".png");
