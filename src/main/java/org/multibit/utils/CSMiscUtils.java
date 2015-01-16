@@ -56,9 +56,12 @@ import org.multibit.viewsystem.swing.view.components.MultiBitLabel;
 
 import org.multibit.controller.bitcoin.BitcoinController;
 import com.google.bitcoin.core.Wallet.SendRequest;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import org.coinspark.wallet.CSMessage;
 import org.joda.time.LocalDateTime;
 import org.multibit.model.bitcoin.BitcoinModel;
+import org.multibit.model.core.CoreModel;
 
 /*
  * Mixed bag of tools.
@@ -140,7 +143,7 @@ public class CSMiscUtils {
     */
     public static String convertBitcoinAddressToCoinSparkAddress(String bitcoinAddress) {
 	CoinSparkAddress csa = new CoinSparkAddress();
-        int flags=CoinSparkAddress.COINSPARK_ADDRESS_FLAG_ASSETS | CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS;
+        int flags=CoinSparkAddress.COINSPARK_ADDRESS_FLAG_ASSETS | CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS | CoinSparkAddress.COINSPARK_ADDRESS_FLAG_TEXT_MESSAGES;
 	csa.setAddressFlags(flags);
 	csa.setBitcoinAddress(bitcoinAddress);
 	csa.setPaymentRef(new CoinSparkPaymentRef(0));
@@ -758,5 +761,32 @@ public class CSMiscUtils {
 	    }
 	}
 	return l;
+    }
+    
+    /**
+     * Return URLs of delivery servers set in preferences.
+     * URLs are URL decoded using UTF-8.  If a URL cannot be decoded, it is skipped.
+     * @return 
+     */
+    public String[] getDeliveryServers(BitcoinController controller) {
+	String serverString = controller.getModel().getUserPreference(CoreModel.MESSAGING_SERVERS);
+	if (serverString==null) {
+	    return CoreModel.DEFAULT_MESSAGING_SERVER_URLS;
+	}
+
+	String[] encodedURLs = serverString.split("\\|"); // regex so we have to escape | character
+	int n = encodedURLs.length;
+	if (n == 0) {
+	    return new String[0];
+	}
+	ArrayList<String> list = new ArrayList<>();
+	for (int i = 0; i < n; i++) {
+	    try {
+		String encoded = URLEncoder.encode(encodedURLs[i], "UTF-8");
+		list.add(encoded);
+	    } catch (UnsupportedEncodingException e) {
+	    }
+	}
+	return list.toArray(new String[0]);
     }
 }

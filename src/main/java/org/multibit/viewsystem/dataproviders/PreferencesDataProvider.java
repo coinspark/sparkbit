@@ -155,4 +155,8 @@ public interface PreferencesDataProvider extends DataProvider {
 
 
     String getPreviousOpenExchangeRatesApiCode();
+    
+    String[] getPreviousMessagingServerURLs();
+    String[] getNewMessagingServerURLs();
+    
 }
