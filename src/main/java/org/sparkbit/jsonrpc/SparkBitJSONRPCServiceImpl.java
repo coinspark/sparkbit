@@ -898,11 +898,13 @@ WalletInfoData winfo = wd.getWalletInfo();
 		}
 	    }
 	    
+	    // If this transaction was sent from addresses belonging to the same wallet
+	    boolean toMyself = myOutput!=null && theirOutput==null;	    
 	    boolean hasAssets = amounts.size()>1;
 	    String myReceiveAddress = null;
 	    String theirAddress = null;
 	    
-	    if (incoming) {
+	    if (incoming || toMyself) {
 		try {
 		    if (myOutput != null) {
 			Address toAddress = new Address(this.controller.getModel().getNetworkParameters(), myOutput.getScriptPubKey().getPubKeyHash());
@@ -912,6 +914,21 @@ WalletInfoData winfo = wd.getWalletInfo();
 			String s = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(myReceiveAddress);
 			if (s != null) {
 			    myReceiveAddress = s;
+			}
+		    }
+		    // If to myself, lets see if CoinSpark or not
+		    if (myReceiveAddress != null && toMyself) {
+			String myCoinSparkAddress = null;
+			
+			Map<String,String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
+			if (m != null) {
+			    myCoinSparkAddress = m.get(tx.getHashAsString());
+			}
+			
+//			myCoinSparkAddress = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(tx.getHashAsString());
+			
+			if (myCoinSparkAddress!=null) {
+			    myReceiveAddress = myCoinSparkAddress;
 			}
 		    }
 		} catch (ScriptException e) {
@@ -944,7 +961,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    }
 	    
 	    String address = "";
-	    if (incoming && myReceiveAddress!=null) {
+	    if ((incoming || toMyself) && myReceiveAddress!=null) {
 		address = myReceiveAddress;
 	    } else if (!incoming && theirAddress != null) {
 		address = theirAddress;
