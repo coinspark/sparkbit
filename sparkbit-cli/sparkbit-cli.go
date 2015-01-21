@@ -51,7 +51,7 @@ http://dave.cheney.net/2013/07/09/an-introduction-to-cross-compilation-with-go-1
 https://github.com/davecheney/golang-crosscompile
 */
 const (
-	versionString = "0.9.3"
+	versionString = "0.9.3.1"
 )
 
 var flagConfigPath string
