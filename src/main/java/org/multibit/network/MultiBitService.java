@@ -256,6 +256,8 @@ public class MultiBitService {
     String filePrefix = getFilePrefix();
     log.debug("filePrefix = " + filePrefix);
 
+    boolean isTestNet = filePrefix.endsWith(TESTNET3_PREFIX) || filePrefix.endsWith(TESTNET_PREFIX);
+	
     if ("".equals(controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory())) {
       blockchainFilename = filePrefix + SPV_BLOCKCHAIN_SUFFIX;
       checkpointsFilename = filePrefix + CHECKPOINTS_SUFFIX;
@@ -269,8 +271,11 @@ public class MultiBitService {
     File blockStoreFile = new File(blockchainFilename);
     boolean blockStoreCreatedNew = !blockStoreFile.exists();
 
+    
     // Ensure there is a checkpoints file.
-    File checkpointsFile = new File(checkpointsFilename);
+    File checkpointsFile = null;
+    if (!isTestNet) {
+	checkpointsFile = new File(checkpointsFilename);
       if (!checkpointsFile.exists()) {
 	  bitcoinController.getFileHandler().copyCheckpointsResource(checkpointsFilename);
       } else {
@@ -286,6 +291,7 @@ public class MultiBitService {
 	      log.debug("Using user data checkpoints file as it is longer/same size as bundled checkpoints - " + sizeOfUserDataCheckpointsFile + " bytes versus " + resourceLength + " bytes.");
 	  }
       }
+    }
 
     // If the spvBlockStore is to be created new
     // or its size is 0 bytes delete the file so that it is recreated fresh (fix for issue 165).
@@ -323,7 +329,7 @@ public class MultiBitService {
     }
 
     // Load the existing checkpoint file and checkpoint from today.
-    if (blockStore != null && checkpointsFile.exists()) {
+    if (blockStore != null && checkpointsFile!=null && checkpointsFile.exists()) {
       FileInputStream stream = null;
       try {
         stream = new FileInputStream(checkpointsFile);
