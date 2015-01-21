@@ -44,11 +44,14 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import org.coinspark.protocol.CoinSparkAddress;
 
 /* CoinSpark START */
 // Get values from the asset validator map, rather than wallet prefs, if sending an asset
 import org.multibit.viewsystem.swing.action.AssetValidator;
 import org.coinspark.protocol.CoinSparkPaymentRef;
+import org.multibit.model.bitcoin.WalletInfoData;
+import org.multibit.utils.CSMiscUtils;
 /* CoinSpark END */
 
 /**
@@ -357,8 +360,28 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         constraints2.anchor = GridBagConstraints.LINE_END;
         detailPanel.add(sendAddressLabel, constraints2);
 
+	String sendAddressTextLabel = sendAddress;
+	
+	// If the address belongs to the same wallet as the sending address, alert user.
+	WalletInfoData wid = this.bitcoinController.getModel().getActiveWalletWalletInfo();
+	String sameWalletAddress = sendAddress;
+	if (sendAddress.startsWith("s")) {
+	    CoinSparkAddress csa = CSMiscUtils.decodeCoinSparkAddress(sendAddress);
+	    if (csa != null) {
+		sameWalletAddress = csa.getBitcoinAddress();
+	    } else {
+		sameWalletAddress = null;
+	    }
+	}
+	if (sameWalletAddress!=null) {
+	    boolean b = wid.containsReceivingAddress(sameWalletAddress);
+	    if (b) {
+		sendAddressTextLabel = sendAddressTextLabel + " (...belongs to sending wallet)";
+	    }
+	}
+	
         sendAddressText = new MultiBitLabel("");
-        sendAddressText.setText(sendAddress);
+        sendAddressText.setText(sendAddressTextLabel);
         constraints2.fill = GridBagConstraints.NONE;
         constraints2.gridx = 2;
         constraints2.gridy = 1;
