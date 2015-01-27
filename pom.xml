@@ -23,7 +23,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.sparkbit</groupId>
     <artifactId>sparkbit</artifactId>
-    <version>0.9.3</version>
+    <version>0.9.3.1</version>
     <name>SparkBit</name>
     <description>A Java Swing client for Bitcoin and CoinSpark</description>
     <url>https://sparkbit.org</url>
@@ -258,12 +258,13 @@
                     <urn>org.joda:joda-money:0.8:jar:null:compile:29e5cdf8cb4af8fffb0b013b1dc63d493cb02115</urn>
                     <urn>org.simplericity.macify:macify:1.6:jar:null:compile:969fedd5d187e92bec18cf4a88cf82fa9668c8d3</urn>
                     <urn>org.slf4j:slf4j-api:1.6.2:jar:null:compile:8619e95939167fb37245b5670135e4feb0ec7d50</urn>
-
-					<urn>org.coinspark.library:coinspark-library:2.0.0:jar:null:compile:a3968497e2cb071e6d992e36257f5c7940300687</urn>
+					<!--
+                    <urn>org.coinspark.library:coinspark-library:2.0.3:jar:null:compile:55f5647e6b17a58d3f50a44c6c03c251f7775164</urn>
+ 				 	-->
 					<!--
 					<urn>org.coinspark.library:coinspark-library:1.0-SNAPSHOT:jar:null:compile:6f7ec6ed6dfbdddcb834175cae416d8cb34025a2</urn>
 
-					<urn>com.google:bitcoinj:0.2-CS-0.11.2-MB-ALICE:jar:null:compile:c8e2f33eefcad366954eb7f39180b18c9b802666</urn>
+					<urn>com.google:bitcoinj:0.3-CS-0.11.2-MB-ALICE:jar:null:compile:c8e2f33eefcad366954eb7f39180b18c9b802666</urn>
 					-->
 					<!-- A check for the rules themselves -->
                     <urn>uk.co.froot.maven.enforcer:digest-enforcer-rules:0.0.1:jar:null:runtime:16a9e04f3fe4bb143c42782d07d5faf65b32106f</urn>
@@ -488,6 +489,27 @@
             <artifactId>xz</artifactId>
             <version>1.5</version>
         </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.4.184</version>
+        </dependency>
+<!--        <dependency>
+            <groupId>com.j256.ormlite</groupId>
+            <artifactId>ormlite-core</artifactId>
+            <version>4.48</version>
+        </dependency>-->
+        <dependency>
+            <groupId>com.j256.ormlite</groupId>
+            <artifactId>ormlite-jdbc</artifactId>
+            <version>4.48</version>
+        </dependency>
+        <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.9.2</version>
+</dependency>
+
     </dependencies>
 
     <reporting>
@@ -506,7 +528,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Version of BitCoinJ to use (multiple uses) -->
-        <bitcoinj.version>0.2-CS-0.11.2-MB-ALICE</bitcoinj.version>
+        <bitcoinj.version>0.3-CS-0.11.2-MB-ALICE</bitcoinj.version>
 
         <!-- Version of XChange to use (multiple uses) -->
         <xchange.version>1.10.0</xchange.version>
@@ -518,6 +540,6 @@
         <jetty.version>9.2.3.v20140905</jetty.version>
 
 		<!-- Version of CoinSpark library to use -->
-		<coinspark.version>2.0.0</coinspark.version>
+		<coinspark.version>2.0.3</coinspark.version>
     </properties>
 </project>
