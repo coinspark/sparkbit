@@ -755,10 +755,7 @@ public class CSMiscUtils {
 	CSMessage message = w.CS.getMessageDB().getMessage(txid);
 	long l = 0L;
 	if (message != null) {
-	    CoinSparkPaymentRef pref = message.getPaymentRef();
-	    if (pref != null) {
-		l = pref.getRef();
-	    }
+	    l = message.getPaymentRefValue();
 	}
 	return l;
     }
