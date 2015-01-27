@@ -246,11 +246,7 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
 	  /* If sending assets or BTC to a coinspark address, record transaction id --> coinspark address, into hashmap so we can use when displaying transactions */
 	String sendAddress = bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_ADDRESS);
 	if (sendAddress.startsWith("s")) {
-	    java.util.Map<String,String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-	    if (m != null) {
-		m.put(transaction.getHashAsString(), sendAddress);
-		SparkBitMapDB.INSTANCE.getMapDB().commit();
-	    }
+	    SparkBitMapDB.INSTANCE.putSendCoinSparkAddressForTxid(transaction.getHashAsString(), sendAddress);
 	}
 
         String successMessage = controller.getLocaliser().getString(assetify("sendBitcoinNowAction.bitcoinSentOk"));

@@ -17,21 +17,16 @@
  */
 package org.sparkbit.jsonrpc;
 
-import com.bitmechanic.barrister.RpcException;
 import org.multibit.controller.bitcoin.BitcoinController;
 import org.sparkbit.jsonrpc.autogen.*;
 import java.util.List;
 import java.util.ArrayList;
 import org.multibit.model.bitcoin.WalletData;
-import org.multibit.viewsystem.swing.MultiBitFrame;
-import org.multibit.model.core.StatusEnum;
-import org.multibit.network.ReplayManager;
 import com.google.bitcoin.core.*;
 //import java.util.HashMap;
 import java.util.Iterator;
 //import org.apache.commons.codec.digest.DigestUtils;
 import org.coinspark.protocol.CoinSparkAddress;
-import org.coinspark.protocol.CoinSparkAssetRef;
 import org.coinspark.wallet.CSAsset;
 import org.coinspark.wallet.CSAssetDatabase;
 import org.coinspark.wallet.CSEventBus;
@@ -41,7 +36,6 @@ import org.coinspark.protocol.CoinSparkAssetRef;
 import org.multibit.model.bitcoin.BitcoinModel;
 import org.multibit.model.bitcoin.WalletAddressBookData;
 import org.multibit.model.bitcoin.WalletInfoData;
-import com.google.bitcoin.crypto.KeyCrypter;
 import org.multibit.file.FileHandler;
 import java.io.*;
 import org.multibit.file.BackupManager;
@@ -50,13 +44,10 @@ import com.google.bitcoin.script.Script;
 import com.google.bitcoin.wallet.DefaultCoinSelector;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
 import org.coinspark.protocol.CoinSparkGenesis;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
-import org.multibit.exchange.CurrencyConverter;
 import org.sparkbit.SBEvent;
 import org.sparkbit.SBEventType;
 import org.multibit.network.MultiBitService;
@@ -64,11 +55,8 @@ import org.multibit.store.MultiBitWalletVersion;
 import java.util.Date;
 import org.multibit.file.WalletSaveException;
 import static org.multibit.model.bitcoin.WalletAssetComboBoxModel.NUMBER_OF_CONFIRMATIONS_TO_SEND_ASSET_THRESHOLD;
-import java.util.concurrent.ConcurrentHashMap;
-import org.coinspark.core.CSUtils;
 import java.text.SimpleDateFormat;
 import static org.multibit.network.MultiBitService.WALLET_SUFFIX;
-import static org.multibit.network.MultiBitService.getFilePrefix;
 import org.sparkbit.utils.FileNameCleaner;
 import org.apache.commons.io.FilenameUtils;
 import java.util.TimeZone;
@@ -82,16 +70,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Set;
 import org.coinspark.wallet.CSBalance;
 import org.coinspark.wallet.CSTransactionOutput;
 import java.util.HashSet;
-import java.util.LinkedList;
-import org.spongycastle.util.encoders.Hex;
 import org.coinspark.protocol.*;
-import org.coinspark.wallet.CSMessage;
-import org.coinspark.wallet.CSMessageDatabase;
 
 
 /**
@@ -918,15 +901,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		    }
 		    // If to myself, lets see if CoinSpark or not
 		    if (myReceiveAddress != null && toMyself) {
-			String myCoinSparkAddress = null;
-			
-			Map<String,String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-			if (m != null) {
-			    myCoinSparkAddress = m.get(tx.getHashAsString());
-			}
-			
-//			myCoinSparkAddress = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(tx.getHashAsString());
-			
+			String myCoinSparkAddress = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(tx.getHashAsString());
 			if (myCoinSparkAddress!=null) {
 			    myReceiveAddress = myCoinSparkAddress;
 			}
@@ -938,10 +913,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		 if (theirOutput != null) {
 		    // First let's see if we have stored the recipient in our map
 		    try {
-			Map<String,String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-			if (m != null) {
-			    theirAddress = m.get(tx.getHashAsString());
-			}
+			theirAddress = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(tx.getHashAsString());
 		    } catch (Exception e) {
 		    }
 
@@ -1212,8 +1184,6 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    skipAddresses = true;
 	}
 	
-	Map<String, String> csAddressMap = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-	
 	ArrayList<JSONRPCUnspentTransactionOutput> resultList = new ArrayList<>();
 
 	Map<CSTransactionOutput, Map<Integer,CSBalance>> map = w.CS.getAllAssetTxOuts();
@@ -1321,12 +1291,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    // First let's see if we have stored the recipient in our map and use it instead
 		// of generating a new one from bitcoin address
 		try {
-		    if (csAddressMap != null) {
-			String spk = csAddressMap.get(tx.getHashAsString());
-			String btc = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(spk);
-			if (btc.equals(btcAddress)) {
-			    sparkAddress = spk;
-			}
+		    String spk = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(tx.getHashAsString());
+		    String btc = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(spk);
+		    if (btc.equals(btcAddress)) {
+			sparkAddress = spk;
 		    }
 		} catch (Exception e) {
 		}
@@ -1820,11 +1788,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		
 		/* If sending assets or BTC to a coinspark address, record transaction id --> coinspark address, into hashmap so we can use when displaying transactions */
 		if (address.startsWith("s")) {
-		    java.util.Map<String, String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-		    if (m != null) {
-			m.put(sendTxHash, address);
-			SparkBitMapDB.INSTANCE.getMapDB().commit();
-		    }
+		    SparkBitMapDB.INSTANCE.putSendCoinSparkAddressForTxid(sendTxHash, address);
 		}
 	    } else {
 		// There is not enough money
@@ -2079,11 +2043,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		
 		/* If sending assets or BTC to a coinspark address, record transaction id --> coinspark address, into hashmap so we can use when displaying transactions */
 		if (address.startsWith("s")) {
-		    java.util.Map<String, String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-		    if (m != null) {
-			m.put(sendTxHash, address);
-			SparkBitMapDB.INSTANCE.getMapDB().commit();
-		    }
+		    SparkBitMapDB.INSTANCE.putSendCoinSparkAddressForTxid(sendTxHash, address);
 		}		
 	    } else {
 		// There is not enough money

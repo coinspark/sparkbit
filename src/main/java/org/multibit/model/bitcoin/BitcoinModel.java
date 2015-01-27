@@ -630,7 +630,14 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
 		    }
 		}
 		if (hasAssets) {
-		    addressString = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(addressString);
+		    // Use address from sent txid map if it exists, else convert BTC to Spark address.
+		    String txid = tx.getHashAsString();
+		    String s = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(txid);
+		    if (s!=null) {
+			addressString = s;
+		    } else {
+			addressString = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(addressString);
+		    }
 		}
 
                 if (label != null && !label.equals("")) {
@@ -658,10 +665,7 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
 
 		    // First let's see if we have stored the recipient in our map
 		    try {
-			Map<String, String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-			if (m != null) {
-			    addressString = m.get(tx.getHashAsString());
-			}
+			addressString = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(tx.getHashAsString());
 		    } catch (Exception e) {
 		    }
 

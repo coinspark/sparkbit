@@ -210,14 +210,8 @@ public class ExitAction extends AbstractExitAction {
         }
 
 		    
-	    // Shut down mapDB
-	    DB db = SparkBitMapDB.INSTANCE.getMapDB();
-	    if (db!=null) {
-		if (!db.isClosed()) {
-		    db.commit();
-		    db.close();
-		}
-	    }
+	// Shut down SparkBit Databases
+	SparkBitMapDB.INSTANCE.shutdown();
 	
         log.debug("Shutting down Bitcoin URI checker ...");
         ApplicationInstanceManager.shutdownSocket();
