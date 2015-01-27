@@ -131,6 +131,11 @@ public enum UpdateAssetBalanceService {
 					    if (pool.isShutdown()) {
 						return;
 					    }
+					    
+					    
+					    w.CS.retrieveMessages();
+					    
+					    
 //					log.info("....timer: start validateAllAssets()");
 					    w.CS.validateAllAssets(peerGroup);
 //					log.info("....timer: finish validateAllAssets()");
@@ -152,6 +157,7 @@ public enum UpdateAssetBalanceService {
 		} catch (Exception e) {
 		    // if uncaught, an exception will kill the scheduled executor
 		    log.error("Update asset balance service: Caught exception: " + e);
+		    e.printStackTrace();
 		}
 	    }
 	};
