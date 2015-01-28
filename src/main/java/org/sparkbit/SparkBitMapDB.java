@@ -64,15 +64,15 @@ public enum SparkBitMapDB {
     private BitcoinController bitcoinController;
 
     // initialize this singleton
-    public void initialize(BitcoinController controller) {
+    public void initialize(BitcoinController controller, boolean isTestNet3) {
         this.bitcoinController = controller;
-
+	
 	String mapPath = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator + MAP_FILENAME;
 
 	File mapDBFile = new File(mapPath);
 	boolean mapExists = mapDBFile.exists();
 	
-	String h2KVStorePath = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator + H2_KVSTORE_FILENAME;
+	String h2KVStorePath = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator + H2_KVSTORE_FILENAME + (isTestNet3 ? "-testnet3" : "");
 	File h2StoreFile = new File(h2KVStorePath);
 	boolean h2KVStoreExists = h2StoreFile.exists();
 	

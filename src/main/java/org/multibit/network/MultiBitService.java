@@ -62,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import org.coinspark.core.CSExceptions;
+import org.coinspark.wallet.CSMessageDatabase;
 import org.multibit.model.bitcoin.WalletAddressBookData;
 import org.multibit.utils.CSMiscUtils;
 import org.multibit.viewsystem.swing.UpdateAssetBalanceService;
@@ -164,6 +165,9 @@ public class MultiBitService {
     networkParameters = this.bitcoinController.getModel().getNetworkParameters();
     log.debug("Network parameters = " + networkParameters);
 
+    boolean isTestNet3 = isTestNet3();
+    CSMessageDatabase.testnet3 = isTestNet3;
+    
     try {
       // Load or create the blockStore..
       log.debug("Loading/ creating blockstore ...");
@@ -179,8 +183,8 @@ public class MultiBitService {
       log.debug("Attaching .fbhchain to blockchain...");
     attachFullBlockHashChain(false, blockChain);
 
-      log.debug("Initializing mapDB storage...");
-      SparkBitMapDB.INSTANCE.initialize(this.bitcoinController);
+      log.debug("Initializing map storage...");
+      SparkBitMapDB.INSTANCE.initialize(this.bitcoinController, isTestNet3);
 /* CoinSpark END */
       
       log.debug("Creating peergroup ...");
