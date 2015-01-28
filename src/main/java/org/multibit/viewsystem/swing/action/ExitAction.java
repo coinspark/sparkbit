@@ -40,6 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
+import org.coinspark.wallet.CSMessageDatabase;
 import org.multibit.viewsystem.swing.UpdateAssetBalanceService;
 import org.sparkbit.jsonrpc.JSONRPCController;
 
@@ -212,6 +213,7 @@ public class ExitAction extends AbstractExitAction {
 		    
 	// Shut down SparkBit Databases
 	SparkBitMapDB.INSTANCE.shutdown();
+	CSMessageDatabase.shutdownBlobStore();
 	
         log.debug("Shutting down Bitcoin URI checker ...");
         ApplicationInstanceManager.shutdownSocket();
