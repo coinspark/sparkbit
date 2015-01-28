@@ -50,7 +50,9 @@ public enum SparkBitMapDB {
     public static final String MAP_FILENAME = "sparkbit.mapdb";
     
     // Filename of new H2 key-value store
-    public static final String H2_KVSTORE_FILENAME = "sparkbit_h2_kvstore";
+    public static final String TESTNET3_FILENAME_SUFFIX = "-testnet3";
+    public static final String H2_KVSTORE_FILE_EXTENSION = ".mv.db";
+    public static final String H2_KVSTORE_FILENAME = "sparkbit-keyvalue";
 
     // Name of map storing txid->coinsparkAddress
     public static final String SPARKBITDB_SEND_TX_TO_COINSPARK_ADDRESS_MAP_NAME = "sendTxToCoinSparkAddressMap";
@@ -72,7 +74,7 @@ public enum SparkBitMapDB {
 	File mapDBFile = new File(mapPath);
 	boolean mapExists = mapDBFile.exists();
 	
-	String h2KVStorePath = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator + H2_KVSTORE_FILENAME + (isTestNet3 ? "-testnet3" : "");
+	String h2KVStorePath = controller.getApplicationDataDirectoryLocator().getApplicationDataDirectory() + File.separator + H2_KVSTORE_FILENAME + (isTestNet3 ? TESTNET3_FILENAME_SUFFIX : "") + H2_KVSTORE_FILE_EXTENSION;
 	File h2StoreFile = new File(h2KVStorePath);
 	boolean h2KVStoreExists = h2StoreFile.exists();
 	
