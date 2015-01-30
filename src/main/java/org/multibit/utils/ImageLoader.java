@@ -98,7 +98,7 @@ public final class ImageLoader {
      public static final String CS_CONTRACT_ICON_FILE = "/images-coinspark/fatcow/16/document_index.png";
      
     
-    public static final String CS_FILE_EXTENSION_ICON_FILE_FORMAT_STRING = "/images-coinspark/fatcow/file_extension_%s.png";
+    public static final String CS_FILE_EXTENSION_ICON_FILE_FORMAT_STRING = "/images-coinspark/fatcow/16/file_extension_%s.png";
     
     // Rename icon files, if they have a hypen - replace with underscore
     public enum FUGUE {
