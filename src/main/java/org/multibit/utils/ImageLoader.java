@@ -102,7 +102,10 @@ public final class ImageLoader {
     
     // Rename icon files, if they have a hypen - replace with underscore
     public enum FUGUE {
+	balloon,
+	balloon_white,
 	edit_number,
+	tag_hash,
     }
     
     public enum FATCOW {
@@ -178,6 +181,10 @@ public final class ImageLoader {
     
     public static ImageIcon fugue(FUGUE fc) {
 	return createImageIcon("/images-coinspark/fugue/"+fc.toString()+".png");	
+    }
+    
+    public static ImageIcon fugue(String name) {
+	return createImageIcon("/images-coinspark/fugue/"+name+".png");		
     }
     
     public static ImageIcon fatCow16(FATCOW fc) {
