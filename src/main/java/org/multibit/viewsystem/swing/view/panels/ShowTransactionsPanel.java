@@ -215,6 +215,8 @@ public class ShowTransactionsPanel extends JPanel implements Viewable {
 	TableColumnModel columnModel = table.getColumnModel();
 	TableColumn statusColumn = columnModel.getColumn(walletTableModel.getColumnIndex("status"));
 	TableColumn extrasColumn = columnModel.getColumn(walletTableModel.getColumnIndex("extras"));
+	TableColumn messageColumn = columnModel.getColumn(walletTableModel.getColumnIndex("message"));
+//	TableColumn attachmentsColumn = columnModel.getColumn(walletTableModel.getColumnIndex("attachments"));
 	TableColumn dateColumn = columnModel.getColumn(walletTableModel.getColumnIndex("date"));
 	TableColumn descriptionColumn = columnModel.getColumn(walletTableModel.getColumnIndex("description"));
 //	TableColumn btcAmountColumn = columnModel.getColumn(walletTableModel.getColumnIndex("btcAmount"));
@@ -233,6 +235,23 @@ public class ShowTransactionsPanel extends JPanel implements Viewable {
 	extrasColumn.setMaxWidth(BUTTON_ICON_COLUMN_WIDTH);
 	extrasColumn.setWidth(BUTTON_ICON_COLUMN_WIDTH);
 	extrasColumn.setPreferredWidth(BUTTON_ICON_COLUMN_WIDTH);
+
+	CSButtonColumnCellRenderer messageCellRenderer = new CSButtonColumnCellRenderer(table, null);
+	messageCellRenderer.useAlternateRowColors = true;
+	messageColumn.setCellRenderer(messageCellRenderer);
+	messageColumn.setMinWidth(BUTTON_ICON_COLUMN_WIDTH);
+	messageColumn.setMaxWidth(BUTTON_ICON_COLUMN_WIDTH);
+	messageColumn.setWidth(BUTTON_ICON_COLUMN_WIDTH);
+	messageColumn.setPreferredWidth(BUTTON_ICON_COLUMN_WIDTH);
+/*
+	CSButtonColumnCellRenderer attachmentsCellRenderer = new CSButtonColumnCellRenderer(table, null);
+	attachmentsCellRenderer.useAlternateRowColors = true;
+	attachmentsColumn.setCellRenderer(attachmentsCellRenderer);
+	attachmentsColumn.setMinWidth(BUTTON_ICON_COLUMN_WIDTH);
+	attachmentsColumn.setMaxWidth(BUTTON_ICON_COLUMN_WIDTH);
+	attachmentsColumn.setWidth(BUTTON_ICON_COLUMN_WIDTH);
+	attachmentsColumn.setPreferredWidth(BUTTON_ICON_COLUMN_WIDTH);
+	*/
 	
 	// Use status icons.
 	statusColumn.setCellRenderer(new ImageRenderer());

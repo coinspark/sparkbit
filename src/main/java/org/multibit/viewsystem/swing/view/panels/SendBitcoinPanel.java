@@ -58,6 +58,7 @@ import org.joda.money.Money;
 import org.multibit.model.bitcoin.WalletAssetComboBoxModel;
 import org.multibit.model.bitcoin.WalletAssetComboBoxItem;
 import org.multibit.viewsystem.swing.view.panels.CSSendAssetPanel;
+import org.multibit.viewsystem.swing.view.panels.CSMessageSendPanel;
 import org.multibit.viewsystem.dataproviders.AssetFormDataProvider;
 import org.coinspark.core.*;
 import org.coinspark.wallet.*;
@@ -89,8 +90,13 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
     private JComboBox<WalletAssetComboBoxItem> assetComboBox;
     private JPanel bitcoinAmountPanel;
     private CSSendAssetPanel assetAmountPanel;
-    private GridBagConstraints amountPanelConstraints;
+//    private GridBagConstraints amountPanelConstraints;
     private MultiBitLabel notificationLabel2;
+    private int yGridAssetAmountPanel;
+    private int yGridMessagePanel;
+    private CSMessageSendPanel messageSendPanel;
+    private MultiBitLabel messageLabel;
+    private MultiBitLabel paymentRefTextLabel;
     /* CoinSpark END */
 
     public SendBitcoinPanel(BitcoinController bitcoinController, MultiBitFrame mainFrame) {
@@ -159,6 +165,11 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
     }
     
     // Implement AssetFormDataProvider
+    @Override
+    public String getMessage() {
+	return messageSendPanel.getMessageText();
+    }
+	    
     @Override
     public int getAssetId() {
 	Object o = assetComboBox.getSelectedItem();
@@ -297,13 +308,19 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 
 	// create stents and forcers
 	createFormPanelStentsAndForcers(formPanel, constraints);
+	
+	// Y grid position
+	int yGridPosition = 0;
+		
+	
+	yGridPosition++;
 
 	MultiBitLabel addressLabel = new MultiBitLabel(controller.getLocaliser().getString("sendBitcoinPanel.addressLabel"));
 	addressLabel.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinPanel.addressLabel.tooltip")));
 	addressLabel.setHorizontalAlignment(JLabel.TRAILING);
 	constraints.fill = GridBagConstraints.HORIZONTAL;
 	constraints.gridx = 0;
-	constraints.gridy = 1;
+	constraints.gridy = yGridPosition;
 	constraints.weightx = 1.0;
 	constraints.weighty = 0.2;
 	constraints.gridwidth = 1;
@@ -330,7 +347,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	addressTextField.addKeyListener(new QRCodeKeyListener());
 	constraints.fill = GridBagConstraints.HORIZONTAL;
 	constraints.gridx = 2;
-	constraints.gridy = 1;
+	constraints.gridy = yGridPosition;
 	constraints.weightx = 1000; //1.0;
 	constraints.weighty = 0.2;
 	constraints.gridwidth = 3;
@@ -358,7 +375,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	MultiBitButton copyAddressButton = new MultiBitButton(copyAddressAction, controller);
 	constraints.fill = GridBagConstraints.NONE;
 	constraints.gridx = 6;
-	constraints.gridy = 1;
+	constraints.gridy = yGridPosition;
 	constraints.weightx = 1;
 	constraints.gridwidth = 1;
 	constraints.anchor = GridBagConstraints.LINE_START;
@@ -369,7 +386,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	pasteAddressButton = new MultiBitButton(pasteAddressAction, controller);
 	constraints.fill = GridBagConstraints.NONE;
 	constraints.gridx = 8;
-	constraints.gridy = 1;
+	constraints.gridy = yGridPosition;
 	constraints.weightx = 1.0; //10.0; //1; //0.0;
 	constraints.weighty = 0.2;
 	constraints.gridwidth = 1;
@@ -381,7 +398,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	JPanel pasteButtonStent = MultiBitTitledPanel.createStent((int)copyAddressButton.getPreferredSize().getWidth(), (int)copyAddressButton.getPreferredSize().getHeight());
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 10;
-        constraints.gridy = 1;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 1.0; //10.0;
         constraints.weighty = 0.2;
         constraints.gridwidth = 1;
@@ -389,14 +406,32 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
         constraints.anchor = GridBagConstraints.LINE_START;
         formPanel.add(pasteButtonStent, constraints);
 	
-
+	
+	
+	yGridPosition++;
+	
+	paymentRefTextLabel = new MultiBitLabel("");
+	paymentRefTextLabel.setHorizontalAlignment(JLabel.LEADING);
+	constraints.fill = GridBagConstraints.HORIZONTAL;
+	constraints.gridx = 2;
+	constraints.gridy = yGridPosition;
+	constraints.weightx = 1.0;
+	constraints.weighty = 0.2;
+	constraints.gridwidth = 1;
+	constraints.gridheight = 1;
+	constraints.anchor = GridBagConstraints.LINE_START;
+	formPanel.add(paymentRefTextLabel, constraints);
+	
+	
+	yGridPosition++;
+	
 	MultiBitLabel assetTypeLabel = new MultiBitLabel(controller.getLocaliser().getString("sendBitcoinPanel.assetTypeLabel"));
 	assetTypeLabel.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinPanel.sparkAddressLabel.tooltip")));
 	assetTypeLabel.setBorder(BorderFactory.createMatteBorder((int) (TEXTFIELD_VERTICAL_DELTA * 0.5), 0, (int) (TEXTFIELD_VERTICAL_DELTA * 0.5), 0, ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR));
 	assetTypeLabel.setHorizontalAlignment(JLabel.TRAILING);
 	constraints.fill = GridBagConstraints.BOTH;
 	constraints.gridx = 0;
-	constraints.gridy = 2;
+	constraints.gridy = yGridPosition;
 	constraints.weightx = 1.0;
 	constraints.weighty = 0.2;
 	constraints.gridwidth = 1;
@@ -463,7 +498,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 
 	constraints.fill = GridBagConstraints.HORIZONTAL;
 	constraints.gridx = 2;
-	constraints.gridy = 2;
+	constraints.gridy = yGridPosition;
 	constraints.weightx = 1.0;
 	constraints.weighty = 1.0;
 	constraints.gridwidth = 3;
@@ -472,14 +507,18 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	formPanel.add(assetComboBox, constraints);
 
 	
+	yGridPosition++;
+	
+
+
 	MultiBitLabel labelLabel = new MultiBitLabel(controller.getLocaliser().getString("sendBitcoinPanel.labelLabel"));
 	labelLabel.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinPanel.labelLabel.tooltip")));
 	labelLabel.setHorizontalAlignment(JLabel.TRAILING);
 	constraints.fill = GridBagConstraints.NONE;
 	constraints.gridx = 0;
-	constraints.gridy = 3;
+	constraints.gridy = yGridPosition;
 	constraints.weightx = 1.0;
-	constraints.weighty = 1.0;
+	constraints.weighty = 0.2; //1.0;
 	constraints.gridwidth = 1;
 	constraints.gridheight = 1;
 	constraints.anchor = GridBagConstraints.LINE_END;
@@ -521,25 +560,106 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 
 	constraints.fill = GridBagConstraints.BOTH; //HORIZONTAL;
 	constraints.gridx = 2;
-	constraints.gridy = 3;
+	constraints.gridy = yGridPosition;
 	constraints.weightx = 1; //0.6;
-	constraints.weighty = 0; //1; //0.2; //1
+	constraints.weighty = 0.2; //0; //1; //0.2; //1
 	constraints.gridwidth = 3;
 	constraints.gridheight = 1;
 	constraints.anchor = GridBagConstraints.LINE_START;
+	constraints.insets = new Insets(0, 0, 3, 0);	// when scrollers show to expand height, maintain gap to next grid
 	formPanel.add(labelScrollPane, constraints);
 
+
+	sendBitcoinConfirmAction = new SendBitcoinConfirmAction(super.bitcoinController, mainFrame, this);
+	sendBitcoinConfirmAction.setEnabled(enableSendButton);
+	sendButton = new MultiBitButton(sendBitcoinConfirmAction, controller);
+	if (enableSendButton) {
+	    sendButton.setEnabled(true);
+	    sendButton.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinAction.tooltip")));
+	} else {
+	    sendButton.setEnabled(false);
+	    sendButton.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinAction.pleaseWait.tooltip")));
+	}
+	
+	// Mouse press event occurs before focus is lost, so we can capture what was typed before
+	// losing focus leads to the textfield being updated/validated and the formatter applied.
+	// We want to catch the user typing in too many decimals.
+	sendButton.addMouseListener(new MouseAdapter() {
+	    @Override
+	    public void mousePressed(MouseEvent e) {
+		sendAssetAmountText = assetAmountPanel.getAssetTextField().getText();
+	    }
+	});
+		
+	/* CoinSpark START */
+	sendAssetConfirmAction = new SendAssetConfirmAction(super.bitcoinController, mainFrame, this);
+	sendAssetConfirmAction.setEnabled(enableSendButton);
+	/* CoinSpark END */
+
+	
+	constraints.fill = GridBagConstraints.HORIZONTAL;
+	constraints.gridx = 6;
+	constraints.gridy = yGridPosition; //yGridSendButton;
+	constraints.weightx = 1; //0.1;
+	constraints.weighty = 0.1;
+	constraints.gridwidth = 3;
+	constraints.gridheight = 1;
+	constraints.anchor = GridBagConstraints.LINE_START;
+	formPanel.add(sendButton, constraints);	
+	
+	
+	
+	yGridPosition++;
+	
+	
+	
+		this.messageLabel = new MultiBitLabel(controller.getLocaliser().getString("sendBitcoinPanel.messageLabel"));
+	labelLabel.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinPanel.messageLabel.tooltip")));
+	labelLabel.setHorizontalAlignment(JLabel.TRAILING);
+	constraints.fill = GridBagConstraints.NONE;
+	constraints.gridx = 0;
+	constraints.gridy = yGridPosition;
+	constraints.weightx = 1.0;
+	constraints.weighty = 0.2; //1.0;
+	constraints.gridwidth = 1;
+	constraints.gridheight = 1;
+	constraints.anchor = GridBagConstraints.LINE_END;
+	formPanel.add(messageLabel, constraints);
+	
+	
+	messageSendPanel = new CSMessageSendPanel();
+	
+	constraints.fill = GridBagConstraints.BOTH; //HORIZONTAL;
+	constraints.gridx = 2;
+	constraints.gridy = yGridPosition;
+	constraints.weightx = 1; //0.6;
+	constraints.weighty = 0.2; //0; //1; //0.2; //1
+	constraints.gridwidth = 3;
+	constraints.gridheight = 1;
+	constraints.anchor = GridBagConstraints.LINE_START;
+	formPanel.add(messageSendPanel, constraints);
+	
+	yGridPosition++;
+	
+	
+	
+	// Asset amount row
+	// Because height of the asset amount panel can vary, it should currently be the
+	// last row of widgets to show until we find a way to compute size dynamically
+	// instead of setting to 1,000.
+	yGridAssetAmountPanel = yGridPosition;
+	
 	
 	MultiBitLabel amountLabel = new MultiBitLabel(controller.getLocaliser().getString("sendBitcoinPanel.amountLabel"));
 	amountLabel.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinPanel.amountLabel.tooltip")));
 	amountLabel.setHorizontalAlignment(JLabel.TRAILING);
 	constraints.fill = GridBagConstraints.NONE;
 	constraints.gridx = 0;
-	constraints.gridy = 4;
+	constraints.gridy = yGridPosition;
 	constraints.gridwidth = 1;
 	constraints.gridheight = 1;
 	constraints.weightx = 1.0; //0.1;  // FUDGE: Try to force labels to take more room and be visible.
-	constraints.weighty = 1;
+	constraints.weighty = 0.2; //1;
 	constraints.anchor = GridBagConstraints.LINE_END;
 	formPanel.add(amountLabel, constraints);
 
@@ -570,13 +690,22 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
     formPanel.add(amountPanel, constraints);
 //	formPanel.add(cards, constraints);
 	*/
+	
+	
+	yGridPosition++;
+	
+	
+	
+
+	
+	
 
 	notificationLabel = new MultiBitLabel("");
 	notificationLabel.setForeground(Color.RED);
 	//notificationLabel.setBorder(BorderFactory.createLineBorder(Color.GREEN));
 	constraints.fill = GridBagConstraints.BOTH;
 	constraints.gridx = 2;
-	constraints.gridy = 5;
+	constraints.gridy = yGridPosition;
 
 	constraints.gridwidth = 8;
 	constraints.gridheight = 3;
@@ -585,12 +714,18 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.anchor = GridBagConstraints.ABOVE_BASELINE_LEADING;
 	formPanel.add(notificationLabel, constraints);
 
+	
+	
+	yGridPosition++;
+	
+	
+	
 	// Add another notification label
 	notificationLabel2 = new MultiBitLabel("");
 	notificationLabel2.setForeground(Color.MAGENTA); // not red, because it may be a suggestion or warning, rather than just an error.
 	constraints.fill = GridBagConstraints.BOTH;
 	constraints.gridx = 2;
-	constraints.gridy = 6;
+	constraints.gridy = yGridPosition;
 
 	constraints.gridwidth = 8;
 	constraints.gridheight = 3;
@@ -598,6 +733,22 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.weighty = 0.1;
 	constraints.anchor = GridBagConstraints.ABOVE_BASELINE_LEADING;
 	formPanel.add(notificationLabel2, constraints);	
+	
+	
+	yGridPosition++;
+	
+	// Filler to push everything up if there is a lot of spare room..
+	JPanel filler = new JPanel();
+	filler.setBackground(ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR);
+constraints.fill = GridBagConstraints.BOTH;
+	constraints.gridx = 0;
+	constraints.gridy = yGridPosition;
+	constraints.gridwidth = 8;
+	constraints.gridheight = 1;
+	constraints.weightx = 0.1;
+	constraints.weighty = 100.0;
+	constraints.anchor = GridBagConstraints.ABOVE_BASELINE_LEADING;
+	formPanel.add(filler, constraints);		
 	
 //	Action helpAction;
 //	if (ComponentOrientation.LEFT_TO_RIGHT == ComponentOrientation.getOrientation(controller.getLocaliser().getLocale())) {
@@ -630,42 +781,8 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 //	constraints.anchor = GridBagConstraints.BELOW_BASELINE_LEADING;
 //	formPanel.add(helpButton, constraints);
 
-	sendBitcoinConfirmAction = new SendBitcoinConfirmAction(super.bitcoinController, mainFrame, this);
-	sendBitcoinConfirmAction.setEnabled(enableSendButton);
-	sendButton = new MultiBitButton(sendBitcoinConfirmAction, controller);
-	if (enableSendButton) {
-	    sendButton.setEnabled(true);
-	    sendButton.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinAction.tooltip")));
-	} else {
-	    sendButton.setEnabled(false);
-	    sendButton.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinAction.pleaseWait.tooltip")));
-	}
+
 	
-	// Mouse press event occurs before focus is lost, so we can capture what was typed before
-	// losing focus leads to the textfield being updated/validated and the formatter applied.
-	// We want to catch the user typing in too many decimals.
-	sendButton.addMouseListener(new MouseAdapter() {
-	    @Override
-	    public void mousePressed(MouseEvent e) {
-		sendAssetAmountText = assetAmountPanel.getAssetTextField().getText();
-	    }
-	});
-		
-	/* CoinSpark START */
-	sendAssetConfirmAction = new SendAssetConfirmAction(super.bitcoinController, mainFrame, this);
-	sendAssetConfirmAction.setEnabled(enableSendButton);
-	/* CoinSpark END */
-
-	constraints.fill = GridBagConstraints.HORIZONTAL;
-	constraints.gridx = 6;
-	constraints.gridy = 3;
-	constraints.weightx = 1; //0.1;
-	constraints.weighty = 0.1;
-	constraints.gridwidth = 3;
-	constraints.gridheight = 1;
-	constraints.anchor = GridBagConstraints.LINE_START;
-	formPanel.add(sendButton, constraints);
-
 	/*
 	Action sidePanelAction = new MoreOrLessAction(controller, this);
 	sidePanelButton = new MultiBitButton(sidePanelAction, controller);
@@ -689,6 +806,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	return formPanel;
     }
 
+
     
     public void removeAmountPanel(JPanel formPanel, JPanel panel) {
 	if (panel==null) return;
@@ -700,7 +818,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	GridBagConstraints constraints = new GridBagConstraints();
 	constraints.fill = GridBagConstraints.BOTH;
 	constraints.gridx = 2;
-	constraints.gridy = 4;
+	constraints.gridy = yGridAssetAmountPanel;
 	constraints.gridwidth = 3; //3
 	constraints.gridheight = 1;
 	constraints.weightx = 0.1;
@@ -736,6 +854,12 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	String label = this.bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_LABEL);
 	String amountNotLocalised = this.bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_AMOUNT);
 
+	if (messageSendPanel != null) {
+	    String message = this.bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_MESSAGE);
+	    if (message==null) message = "";
+	    messageSendPanel.setMessageText(message);
+	}
+	
 	if (amountBTCTextField != null) {
 	    CurrencyConverterResult converterResult = CurrencyConverter.INSTANCE.parseToBTCNotLocalised(amountNotLocalised);
 
@@ -1057,6 +1181,9 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	boolean validCoinsparkAddress = false;
 	boolean validBitcoinAddress = false;
 	boolean cannotSendAssetsToValidCoinsparkAddress = false;
+	boolean canSendMessage = false;
+	boolean showPaymentRef = false;
+	
 	String address = addressTextField.getText();
 	if (address.startsWith("s")) {
 	    CoinSparkAddress csa = CSMiscUtils.decodeCoinSparkAddress(address);
@@ -1068,6 +1195,18 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 		    cannotSendAssetsToValidCoinsparkAddress = true;
 		}
 	    }
+	    int flags = csa.getAddressFlags();
+	    canSendMessage = (flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_TEXT_MESSAGES)>0;
+	    
+	    if ((flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS) > 0) {
+		CoinSparkPaymentRef paymentRef = csa.getPaymentRef();
+		long ref = paymentRef.getRef();
+		if (ref>0) {
+		    showPaymentRef = true;
+		    paymentRefTextLabel.setText("This address has a payment reference: " + ref);
+		}
+	    }
+	    
 	} else {
 	    validBitcoinAddress = CSMiscUtils.validateBitcoinAddress(address, bitcoinController);
 	}
@@ -1093,8 +1232,20 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	    assetComboBox.setEnabled(true);
 	    ((WalletAssetComboBoxModel) assetComboBox.getModel()).enableAssets();
 	}
-
+	
 	notificationLabel2.setText(message);
+	
+	// show/hide payment ref area
+	
+	// show/hide message text area
+//	boolean oldVisibility = messageSendPanel.isVisible();
+	messageSendPanel.setVisible(canSendMessage);
+	messageLabel.setVisible(canSendMessage);
+//	if (oldVisibility != canSendMessage) {
+//	    upperPanel.validate();
+//	}
+	
+	paymentRefTextLabel.setVisible(showPaymentRef);
     }
     
     

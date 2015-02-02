@@ -25,7 +25,6 @@ import org.multibit.controller.bitcoin.BitcoinController;
 import org.multibit.message.Message;
 import org.multibit.message.MessageManager;
 import org.multibit.model.bitcoin.BitcoinModel;
-import org.multibit.utils.ImageLoader;
 import org.multibit.viewsystem.dataproviders.BitcoinFormDataProvider;
 import org.multibit.viewsystem.swing.MultiBitFrame;
 import org.multibit.viewsystem.swing.view.dialogs.SendBitcoinConfirmDialog;
@@ -35,13 +34,18 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.coinspark.protocol.CoinSparkAddress;
 /* CoinSpark START */
 import org.multibit.utils.CSMiscUtils;
 import org.coinspark.protocol.*;
-import org.sparkbit.SparkBitMapDB;
-import java.util.*;
+import org.multibit.model.core.CoreModel;
+import org.multibit.viewsystem.dataproviders.AssetFormDataProvider;
 /* CoinSpark END */
 
 /**
@@ -83,7 +87,9 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
         try {
             String sendAddress = dataProvider.getAddress();
             String sendAmount = dataProvider.getAmount();
-
+	    String sendMessage = null;
+	    boolean canSendMessage = false;
+	    
 	    /*CoinSpark START */
 	    CoinSparkPaymentRef paymentRef = null;
 
@@ -107,6 +113,10 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 		    paymentRef = csa.getPaymentRef();
 		    log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
 		}
+		
+		// Messages - can send message and BTC to CoinSpark address, without any assets.
+		sendMessage = ((AssetFormDataProvider)dataProvider).getMessage();
+		canSendMessage = (flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_TEXT_MESSAGES)>0;
 	    }
 	    /*CoinSpark END */
 	    
@@ -130,6 +140,59 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 		if (paymentRef != null) {
 		    sendRequest.setPaymentRef(paymentRef);
 		}
+		
+		// Send a message if the address will take it and message is not empty
+		if (canSendMessage) {
+		    boolean isEmptyMessage = false;
+		    if (sendMessage == null || sendMessage.isEmpty() || sendMessage.trim().length() == 0) {
+			isEmptyMessage = true;
+		    }	    
+		    if (!isEmptyMessage) {
+			int numParts = 1;
+			CoinSparkMessagePart[] parts = new CoinSparkMessagePart[numParts];
+			parts[0] = new CoinSparkMessagePart();
+			parts[0].fileName = null;
+			parts[0].mimeType = "text/plain";
+			parts[0].content = sendMessage.getBytes("UTF-8");
+
+			//String[] servers = new String[]{"assets1.coinspark.org/","assets1.coinspark.org/abc"};//,"144.76.175.228/" };					
+			// Servers are URL encoded, and CSUtils looks for "://" to decide whether
+			// or not to add prefix of "http://" but encoded this is %3A%2F%2F.
+			String servers = controller.getModel().getUserPreference(CoreModel.MESSAGING_SERVERS);
+			if (servers == null) {
+			    servers = StringUtils.join(CoreModel.DEFAULT_MESSAGING_SERVER_URLS, "|");
+			    controller.getModel().setUserPreference(CoreModel.MESSAGING_SERVERS, servers);
+			}
+			String[] urls = servers.split("\\|"); // regex so we have to escape | character
+			ArrayList<String> list = new ArrayList<>();
+			for (String url : urls) {
+			    try {
+				String decoded = URLDecoder.decode(url, "UTF-8");
+				list.add(decoded);
+			    } catch (UnsupportedEncodingException ue) {
+				// don't add it
+			    }
+			}
+			String[] serverURLs = list.toArray(new String[0]);
+
+			
+			sendRequest.setMessage(parts, serverURLs);
+
+			log.debug(">>>> Messaging servers = " + servers);
+			log.debug(">>>> parts[0] = " + parts[0]);
+			log.debug(">>>> parts[0].fileName = " + parts[0].fileName);
+			log.debug(">>>> parts[0].mimeType = " + parts[0].mimeType);
+			log.debug(">>>> parts[0].content = " + ArrayUtils.toString(parts[0].content));
+			//String message = "Hello, the time is now..." + DateTime.now().toString();
+//		parts[2].fileName = imagePath;
+//		parts[2].mimeType = "image/png";
+//		byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
+//		parts[2].content = imageBytes;
+
+		    }
+		}
+
+		
 
                 // Complete it (which works out the fee) but do not sign it yet.
                 log.debug("Just about to complete the tx (and calculate the fee)...");

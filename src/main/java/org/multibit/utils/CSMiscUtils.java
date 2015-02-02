@@ -23,7 +23,6 @@ package org.multibit.utils;
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.TransactionOutput;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
@@ -42,11 +41,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.TreeMap;
-import org.coinspark.wallet.CSAssetDatabase;
 import org.apache.commons.lang3.StringUtils;
 
 import org.joda.time.DateTime;
@@ -58,7 +53,11 @@ import org.multibit.controller.bitcoin.BitcoinController;
 import com.google.bitcoin.core.Wallet.SendRequest;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.List;
+import java.util.Random;
 import org.coinspark.wallet.CSMessage;
+import org.coinspark.wallet.CSMessageDatabase;
+import org.coinspark.wallet.CSMessagePart;
 import org.joda.time.LocalDateTime;
 import org.multibit.model.bitcoin.BitcoinModel;
 import org.multibit.model.core.CoreModel;
@@ -752,6 +751,7 @@ public class CSMiscUtils {
      * @return 0 if no payment reference exists.
      */
     public static long getPaymentRefFromTx(Wallet w, String txid) {
+	if (txid==null || w==null) return 0;
 	CSMessage message = w.CS.getMessageDB().getMessage(txid);
 	long l = 0L;
 	if (message != null) {
@@ -765,7 +765,7 @@ public class CSMiscUtils {
      * URLs are URL decoded using UTF-8.  If a URL cannot be decoded, it is skipped.
      * @return 
      */
-    public String[] getDeliveryServers(BitcoinController controller) {
+    public static String[] getDeliveryServers(BitcoinController controller) {
 	String serverString = controller.getModel().getUserPreference(CoreModel.MESSAGING_SERVERS);
 	if (serverString==null) {
 	    return CoreModel.DEFAULT_MESSAGING_SERVER_URLS;
@@ -786,4 +786,47 @@ public class CSMiscUtils {
 	}
 	return list.toArray(new String[0]);
     }
+    
+    /**
+     * Get the short message for a transaction.
+     * For SparkBit, this would be the first message part, which should be UTF-8 encoded,
+     * have a mimetype of plain/text and no filename.
+     * From the CS protocol perspective, there is no guarantee that other clients will
+     * do the same.  So for SparkBit, we will search for something which looks like a
+     * short text message, in ascending part ID order, and use that as the "short message".
+     * @param w
+     * @param txid
+     * @return 
+     */
+    public static String getShortTextMessage(Wallet w, String txid) {
+	String msg = null;
+	
+	//other methos i could use.
+	//CSMessagePart part = w.CS.getMessageDB().getMessagePart(txid, 1);
+
+	// We are probably here because the message sender was not using SparkBit
+	CSMessage message = w.CS.getMessageDB().getMessage(txid);
+	if (message==null || message.getMessageState()==CSMessage.CSMessageState.PAYMENTREF_ONLY) {
+	    return null;
+	}
+	List<CSMessagePart> parts = message.getMessagePartsSortedByPartID();
+	for (CSMessagePart p : parts) {
+	    if (p.fileName == null && p.mimeType != null && p.mimeType.equals("text/plain")) {
+		byte[] content = CSMessageDatabase.getBlobForMessagePart(txid, p.partID);
+		if (content != null) {
+		    try {
+			msg = new String(content, "UTF-8");
+			break;
+		    } catch (Exception e) {
+			msg = "Error decoding text message";
+		    }
+		}
+	    }
+	}
+
+	return msg;
+
+    }
+    
+    
 }

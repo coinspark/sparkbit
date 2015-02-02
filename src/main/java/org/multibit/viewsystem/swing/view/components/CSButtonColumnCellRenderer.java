@@ -32,6 +32,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
 import java.awt.Font;
+import javax.swing.Icon;
 import org.multibit.viewsystem.swing.ColorAndFontConstants;
 
 
@@ -98,7 +99,7 @@ public class CSButtonColumnCellRenderer extends AbstractCellEditor implements Ta
 	    renderButton.setToolTipText(null);
 	} else {
 	    HashMap<String, Object> map = (HashMap<String, Object>) value;
-	    ImageIcon icon = (ImageIcon) (map.get("icon"));
+	    Icon icon = (Icon) (map.get("icon"));
 	    String text = (String) (map.get("text"));
 	    String tooltip = (String) (map.get("tooltip"));
 	    renderButton.setIcon(icon);
@@ -132,7 +133,7 @@ public class CSButtonColumnCellRenderer extends AbstractCellEditor implements Ta
 	    editButton.setIcon(null);
 	} else {
 	    HashMap<String, Object> map = (HashMap<String, Object>) value;
-	    ImageIcon icon = (ImageIcon) (map.get("icon"));
+	    Icon icon = (Icon) (map.get("icon"));
 	    String text = (String) (map.get("text"));
 	    String tooltip = (String) (map.get("tooltip"));
 	    renderButton.setIcon(icon);

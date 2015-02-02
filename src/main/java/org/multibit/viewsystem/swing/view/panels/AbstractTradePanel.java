@@ -104,7 +104,7 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
 
     private static final int TABLE_BORDER = 3;
 
-    protected static final int PREFERRED_NUMBER_OF_LABEL_ROWS = 3;
+    protected static final int PREFERRED_NUMBER_OF_LABEL_ROWS = 1; //3;
 
     protected MultiBitFrame mainFrame;
 
@@ -302,6 +302,15 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
         theFormPanel = createFormPanel(upperPanel, constraints2);   // CoinSpark
 //        createQRCodePanel(upperPanel, constraints2);
 
+	// Wrap send panel in scrollpane
+	JScrollPane sendScrollPane = null;
+	if (!isReceiveBitcoin()) {
+	    sendScrollPane = new JScrollPane(upperPanel);
+	    sendScrollPane.setBorder(BorderFactory.createEmptyBorder());
+	    sendScrollPane.setMinimumSize(this.minimumSize());
+	    sendScrollPane.getViewport().setBackground(ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR);
+	}
+	
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 0;
         constraints.gridy = 0;
@@ -310,7 +319,11 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
         constraints.weightx = 1.0;
         constraints.weighty = 0.5;
         constraints.anchor = GridBagConstraints.LINE_START;
-	add(upperPanel, constraints);
+	if (!isReceiveBitcoin()) {
+	    add(sendScrollPane, constraints);
+	} else {
+	    add(upperPanel, constraints);
+	}
 
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 0;

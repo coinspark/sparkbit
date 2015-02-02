@@ -86,6 +86,7 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
     public static final String HTTPS_TRUST_ALL_CERTS = "httpsTrustAllCerts";
     
     // Send bitcoin and send bitcoin confirm.
+    public static final String SEND_MESSAGE = "sendMessage";    
     public static final String SEND_SPARK_ADDRESS = "sendSparkAddress";
     public static final String SEND_ADDRESS = "sendAddress";
     public static final String SEND_LABEL = "sendLabel";
