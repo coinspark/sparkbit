@@ -540,6 +540,6 @@
         <jetty.version>9.2.3.v20140905</jetty.version>
 
 		<!-- Version of CoinSpark library to use -->
-		<coinspark.version>2.0.3</coinspark.version>
+		<coinspark.version>2.0.4-DEVELOP</coinspark.version>
     </properties>
 </project>
