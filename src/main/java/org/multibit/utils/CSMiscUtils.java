@@ -145,7 +145,10 @@ public class CSMiscUtils {
         int flags=CoinSparkAddress.COINSPARK_ADDRESS_FLAG_ASSETS | CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS | CoinSparkAddress.COINSPARK_ADDRESS_FLAG_TEXT_MESSAGES;
 	csa.setAddressFlags(flags);
 	csa.setBitcoinAddress(bitcoinAddress);
-	csa.setPaymentRef(new CoinSparkPaymentRef(0));
+	
+	// For SparkBit, a reference of 0 is semantically the same as no payment reference
+	// but for other clients this might not be the case, so we should not create reference.
+	//csa.setPaymentRef(new CoinSparkPaymentRef(0));
 
 	String s = csa.encode();
 	return s;
