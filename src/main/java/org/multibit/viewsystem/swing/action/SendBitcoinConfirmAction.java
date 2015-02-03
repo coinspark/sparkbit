@@ -148,41 +148,15 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 			isEmptyMessage = true;
 		    }	    
 		    if (!isEmptyMessage) {
-			int numParts = 1;
-			CoinSparkMessagePart[] parts = new CoinSparkMessagePart[numParts];
-			parts[0] = new CoinSparkMessagePart();
-			parts[0].fileName = null;
-			parts[0].mimeType = "text/plain";
-			parts[0].content = sendMessage.getBytes("UTF-8");
-
-			//String[] servers = new String[]{"assets1.coinspark.org/","assets1.coinspark.org/abc"};//,"144.76.175.228/" };					
-			// Servers are URL encoded, and CSUtils looks for "://" to decide whether
-			// or not to add prefix of "http://" but encoded this is %3A%2F%2F.
-			String servers = controller.getModel().getUserPreference(CoreModel.MESSAGING_SERVERS);
-			if (servers == null) {
-			    servers = StringUtils.join(CoreModel.DEFAULT_MESSAGING_SERVER_URLS, "|");
-			    controller.getModel().setUserPreference(CoreModel.MESSAGING_SERVERS, servers);
-			}
-			String[] urls = servers.split("\\|"); // regex so we have to escape | character
-			ArrayList<String> list = new ArrayList<>();
-			for (String url : urls) {
-			    try {
-				String decoded = URLDecoder.decode(url, "UTF-8");
-				list.add(decoded);
-			    } catch (UnsupportedEncodingException ue) {
-				// don't add it
-			    }
-			}
-			String[] serverURLs = list.toArray(new String[0]);
-
-			
+			CoinSparkMessagePart[] parts = { CSMiscUtils.createPlainTextCoinSparkMessagePart(sendMessage) };
+			String[] serverURLs = CSMiscUtils.getMessageDeliveryServersArray(bitcoinController);
 			sendRequest.setMessage(parts, serverURLs);
 
-			log.debug(">>>> Messaging servers = " + servers);
+			log.debug(">>>> Messaging servers = " + ArrayUtils.toString(serverURLs));
 			log.debug(">>>> parts[0] = " + parts[0]);
 			log.debug(">>>> parts[0].fileName = " + parts[0].fileName);
 			log.debug(">>>> parts[0].mimeType = " + parts[0].mimeType);
-			log.debug(">>>> parts[0].content = " + ArrayUtils.toString(parts[0].content));
+			log.debug(">>>> parts[0].content = " + new String(parts[0].content, "UTF-8"));
 			//String message = "Hello, the time is now..." + DateTime.now().toString();
 //		parts[2].fileName = imagePath;
 //		parts[2].mimeType = "image/png";

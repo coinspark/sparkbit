@@ -37,9 +37,11 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import org.apache.commons.lang3.ArrayUtils;
 import org.multibit.utils.CSMiscUtils;
 import org.coinspark.protocol.CoinSparkAddress;
 import org.coinspark.protocol.CoinSparkGenesis;
+import org.coinspark.protocol.CoinSparkMessagePart;
 import org.coinspark.protocol.CoinSparkPaymentRef;
 
 import org.multibit.viewsystem.dataproviders.AssetFormDataProvider;
@@ -85,7 +87,9 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
         try {	    
             String sendAddress = dataProvider.getAddress();
             String sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);
-
+	    String sendMessage = null;
+	    boolean canSendMessage = false;
+	    
 	    int assetId = dataProvider.getAssetId();
 	    String assetAmount = dataProvider.getAssetAmount();
 	    boolean isSenderPays = dataProvider.isSenderPays();
@@ -146,6 +150,10 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 		    paymentRef = csa.getPaymentRef();
 		    log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
 		}
+		
+		// Messages - can send message and BTC to CoinSpark address, without any assets.
+		sendMessage = dataProvider.getMessage();
+		canSendMessage = (flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_TEXT_MESSAGES)>0;
 		/* CoinSpark END */
 		
                 // Create a SendRequest.
@@ -168,6 +176,33 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 		// Send with payment ref - if it exists
 		if (paymentRef != null) {
 		    sendRequest.setPaymentRef(paymentRef);
+		}
+
+		
+				// Send a message if the address will take it and message is not empty
+		if (canSendMessage) {
+		    boolean isEmptyMessage = false;
+		    if (sendMessage == null || sendMessage.isEmpty() || sendMessage.trim().length() == 0) {
+			isEmptyMessage = true;
+		    }	    
+		    if (!isEmptyMessage) {
+			//int numParts = 1;
+			CoinSparkMessagePart[] parts = { CSMiscUtils.createPlainTextCoinSparkMessagePart(sendMessage) };
+			String[] serverURLs = CSMiscUtils.getMessageDeliveryServersArray(bitcoinController);
+			sendRequest.setMessage(parts, serverURLs);
+
+			log.debug(">>>> Messaging servers = " + ArrayUtils.toString(serverURLs));
+			log.debug(">>>> parts[0] = " + parts[0]);
+			log.debug(">>>> parts[0].fileName = " + parts[0].fileName);
+			log.debug(">>>> parts[0].mimeType = " + parts[0].mimeType);
+			log.debug(">>>> parts[0].content = " + new String(parts[0].content, "UTF-8"));
+			//String message = "Hello, the time is now..." + DateTime.now().toString();
+//		parts[2].fileName = imagePath;
+//		parts[2].mimeType = "image/png";
+//		byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
+//		parts[2].content = imageBytes;
+
+		    }
 		}
 
 

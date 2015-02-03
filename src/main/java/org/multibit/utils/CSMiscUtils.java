@@ -52,9 +52,11 @@ import org.multibit.viewsystem.swing.view.components.MultiBitLabel;
 import org.multibit.controller.bitcoin.BitcoinController;
 import com.google.bitcoin.core.Wallet.SendRequest;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Random;
+import org.coinspark.protocol.CoinSparkMessagePart;
 import org.coinspark.wallet.CSMessage;
 import org.coinspark.wallet.CSMessageDatabase;
 import org.coinspark.wallet.CSMessagePart;
@@ -832,4 +834,52 @@ public class CSMiscUtils {
     }
     
     
+    public static String[] getMessageDeliveryServersArray(BitcoinController controller) {
+	List<String> servers = getMessageDeliveryServers(controller);
+	String[] serverURLs = servers.toArray(new String[0]);
+	return serverURLs;
+    }
+    
+    public static List<String> getMessageDeliveryServers(BitcoinController controller) {
+	//String[] servers = new String[]{"assets1.coinspark.org/","assets1.coinspark.org/abc"};//,"144.76.175.228/" };					
+	// Servers are URL encoded, and CSUtils looks for "://" to decide whether
+	// or not to add prefix of "http://" but encoded this is %3A%2F%2F.
+	String servers = controller.getModel().getUserPreference(CoreModel.MESSAGING_SERVERS);
+	if (servers == null) {
+	    servers = StringUtils.join(CoreModel.DEFAULT_MESSAGING_SERVER_URLS, "|");
+	    controller.getModel().setUserPreference(CoreModel.MESSAGING_SERVERS, servers);
+	}
+	String[] urls = servers.split("\\|"); // regex so we have to escape | character
+	ArrayList<String> list = new ArrayList<>();
+	for (String url : urls) {
+	    try {
+		String decoded = URLDecoder.decode(url, "UTF-8");
+		URI test = new URI(decoded); // filter out << double-click to edit >>
+		list.add(decoded);
+	    } catch (UnsupportedEncodingException ue) {
+		// don't add it
+	    } catch (URISyntaxException ue2) {
+		// don't add it
+	    }
+	}
+	return list;
+    }
+    
+    /**
+     * createPlainTextCoinSparkMessagePart
+     * @param text
+     * @return null if encoding error or there is no message (empty string)
+     */
+    public static CoinSparkMessagePart createPlainTextCoinSparkMessagePart(String text) {
+	if (text==null || text.trim().isEmpty()) return null;
+	CoinSparkMessagePart part = new CoinSparkMessagePart();
+	part.fileName = null;
+	part.mimeType = "text/plain";
+	try {
+	    part.content = text.getBytes("UTF-8");
+	} catch (UnsupportedEncodingException e) {
+	    part = null;
+	}
+	return part;
+    }
 }
