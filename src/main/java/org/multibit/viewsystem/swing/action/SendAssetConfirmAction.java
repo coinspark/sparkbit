@@ -21,6 +21,13 @@ package org.multibit.viewsystem.swing.action;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.core.Wallet.SendRequest;
 import com.google.bitcoin.crypto.KeyCrypterException;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import java.awt.BorderLayout;
+import java.awt.Dialog;
 import org.multibit.controller.bitcoin.BitcoinController;
 import org.multibit.message.Message;
 import org.multibit.message.MessageManager;
@@ -37,6 +44,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 import org.apache.commons.lang3.ArrayUtils;
 import org.multibit.utils.CSMiscUtils;
 import org.coinspark.protocol.CoinSparkAddress;
@@ -47,6 +56,8 @@ import org.coinspark.protocol.CoinSparkPaymentRef;
 import org.multibit.viewsystem.dataproviders.AssetFormDataProvider;
 import org.multibit.viewsystem.swing.view.dialogs.SendAssetConfirmDialog;
 import org.coinspark.wallet.CSAsset;
+import org.multibit.viewsystem.swing.view.dialogs.SendBitcoinConfirmDialog;
+import org.multibit.viewsystem.swing.view.dialogs.ValidationErrorDialog;
 
 /**
  * This {@link Action} shows the send bitcoin confirm dialog or validation dialog on an attempted spend.
@@ -179,13 +190,15 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 		}
 
 		
-				// Send a message if the address will take it and message is not empty
+		// Send a message if the address will take it and message is not empty
+		boolean willSendMessage = false;
 		if (canSendMessage) {
 		    boolean isEmptyMessage = false;
 		    if (sendMessage == null || sendMessage.isEmpty() || sendMessage.trim().length() == 0) {
 			isEmptyMessage = true;
 		    }	    
 		    if (!isEmptyMessage) {
+			willSendMessage = true;
 			//int numParts = 1;
 			CoinSparkMessagePart[] parts = { CSMiscUtils.createPlainTextCoinSparkMessagePart(sendMessage) };
 			String[] serverURLs = CSMiscUtils.getMessageDeliveryServersArray(bitcoinController);
@@ -205,7 +218,102 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 		    }
 		}
 
+		//
+		// When sending a message, show a modal dialog.
+		// CompleteTX now occurs in background thread so UI does not block
+		// when "Send" is clicked with widget updates frozen.
+		//
+/*
+		// Show option pane
+		 final JOptionPane optionPane = new JOptionPane("Contacting message delivery servers...", JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{}, null);
+		 final JDialog dialog = new JDialog(mainFrame, "SparkBit", Dialog.ModalityType.APPLICATION_MODAL, null);
+		 dialog.setContentPane(optionPane);
+		 dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+		 dialog.setLocationRelativeTo(mainFrame);
+		 dialog.pack();
+		 */
+		// Show dialog with indeterminate progress bar
+		final JDialog dialog = new JDialog(mainFrame, "SparkBit", Dialog.ModalityType.APPLICATION_MODAL);
+		JProgressBar progressBar = new JProgressBar();
+		progressBar.setIndeterminate(true);
+		JPanel panel = new JPanel(new BorderLayout());
+		//      panel.setPreferredSize(new Dimension(600, 200));
+		panel.add(progressBar, BorderLayout.CENTER);
+		panel.add(new JLabel("Contacting message delivery servers..."), BorderLayout.PAGE_START);
+		dialog.add(panel);
+		dialog.pack();
+		dialog.setLocationRelativeTo(mainFrame);
 
+		// Dialog is made visible after futures have been set up
+		
+		final SendRequest futureSendRequest = sendRequest;
+		ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()); //newFixedThreadPool(10));
+		ListenableFuture<Boolean> future = service.submit(new Callable<Boolean>() {
+		    public Boolean call() throws Exception {
+			try {
+			    // Complete it (which works out the fee) but do not sign it yet.
+			    log.debug("Just about to complete the tx (and calculate the fee)...");
+			    bitcoinController.getModel().getActiveWallet().completeTx(futureSendRequest, false);
+			    log.debug("The fee after completing the transaction was " + futureSendRequest.fee);
+
+			} catch (Exception e) {
+			    throw e;
+			}
+			return true;
+		    }
+		});
+
+		final SendRequest mySendRequest = sendRequest;
+		final int myAssetId = assetId;
+		final BigInteger myAssetAmountRawUnits = assetAmountRawUnits;
+		final AssetValidator myValidator = validator;
+		
+		Futures.addCallback(future, new FutureCallback<Boolean>() {
+		    public void onSuccess(Boolean b) {
+
+			// There is enough money.
+			SwingUtilities.invokeLater(new Runnable() {
+			    @Override
+			    public void run() {
+				dialog.dispose();
+
+				SendAssetConfirmDialog mySendAssetConfirmDialog = new SendAssetConfirmDialog(bitcoinController, mainFrame, mySendRequest, myAssetId, myAssetAmountRawUnits, myValidator);
+				mySendAssetConfirmDialog.setVisible(true);
+			    }
+			});
+
+		    }
+
+		    public void onFailure(Throwable thrown) {
+			final String failureReason = thrown.getMessage();
+			final boolean isCSException = thrown instanceof org.coinspark.core.CSExceptions.CannotEncode;			
+			// There is not enough money.
+			// TODO setup validation parameters accordingly so that it displays ok.
+			SwingUtilities.invokeLater(new Runnable() {
+			    @Override
+			    public void run() {
+				dialog.dispose();
+
+				if (isCSException) {
+				    JOptionPane.showMessageDialog(mainFrame, "SparkBit is unable to proceed with this transaction:\n\n"+failureReason, "SparkBit Error", JOptionPane.ERROR_MESSAGE);
+				} else {
+
+				    AssetValidationErrorDialog myValidationErrorDialog = new AssetValidationErrorDialog(bitcoinController, mainFrame, mySendRequest, true, myValidator);
+				    myValidationErrorDialog.setVisible(true);
+				}
+			    }
+			});
+		    }
+		});
+
+		
+		// Show message server dialog only if we are going to send
+		if (willSendMessage) {
+		    dialog.setVisible(true);
+		}
+		
+		
+/*		
                 // Complete it (which works out the fee) but do not sign it yet.
                 log.debug("Just about to complete the tx (and calculate the fee)...");
                 boolean completedOk;
@@ -227,7 +335,8 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
                     validationErrorDialog = new AssetValidationErrorDialog(super.bitcoinController, mainFrame, sendRequest, true, validator);
                     validationErrorDialog.setVisible(true);
                 }
-
+*/
+		
             } else {
                 validationErrorDialog = new AssetValidationErrorDialog(super.bitcoinController, mainFrame, null, false, validator);
                 validationErrorDialog.setVisible(true);
