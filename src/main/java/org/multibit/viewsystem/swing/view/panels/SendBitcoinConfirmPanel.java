@@ -472,7 +472,8 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
 		} catch (UnsupportedEncodingException uee) {
 		    message = "Error decoding message, please check it!";
 		}
-		String messageToShow = message;
+		// Replace significant white space in our preview
+		String messageToShow = message.replace("\n\n", " ").replace("\n", " ").replace("\t", " ");
 		final int messageLen = messageToShow.length();
 		final int messageDisplayLimit = 60;
 		if (messageLen > messageDisplayLimit) {
