@@ -86,7 +86,7 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
             return;
         }
 
-        SendBitcoinConfirmDialog sendBitcoinConfirmDialog = null;
+//        SendBitcoinConfirmDialog sendBitcoinConfirmDialog = null;
         ValidationErrorDialog validationErrorDialog = null;
 
         try {
@@ -133,7 +133,7 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
                 Address sendAddressObject;
 
                 sendAddressObject = new Address(bitcoinController.getModel().getNetworkParameters(), sendAddress);
-                SendRequest sendRequest = SendRequest.to(sendAddressObject, Utils.toNanoCoins(sendAmount));
+                final SendRequest sendRequest = SendRequest.to(sendAddressObject, Utils.toNanoCoins(sendAmount));
 //                SendRequest sendRequest = SendRequest.to(sendAddressObject, Utils.toNanoCoins(sendAmount), 6, new BigInteger("10000"),1);
                 sendRequest.ensureMinRequiredFee = true;
                 sendRequest.fee = BigInteger.ZERO;
@@ -201,15 +201,14 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 
 		// Dialog is made visible after futures have been set up
 		
-		final SendRequest futureSendRequest = sendRequest;
 		ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()); //newFixedThreadPool(10));
 		ListenableFuture<Boolean> future = service.submit(new Callable<Boolean>() {
 		    public Boolean call() throws Exception {
 			try {
 			    // Complete it (which works out the fee) but do not sign it yet.
 			    log.debug("Just about to complete the tx (and calculate the fee)...");
-			    bitcoinController.getModel().getActiveWallet().completeTx(futureSendRequest, false);
-			    log.debug("The fee after completing the transaction was " + futureSendRequest.fee);
+			    bitcoinController.getModel().getActiveWallet().completeTx(sendRequest, false);
+			    log.debug("The fee after completing the transaction was " + sendRequest.fee);
 
 			} catch (Exception e) {
 			    throw e;
@@ -217,8 +216,6 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 			return true;
 		    }
 		});
-
-		final SendRequest mySendRequest = sendRequest;
 		
 		Futures.addCallback(future, new FutureCallback<Boolean>() {
 		    public void onSuccess(Boolean b) {
@@ -229,7 +226,7 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 			    public void run() {
 				dialog.dispose();
 
-				SendBitcoinConfirmDialog mySendBitcoinConfirmDialog = new SendBitcoinConfirmDialog(bitcoinController, mainFrame, mySendRequest);
+				SendBitcoinConfirmDialog mySendBitcoinConfirmDialog = new SendBitcoinConfirmDialog(bitcoinController, mainFrame, sendRequest);
 				mySendBitcoinConfirmDialog.setVisible(true);
 			    }
 			});
@@ -250,7 +247,7 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 				    JOptionPane.showMessageDialog(mainFrame, "SparkBit is unable to proceed with this transaction:\n\n"+failureReason, "SparkBit Error", JOptionPane.ERROR_MESSAGE);
 				} else {
 
-				    ValidationErrorDialog myValidationErrorDialog = new ValidationErrorDialog(bitcoinController, mainFrame, mySendRequest, true);
+				    ValidationErrorDialog myValidationErrorDialog = new ValidationErrorDialog(bitcoinController, mainFrame, sendRequest, true);
 				    myValidationErrorDialog.setVisible(true);
 				}
 			    }

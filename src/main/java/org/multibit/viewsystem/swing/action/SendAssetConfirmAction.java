@@ -92,7 +92,7 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
             return;
         }
 
-        SendAssetConfirmDialog sendAssetConfirmDialog = null;
+//        SendAssetConfirmDialog sendAssetConfirmDialog = null;
         AssetValidationErrorDialog validationErrorDialog = null;
 
         try {	    
@@ -101,7 +101,7 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 	    String sendMessage = null;
 	    boolean canSendMessage = false;
 	    
-	    int assetId = dataProvider.getAssetId();
+	    final int assetId = dataProvider.getAssetId();
 	    String assetAmount = dataProvider.getAssetAmount();
 	    boolean isSenderPays = dataProvider.isSenderPays();
 
@@ -142,7 +142,7 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 	    
 	    // Todo: Allow invalid assets to be sent even if spendable balance is 0
 	    //if (CSMiscUtils.canSendInvalidAsset(bitcoinController) 
-            AssetValidator validator = new AssetValidator(super.bitcoinController);
+            final AssetValidator validator = new AssetValidator(super.bitcoinController);
             if (validator.validate(sendAddress, sendAmount, assetId, assetAmountRawUnits.toString() )) {
 		/* CoinSpark START */
 		CoinSparkPaymentRef paymentRef = null;
@@ -177,7 +177,7 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 		//BigInteger assetAmountRawUnits = new BigInteger(assetAmount);
 		BigInteger bitcoinAmountSatoshis = Utils.toNanoCoins(sendAmount);
 		
-		SendRequest sendRequest = SendRequest.to(sendAddressObject, bitcoinAmountSatoshis, assetId, assetAmountRawUnits, 1);
+		final SendRequest sendRequest = SendRequest.to(sendAddressObject, bitcoinAmountSatoshis, assetId, assetAmountRawUnits, 1);
                 sendRequest.ensureMinRequiredFee = true;
                 sendRequest.fee = BigInteger.ZERO;
                 sendRequest.feePerKb = BitcoinModel.SEND_FEE_PER_KB_DEFAULT;
@@ -246,15 +246,14 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 
 		// Dialog is made visible after futures have been set up
 		
-		final SendRequest futureSendRequest = sendRequest;
 		ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()); //newFixedThreadPool(10));
 		ListenableFuture<Boolean> future = service.submit(new Callable<Boolean>() {
 		    public Boolean call() throws Exception {
 			try {
 			    // Complete it (which works out the fee) but do not sign it yet.
 			    log.debug("Just about to complete the tx (and calculate the fee)...");
-			    bitcoinController.getModel().getActiveWallet().completeTx(futureSendRequest, false);
-			    log.debug("The fee after completing the transaction was " + futureSendRequest.fee);
+			    bitcoinController.getModel().getActiveWallet().completeTx(sendRequest, false);
+			    log.debug("The fee after completing the transaction was " + sendRequest.fee);
 
 			} catch (Exception e) {
 			    throw e;
@@ -263,10 +262,7 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 		    }
 		});
 
-		final SendRequest mySendRequest = sendRequest;
-		final int myAssetId = assetId;
 		final BigInteger myAssetAmountRawUnits = assetAmountRawUnits;
-		final AssetValidator myValidator = validator;
 		
 		Futures.addCallback(future, new FutureCallback<Boolean>() {
 		    public void onSuccess(Boolean b) {
@@ -277,7 +273,7 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 			    public void run() {
 				dialog.dispose();
 
-				SendAssetConfirmDialog mySendAssetConfirmDialog = new SendAssetConfirmDialog(bitcoinController, mainFrame, mySendRequest, myAssetId, myAssetAmountRawUnits, myValidator);
+				SendAssetConfirmDialog mySendAssetConfirmDialog = new SendAssetConfirmDialog(bitcoinController, mainFrame, sendRequest, assetId, myAssetAmountRawUnits, validator);
 				mySendAssetConfirmDialog.setVisible(true);
 			    }
 			});
@@ -298,7 +294,7 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 				    JOptionPane.showMessageDialog(mainFrame, "SparkBit is unable to proceed with this transaction:\n\n"+failureReason, "SparkBit Error", JOptionPane.ERROR_MESSAGE);
 				} else {
 
-				    AssetValidationErrorDialog myValidationErrorDialog = new AssetValidationErrorDialog(bitcoinController, mainFrame, mySendRequest, true, myValidator);
+				    AssetValidationErrorDialog myValidationErrorDialog = new AssetValidationErrorDialog(bitcoinController, mainFrame, sendRequest, true, validator);
 				    myValidationErrorDialog.setVisible(true);
 				}
 			    }
