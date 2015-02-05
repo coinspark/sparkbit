@@ -18,15 +18,9 @@
 package org.multibit.viewsystem.swing.view.panels;
 
 import java.awt.BorderLayout;
-import java.awt.ComponentOrientation;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.multibit.controller.Controller;
@@ -36,7 +30,6 @@ import org.multibit.viewsystem.View;
 import org.multibit.viewsystem.Viewable;
 import org.multibit.viewsystem.swing.ColorAndFontConstants;
 import org.multibit.viewsystem.swing.MultiBitFrame;
-import org.multibit.viewsystem.swing.view.components.MultiBitLabel;
 
 import org.multibit.controller.bitcoin.BitcoinController;
 
@@ -58,8 +51,7 @@ import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionOutput;
 
 // Apache license
-import java.util.List;
-import java.util.LinkedList;
+import org.sparkbit.WrapLayout;
 
 import org.sparkbit.jsonrpc.JSONRPCController;
 
@@ -89,7 +81,8 @@ public class CSDeveloperToolsPanel extends JPanel implements Viewable {
 	setLayout(new BorderLayout());
 
 	JPanel buttonPanel = new JPanel();
-	buttonPanel.setLayout(new FlowLayout());
+	WrapLayout wrapLayout = new WrapLayout(WrapLayout.LEFT);
+	buttonPanel.setLayout(wrapLayout);
 	
         JButton clearLogButton = new JButton("Clear Log");
         clearLogButton.addActionListener(new ActionListener() {
