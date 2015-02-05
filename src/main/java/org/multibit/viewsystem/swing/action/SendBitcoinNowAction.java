@@ -22,6 +22,7 @@ import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.Wallet.SendRequest;
 import com.google.bitcoin.crypto.KeyCrypterException;
+import com.google.common.eventbus.Subscribe;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.multibit.controller.Controller;
 import org.multibit.controller.bitcoin.BitcoinController;
@@ -38,6 +39,10 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.CharBuffer;
+import java.util.concurrent.Executors;
+import org.coinspark.wallet.CSEvent;
+import org.coinspark.wallet.CSEventBus;
+import org.coinspark.wallet.CSEventType;
 import org.sparkbit.SparkBitMapDB;
 
 /**
@@ -105,7 +110,45 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
     // This action is a WalletBusyListener.
     this.bitcoinController.registerWalletBusyListener(this);
     walletBusyChange(this.bitcoinController.getModel().getActivePerWalletModelData().isBusy());
+    
+    // Listen for event updates if sending a message
+    if (sendRequest.getMessageParts() != null) {
+	CSEventBus.INSTANCE.registerAsyncSubscriber(this);
+    }
   }
+  
+  
+    @Subscribe
+    public void listen(CSEvent event) throws Exception {
+//	log.debug(">>>> Received event: " + event.getType());
+	CSEventType t = event.getType();
+	if (t == CSEventType.MESSAGE_UPLOAD_STARTED || t == CSEventType.MESSAGE_UPLOAD_ENDED) {
+	    int otherHashCode = (int)event.getInfo();
+	    if (otherHashCode == sendRequest.hashCode()) {
+		final boolean started = (t == CSEventType.MESSAGE_UPLOAD_STARTED);
+		if (started) {
+		    showSendingMessageText();
+		} else {
+		    showSendingBitcoinText();
+		}
+	    }
+	}
+    }
+    
+    public void cleanUp() {
+	CSEventBus.INSTANCE.unsubscribe(this);
+    }
+    
+    private void showSendingMessageText() {
+	sendBitcoinConfirmPanel.setMessageText("Sending message to delivery server...", "");
+    }
+    
+    private void showSendingBitcoinText() {
+	sendBitcoinConfirmPanel.setMessageText(controller.getLocaliser().getString(assetify("sendBitcoinNowAction.sendingBitcoin")), "");
+    }
+  
+    
+  
   
   /**
    * Actually send the bitcoin.
@@ -115,7 +158,7 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
     sendBitcoinConfirmPanel.setMessageText(" ", " ");
 
     // Check to see if the wallet files have changed.
-    WalletData perWalletModelData = this.bitcoinController.getModel().getActivePerWalletModelData();
+    final WalletData perWalletModelData = this.bitcoinController.getModel().getActivePerWalletModelData();
     boolean haveFilesChanged = this.bitcoinController.getFileHandler().haveFilesChanged(perWalletModelData);
 
     if (haveFilesChanged) {
@@ -135,7 +178,7 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
         addressBook.addSendingAddress(new WalletAddressBookData(sendLabel, sendAddress));
       }
 
-      char[] walletPassword = walletPasswordField.getPassword();
+      final char[] walletPassword = walletPasswordField.getPassword();
 
       if (this.bitcoinController.getModel().getActiveWallet() != null
               && this.bitcoinController.getModel().getActiveWallet().getEncryptionType() != EncryptionType.UNENCRYPTED) {
@@ -170,12 +213,25 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
         perWalletModelData.setBusyTaskVerbKey(assetify("sendBitcoinNowAction.sendingBitcoin"));
 
         this.bitcoinController.fireWalletBusyChange(true);
-        sendBitcoinConfirmPanel.setMessageText(controller.getLocaliser().getString(assetify("sendBitcoinNowAction.sendingBitcoin")), "");
+        sendBitcoinConfirmPanel.setMessageText(controller.getLocaliser().getString("sendBitcoinNowAction.preparingToSend"), "");
+		//assetify("sendBitcoinNowAction.sendingBitcoin")), "");
         sendBitcoinConfirmPanel.invalidate();
         sendBitcoinConfirmPanel.validate();
         sendBitcoinConfirmPanel.repaint();
 
-        performSend(perWalletModelData, sendRequest, CharBuffer.wrap(walletPassword));
+	
+	// Message delivery could take a while and we can't cancel it, so disable button
+	sendBitcoinConfirmPanel.getCancelButton().setVisible(false);
+	
+	// Perform send
+	Executors.newSingleThreadExecutor().execute(new Runnable() {
+	      @Override
+	      public void run() {
+		  performSend(perWalletModelData, sendRequest, CharBuffer.wrap(walletPassword));
+	      }
+	});
+	
+ //       performSend(perWalletModelData, sendRequest, CharBuffer.wrap(walletPassword));
       }
     }
   }

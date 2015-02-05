@@ -198,6 +198,13 @@ public class SendBitcoinConfirmPanel extends JPanel implements WalletBusyListene
         this.bitcoinController.registerWalletBusyListener(this);
     }
 
+    // Cleanup
+    public void cleanUp() {
+//	log.debug(">>>> cleanUp() invoked");
+	if (sendBitcoinNowAction!=null) sendBitcoinNowAction.cleanUp();
+    }
+    
+    
     /**
      * Initialise bitcoin confirm panel.
      */
