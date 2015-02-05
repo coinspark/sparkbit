@@ -50,6 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.event.*;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -65,6 +66,8 @@ import org.coinspark.wallet.*;
 import org.coinspark.protocol.*;
 import org.multibit.utils.CSMiscUtils;
 import java.math.BigInteger;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 /*CoinSpark END*/
@@ -169,7 +172,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
     public String getMessage() {
 	return messageSendPanel.getMessageText();
     }
-	    
+    
     @Override
     public int getAssetId() {
 	Object o = assetComboBox.getSelectedItem();
@@ -628,6 +631,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	
 	
 	messageSendPanel = new CSMessageSendPanel();
+	messageSendPanel.getMessageTextArea().addKeyListener(new MessageKeyListener());
 	
 	constraints.fill = GridBagConstraints.BOTH; //HORIZONTAL;
 	constraints.gridx = 2;
@@ -854,12 +858,18 @@ constraints.fill = GridBagConstraints.BOTH;
 	String label = this.bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_LABEL);
 	String amountNotLocalised = this.bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_AMOUNT);
 
-	if (messageSendPanel != null) {
-	    String message = this.bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_MESSAGE);
-	    if (message==null) message = "";
-	    messageSendPanel.setMessageText(message);
+	// Load encoded message and if decoded, set it in message area.
+	String encoded = this.bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_MESSAGE);
+	String message = null;
+	if (encoded != null) {
+	    try {
+		message = URLDecoder.decode(encoded, "UTF-8");
+	    } catch (UnsupportedEncodingException ue) {
+	    }
 	}
-	
+	messageSendPanel.setMessageText(message);
+
+
 	if (amountBTCTextField != null) {
 	    CurrencyConverterResult converterResult = CurrencyConverter.INSTANCE.parseToBTCNotLocalised(amountNotLocalised);
 
@@ -1014,6 +1024,42 @@ constraints.fill = GridBagConstraints.BOTH;
 	return sendBitcoinConfirmAction;
     }
     
+    /**
+     * Save message to wallet info on each key press in message text area
+     */
+    protected class MessageKeyListener implements KeyListener {
+        /** Handle the key typed event in the message field */
+        @Override
+        public void keyTyped(KeyEvent e) {
+        }
+
+        /** Handle the key-pressed event in the message field */
+        @Override
+        public void keyPressed(KeyEvent e) {
+            // do nothing
+        }
+
+        /** Handle the key-released event in the message field */
+	@Override
+	public void keyReleased(KeyEvent e) {
+	    String message = getMessage();
+	    String encoded = null;
+	    //Base64.encodeBase64String(binaryData)
+	    if (message != null) {
+		try {
+		    encoded = URLEncoder.encode(message, "UTF-8");
+		} catch (UnsupportedEncodingException ue) {
+		    // do nothing
+		    return;
+		}
+	    }
+
+	    bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_MESSAGE, encoded);
+	    bitcoinController.getModel().getActivePerWalletModelData().setDirty(true);
+	}
+    }
+
+
     class AssetAmountKeyListener implements KeyListener {
         /** Handle the key typed event from the text field. */
         @Override
