@@ -58,7 +58,7 @@ public class CoreModel extends BaseModel<CoreModel> {
     
     // User preference other
     public static final String MESSAGING_SERVERS = "messagingServers";
-    public static final String[] DEFAULT_MESSAGING_SERVER_URLS = {"http://msg1.coinspark.org/", "http://msg2.coinspark.org/", "http://msg3.coinspark.org/"};
+    public static final String[] DEFAULT_MESSAGING_SERVER_URLS = {"https://msg1.coinspark.org/", "https://msg2.coinspark.org/", "https://msg3.coinspark.org/"};
     
     public CoreModel() {
         this(null);
