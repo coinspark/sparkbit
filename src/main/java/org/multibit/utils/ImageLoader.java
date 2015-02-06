@@ -102,10 +102,11 @@ public final class ImageLoader {
     
     // Rename icon files, if they have a hypen - replace with underscore
     public enum FUGUE {
-	balloon,
+	balloon_ellipsis,
 	balloon_white,
-	edit_number,
+	download_cloud,
 	tag_hash,
+	traffic_cone__exclamation,
     }
     
     public enum FATCOW {
@@ -128,6 +129,7 @@ public final class ImageLoader {
 	help,
 	hourglass,
 	information,
+	lock,
 	new_new, // renamed file from new as the java keyword new caused problems
 	note_pin,
 	page_white,
@@ -137,7 +139,8 @@ public final class ImageLoader {
 	page_white_error,
 	page_white_text,
 	picture,
-	question,
+//	question,
+	server_connect,
 	server_error,
 	skull_old,
 	support,

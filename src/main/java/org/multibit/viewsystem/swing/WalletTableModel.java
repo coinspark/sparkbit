@@ -221,7 +221,6 @@ public class WalletTableModel extends AbstractTableModel {
 			String shortMessage = CSMiscUtils.getShortTextMessage(w, txid);
 			if (shortMessage != null) {
 			    icon = ImageLoader.fugue(ImageLoader.FUGUE.balloon_white);
-				//fatCow16(ImageLoader.FATCOW.email);
 
 			// Tooltip is a short preview.  We have to show newlines properly,
 			    // so we convert to HTML.
@@ -240,15 +239,15 @@ public class WalletTableModel extends AbstractTableModel {
 			switch (state) {
 			    case CSMessage.CSMessageState.NEVERCHECKED:
 				tip = "Never checked";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.question);
+				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.hourglass);
 				break;
 			    case CSMessage.CSMessageState.NOT_FOUND:
 				tip = "Not found";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.question);
+				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.find);
 				break;				
 			    case CSMessage.CSMessageState.PENDING:
 				tip = "Pending";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.hourglass);
+				icon = ImageLoader.fugue(ImageLoader.FUGUE.balloon_ellipsis);
 				break;						
 			    case CSMessage.CSMessageState.EXPIRED:
 				tip = "Expired, cannot retrieve message";
@@ -256,23 +255,23 @@ public class WalletTableModel extends AbstractTableModel {
 				break;						
 			    case CSMessage.CSMessageState.INVALID:
 				tip = "Message was invalid";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.thumb_down);
+				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.exclamation);
 				break;					
 			    case CSMessage.CSMessageState.HASH_MISMATCH:
 				tip = "Error, message could not be authenticated, may have been tampered with.";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.exclamation);
+				icon = ImageLoader.fugue(ImageLoader.FUGUE.traffic_cone__exclamation);
 				break;	
 			    case CSMessage.CSMessageState.SERVER_NOT_RESPONDING:
-				tip = "Error, server not responding";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.server_error);
+				tip = "Server not responding";
+				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.server_connect);
 				break;	
 			    case CSMessage.CSMessageState.SERVER_ERROR:
 				tip = "Server returned an error";
 				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.server_error);
 				break;	
 			    case CSMessage.CSMessageState.ENCRYPTED_KEY:
-				tip = "Encrypted key";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.exclamation);
+				tip = "Cannot open encrypted message";
+				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.lock);
 				break;
 //			    case CSMessage.CSMessageState.SELF:
 //			    case CSMessage.CSMessageState.VALID:
