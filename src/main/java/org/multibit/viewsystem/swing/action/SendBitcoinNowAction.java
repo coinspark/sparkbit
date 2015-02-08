@@ -40,6 +40,7 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.CharBuffer;
 import java.util.concurrent.Executors;
+import org.coinspark.core.CSExceptions;
 import org.coinspark.wallet.CSEvent;
 import org.coinspark.wallet.CSEventBus;
 import org.coinspark.wallet.CSEventType;
@@ -284,6 +285,16 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
     } catch (IllegalStateException e) {
       log.error(e.getMessage(), e);
       message = controller.getLocaliser().getString("sendBitcoinNowAction.pingFailure");
+    } catch (CSExceptions.CannotEncode e) {
+      log.error(e.getMessage(), e);
+      message = "Message delivery failed. " + e.getMessage();
+      final String dialogMessage = "Message delivery failed.\n\n" + e.getMessage();
+      SwingUtilities.invokeLater(new Runnable() {
+	  @Override
+	  public void run() {
+	      JOptionPane.showMessageDialog(mainFrame, dialogMessage, "SparkBit Error", JOptionPane.ERROR_MESSAGE);
+	  }
+      });
     } catch (Exception e) {
       // Really trying to catch anything that goes wrong with the send bitcoin.
       log.error(e.getMessage(), e);

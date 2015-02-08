@@ -654,7 +654,7 @@ public class MultiBitService {
    */
 
   public Transaction sendCoins(WalletData perWalletModelData, SendRequest sendRequest,
-                               CharSequence password) throws java.io.IOException, AddressFormatException, KeyCrypterException {
+                               CharSequence password) throws java.io.IOException, AddressFormatException, KeyCrypterException, CSExceptions.CannotEncode {
 
     // Ping the peers to check the bitcoin network connection
     List<Peer> connectedPeers = peerGroup.getConnectedPeers();
@@ -718,6 +718,7 @@ public class MultiBitService {
       e1.printStackTrace();
     } catch (CSExceptions.CannotEncode ex) {
 	ex.printStackTrace();
+	throw ex;
     }
 
     Transaction sendTransaction = sendRequest.tx;
