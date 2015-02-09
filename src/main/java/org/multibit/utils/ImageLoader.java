@@ -104,6 +104,7 @@ public final class ImageLoader {
     public enum FUGUE {
 	balloon_ellipsis,
 	balloon_white,
+	clock__exclamation,
 	download_cloud,
 	tag_hash,
 	traffic_cone__exclamation,
@@ -117,7 +118,6 @@ public final class ImageLoader {
 	baggage_cart_box,
 	ceo,
 	clock,
-	clock_red,
 	delete,
 	document_index,
 	document_signature,

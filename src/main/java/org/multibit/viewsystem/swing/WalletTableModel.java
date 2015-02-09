@@ -210,7 +210,7 @@ public class WalletTableModel extends AbstractTableModel {
 		    String txid = walletDataRow.getTransaction().getHashAsString();
 		    Wallet w = this.bitcoinController.getModel().getActiveWallet();
 		    CSMessage message = w.CS.getMessageDB().getMessage(txid);
-		    if (message!=null) {
+		    if (txid!=null && message!=null) {
 		    int state = message.getMessageState();
 		    if (state == CSMessage.CSMessageState.PAYMENTREF_ONLY) {
 			// Do nothing, it's a payment ref only.
@@ -251,7 +251,7 @@ public class WalletTableModel extends AbstractTableModel {
 				break;						
 			    case CSMessage.CSMessageState.EXPIRED:
 				tip = "Expired, cannot retrieve message";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.clock_red);
+				icon = ImageLoader.fugue(ImageLoader.FUGUE.clock__exclamation);
 				break;						
 			    case CSMessage.CSMessageState.INVALID:
 				tip = "Message was invalid";
