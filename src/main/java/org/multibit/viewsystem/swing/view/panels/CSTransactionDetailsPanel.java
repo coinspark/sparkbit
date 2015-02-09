@@ -50,6 +50,7 @@ import java.util.List;
 
 import com.google.bitcoin.script.Script;
 import java.io.File;
+import java.rmi.ServerError;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.coinspark.core.CSUtils;
@@ -468,6 +469,40 @@ public class CSTransactionDetailsPanel extends JPanel {
 	
 	
 	yGridPosition++;
+	
+	//
+	// Show message error code if it exists
+	//
+	Integer errorCode = null;
+	CSMessageDatabase messageDB = wallet.CS.getMessageDB();
+	if (messageDB!=null && txid!=null) {
+	    errorCode = messageDB.getServerErrorCode(txid);
+//	    log.debug(">>>> error code = " + errorCode);
+	}
+	if (errorCode != null && errorCode!=0) {
+	    MultiBitLabel msgLabel = new MultiBitLabel("");
+	    msgLabel.setText("Message:"); //controller.getLocaliser().getString("walletData.descriptionText"));
+	    constraints.fill = GridBagConstraints.NONE;
+	    constraints.gridx = 0;
+	    constraints.gridy = yGridPosition;
+	    constraints.weightx = 0.3;
+	    constraints.weighty = 0.1;
+	    constraints.gridwidth = 1;
+	    constraints.anchor = GridBagConstraints.LINE_END;
+	    detailPanel.add(msgLabel, constraints);
+	    
+	    MultiBitLabel messageErrorLabel = new MultiBitLabel("Failed to retrieve message. Error code " + errorCode + ".");
+	    constraints.fill = GridBagConstraints.NONE;
+	    constraints.gridx = 2;
+	    constraints.gridy = yGridPosition;
+	    constraints.weightx = 0.3;
+	    constraints.weighty = 0.1;
+	    constraints.gridwidth = 3;
+	    constraints.anchor = GridBagConstraints.LINE_START;
+	    detailPanel.add(messageErrorLabel, constraints);
+	    
+	    yGridPosition++;
+	}
 	
 	
 	//
