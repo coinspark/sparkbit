@@ -141,7 +141,14 @@ public class SparkBitServlet extends HttpServlet {
 	    // Modified: only allow stop method if remote host is actually localhost 127.0.0.1
 	    String method = (String)((Map)obj).get("method");
 	    
-	    log.info("method = " + method);
+//	    log.info("method = " + method);
+/*	    Map<Object, Object> m = (Map)obj;
+	    for (Map.Entry<Object, Object> entrySet : m.entrySet()) {
+		Object key = entrySet.getKey();
+		Object value = entrySet.getValue();
+		log.info(key + " = " + value);		
+	    }
+*/
 	    
 	    if (method.equals("sparkbit.stop") && !remoteHost.equals("127.0.0.1")) {
 		ser.write(new RpcResponse(null, RpcException.Error.INVALID_REQ.exc("Invalid Request - You can only invoke stop from localhost")).marshal(), os);	
