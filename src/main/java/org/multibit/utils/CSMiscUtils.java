@@ -141,17 +141,14 @@ public class CSMiscUtils {
     
     /*
     Based on examples listed: http://coinspark.org/developers/coinspark-addresses/
+    A CoinSpark address will be created with a payment reference of 0 by default
+    which is semantically the same as null.
     */
     public static String convertBitcoinAddressToCoinSparkAddress(String bitcoinAddress) {
 	CoinSparkAddress csa = new CoinSparkAddress();
         int flags=CoinSparkAddress.COINSPARK_ADDRESS_FLAG_ASSETS | CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS | CoinSparkAddress.COINSPARK_ADDRESS_FLAG_TEXT_MESSAGES;
 	csa.setAddressFlags(flags);
 	csa.setBitcoinAddress(bitcoinAddress);
-	
-	// For SparkBit, a reference of 0 is semantically the same as no payment reference
-	// but for other clients this might not be the case, so we should not create reference.
-	//csa.setPaymentRef(new CoinSparkPaymentRef(0));
-
 	String s = csa.encode();
 	return s;
     }
