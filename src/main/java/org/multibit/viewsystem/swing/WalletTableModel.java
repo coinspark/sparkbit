@@ -210,85 +210,81 @@ public class WalletTableModel extends AbstractTableModel {
 		    String txid = walletDataRow.getTransaction().getHashAsString();
 		    Wallet w = this.bitcoinController.getModel().getActiveWallet();
 		    CSMessage message = w.CS.getMessageDB().getMessage(txid);
-		    if (txid!=null && message!=null) {
-		    int state = message.getMessageState();
-		    if (state == CSMessage.CSMessageState.PAYMENTREF_ONLY) {
-			// Do nothing, it's a payment ref only.
-		    }
-		    else if (state == CSMessage.CSMessageState.SELF || state == CSMessage.CSMessageState.VALID)
-		    {
-
-			String shortMessage = CSMiscUtils.getShortTextMessage(w, txid);
-			if (shortMessage != null) {
-			    icon = ImageLoader.fugue(ImageLoader.FUGUE.balloon_white);
+		    if (txid != null && message != null) {
+			int state = message.getMessageState();
+			if (state == CSMessage.CSMessageState.PAYMENTREF_ONLY) {
+			    // Do nothing, it's a payment ref only.
+			} else if (state == CSMessage.CSMessageState.SELF || state == CSMessage.CSMessageState.VALID) {
+			    String shortMessage = CSMiscUtils.getShortTextMessage(w, txid);
+			    if (shortMessage != null) {
+				icon = ImageLoader.fugue(ImageLoader.FUGUE.balloon_white);
 
 			// Tooltip is a short preview.  We have to show newlines properly,
-			    // so we convert to HTML.
-			    final int limit = 140 * 2; // 2 tweets worth...
-			    tip = shortMessage;
-			    if (shortMessage.length() > limit) {
-				tip = shortMessage.substring(0, limit);
+				// so we convert to HTML.
+				final int limit = 140 * 2; // 2 tweets worth...
+				tip = shortMessage;
+				if (shortMessage.length() > limit) {
+				    tip = shortMessage.substring(0, limit);
+				}
+				tip = tip.replace("\n\n", "<p>").replace("\n", "<br>");
+				tip = "<html>" + tip + "</html>";
 			    }
-			    tip = tip.replace("\n\n", "<p>").replace("\n", "<br>");
-			    tip = "<html>" + tip + "</html>";
-			}
-		    }
-		    else {
+			} else {
 			// Something else has happened, so let's check and show
-			// the appropriate icon.
-			switch (state) {
-			    case CSMessage.CSMessageState.NEVERCHECKED:
-				tip = "Never checked";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.hourglass);
-				break;
-			    case CSMessage.CSMessageState.NOT_FOUND:
-				tip = "Not found";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.find);
-				break;				
-			    case CSMessage.CSMessageState.PENDING:
-				tip = "Pending";
-				icon = ImageLoader.fugue(ImageLoader.FUGUE.balloon_ellipsis);
-				break;						
-			    case CSMessage.CSMessageState.EXPIRED:
-				tip = "Expired, cannot retrieve message";
-				icon = ImageLoader.fugue(ImageLoader.FUGUE.clock__exclamation);
-				break;						
-			    case CSMessage.CSMessageState.INVALID:
-				tip = "Message was invalid";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.exclamation);
-				break;					
-			    case CSMessage.CSMessageState.HASH_MISMATCH:
-				tip = "Error, message could not be authenticated, may have been tampered with.";
-				icon = ImageLoader.fugue(ImageLoader.FUGUE.traffic_cone__exclamation);
-				break;	
-			    case CSMessage.CSMessageState.SERVER_NOT_RESPONDING:
-				tip = "Server not responding";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.server_connect);
-				break;	
-			    case CSMessage.CSMessageState.SERVER_ERROR:
-				tip = "Server returned an error";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.server_error);
-				break;	
-			    case CSMessage.CSMessageState.ENCRYPTED_KEY:
-				tip = "Cannot open encrypted message";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.lock);
-				break;
+			    // the appropriate icon.
+			    switch (state) {
+				case CSMessage.CSMessageState.NEVERCHECKED:
+				    tip = "Never checked";
+				    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.hourglass);
+				    break;
+				case CSMessage.CSMessageState.NOT_FOUND:
+				    tip = "Not found";
+				    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.find);
+				    break;
+				case CSMessage.CSMessageState.PENDING:
+				    tip = "Pending";
+				    icon = ImageLoader.fugue(ImageLoader.FUGUE.balloon_ellipsis);
+				    break;
+				case CSMessage.CSMessageState.EXPIRED:
+				    tip = "Expired, cannot retrieve message";
+				    icon = ImageLoader.fugue(ImageLoader.FUGUE.clock__exclamation);
+				    break;
+				case CSMessage.CSMessageState.INVALID:
+				    tip = "Message was invalid";
+				    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.exclamation);
+				    break;
+				case CSMessage.CSMessageState.HASH_MISMATCH:
+				    tip = "Error, message could not be authenticated, may have been tampered with.";
+				    icon = ImageLoader.fugue(ImageLoader.FUGUE.traffic_cone__exclamation);
+				    break;
+				case CSMessage.CSMessageState.SERVER_NOT_RESPONDING:
+				    tip = "Server not responding";
+				    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.server_connect);
+				    break;
+				case CSMessage.CSMessageState.SERVER_ERROR:
+				    tip = "Server returned an error";
+				    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.server_error);
+				    break;
+				case CSMessage.CSMessageState.ENCRYPTED_KEY:
+				    tip = "Cannot open encrypted message";
+				    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.lock);
+				    break;
 //			    case CSMessage.CSMessageState.SELF:
 //			    case CSMessage.CSMessageState.VALID:
 //			    case CSMessage.CSMessageState.PAYMENTREF_ONLY:
 //				break;
-			    case CSMessage.CSMessageState.REFRESH:
-				tip = "Waiting to refresh";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.arrow_refresh);
-				break;	
-			    case CSMessage.CSMessageState.DELETED:
-				tip = "Error, message was deleted";
-				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.delete);
-				break;
-			    default:
-				break;
+				case CSMessage.CSMessageState.REFRESH:
+				    tip = "Waiting to refresh";
+				    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.arrow_refresh);
+				    break;
+				case CSMessage.CSMessageState.DELETED:
+				    tip = "Error, message was deleted";
+				    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.delete);
+				    break;
+				default:
+				    break;
+			    }
 			}
-		    }
 		    }
 		}
 
