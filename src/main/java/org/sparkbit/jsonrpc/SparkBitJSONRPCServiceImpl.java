@@ -74,6 +74,7 @@ import java.util.Set;
 import org.coinspark.wallet.CSBalance;
 import org.coinspark.wallet.CSTransactionOutput;
 import java.util.HashSet;
+import org.coinspark.core.CSExceptions;
 import org.coinspark.protocol.*;
 
 
@@ -1661,7 +1662,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("wallet name = " + walletID);
 	log.info("address     = " + address);
 	log.info("amount      = " + amount);
-	return sendbitcoinwith_impl(walletID, null, 0L, address, amount);
+	return sendbitcoinwith_impl(walletID, null, 0L, address, amount, null);
     }
     
     @Override
@@ -1673,10 +1674,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("vout        = " + vout);
 	log.info("address     = " + address);
 	log.info("amount      = " + amount);
-	return sendbitcoinwith_impl(walletID, txid, vout, address, amount);
+	return sendbitcoinwith_impl(walletID, txid, vout, address, amount, null);
     }
     
-    private synchronized String sendbitcoinwith_impl(String walletID, String txid, Long vout, String address, Double amount) throws com.bitmechanic.barrister.RpcException
+    private synchronized String sendbitcoinwith_impl(String walletID, String txid, Long vout, String address, Double amount, String message) throws com.bitmechanic.barrister.RpcException
     {    
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
@@ -1763,6 +1764,23 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    }
 
 	    
+	    // Set up message if one exists
+	    boolean isEmptyMessage = false;
+	    if (message == null || message.isEmpty() || message.trim().length() == 0) {
+		isEmptyMessage = true;
+	    }
+	    if (!isEmptyMessage) {
+		CoinSparkMessagePart[] parts = {CSMiscUtils.createPlainTextCoinSparkMessagePart(message)};
+		String[] serverURLs = CSMiscUtils.getMessageDeliveryServersArray(this.controller);
+		sendRequest.setMessage(parts, serverURLs);
+//			log.debug(">>>> Messaging servers = " + ArrayUtils.toString(serverURLs));
+//			log.debug(">>>> parts[0] = " + parts[0]);
+//			log.debug(">>>> parts[0].fileName = " + parts[0].fileName);
+//			log.debug(">>>> parts[0].mimeType = " + parts[0].mimeType);
+//			log.debug(">>>> parts[0].content = " + new String(parts[0].content, "UTF-8"))
+	    }
+
+	    
 	    // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
 	    // Complete it (which works out the fee) but do not sign it yet.
 	    log.info("Just about to complete the tx (and calculate the fee)...");
@@ -1798,6 +1816,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 //      } catch (KeyCrypterException e1) {
 	} catch (InsufficientMoneyException e) {
 	    JSONRPCError.SEND_BITCOIN_INSUFFICIENT_MONEY.raiseRpcException();
+	} catch (CSExceptions.CannotEncode e) {
+	    JSONRPCError.SEND_MESSAGE_CANNOT_ENCODE.raiseRpcException(e.getMessage());
 	} catch (Exception e) {
 	    JSONRPCError.throwAsRpcException("Could not send bitcoin due to error", e);
 	} finally {
@@ -1835,7 +1855,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("asset ref   = " + assetRef);
 	log.info("quantity    = " + quantity);
 	log.info("sender pays = " + senderPays);
-	return sendassetwith_impl(walletID, null, 0L, address, assetRef, quantity, senderPays);
+	return sendassetwith_impl(walletID, null, 0L, address, assetRef, quantity, senderPays, null, null);
     }
     
     @Override
@@ -1849,10 +1869,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("asset ref   = " + assetRef);
 	log.info("quantity    = " + quantity);
 	log.info("sender pays = " + senderPays);
-	return sendassetwith_impl(walletID, txid, vout, address, assetRef, quantity, senderPays);
+	return sendassetwith_impl(walletID, txid, vout, address, assetRef, quantity, senderPays, null, null);
     }
     
-    private synchronized String sendassetwith_impl(String walletID, String txid, Long vout, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
+    private synchronized String sendassetwith_impl(String walletID, String txid, Long vout, String address, String assetRef, Double quantity, Boolean senderPays, String message, Double btcAmount) throws com.bitmechanic.barrister.RpcException
     {
 	String sendTxHash = null;
 	boolean sendValidated = false;
@@ -1879,6 +1899,18 @@ WalletInfoData winfo = wd.getWalletInfo();
 	
 	if (quantity<=0.0) {
 	    JSONRPCError.SEND_ASSET_AMOUNT_TOO_LOW.raiseRpcException();
+	}
+	
+	// BTC send amount, if null, use default amount of 10,000 satoshis.
+	String sendAmount;
+	if (btcAmount==null) {
+	    sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);	    
+	} else {
+	    double d = btcAmount.doubleValue();
+	    if (d<=0.0) {
+		JSONRPCError.SEND_BITCOIN_AMOUNT_TOO_LOW.raiseRpcException();
+	    }
+	    sendAmount = btcAmount.toString();
 	}
 	
 	CoinSparkPaymentRef paymentRef = null;
@@ -1965,7 +1997,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    
 	    log.info("Want to send: " + assetAmountRawUnits + " , AssetID=" + assetID + ", total="+w.CS.getAssetBalance(assetID).total + ", spendable=" + w.CS.getAssetBalance(assetID).spendable );       
             
-	    String sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);	    
+//	    String sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);	    
 	    	    CoinSparkGenesis genesis = asset.getGenesis();
 
 	    	    long desiredRawUnits = assetAmountRawUnits.longValue();
@@ -2019,6 +2051,19 @@ WalletInfoData winfo = wd.getWalletInfo();
 		sendRequest.setPaymentRef(paymentRef);
 	    }
 
+	    
+	    // Set up message if one exists
+	    boolean isEmptyMessage = false;
+	    if (message == null || message.trim().isEmpty()) {
+		isEmptyMessage = true;
+	    }
+	    if (!isEmptyMessage) {
+		CoinSparkMessagePart[] parts = {CSMiscUtils.createPlainTextCoinSparkMessagePart(message)};
+		String[] serverURLs = CSMiscUtils.getMessageDeliveryServersArray(this.controller);
+		sendRequest.setMessage(parts, serverURLs);
+	    }
+
+	    
                 // Complete it (which works out the fee) but do not sign it yet.
                 log.info("Just about to complete the tx (and calculate the fee)...");
 
@@ -2054,6 +2099,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.ASSET_INSUFFICIENT_BALANCE.raiseRpcException();
 	} catch (com.bitmechanic.barrister.RpcException e) {
 	    throw(e);
+	} catch (CSExceptions.CannotEncode e) {
+	    JSONRPCError.SEND_MESSAGE_CANNOT_ENCODE.raiseRpcException(e.getMessage());
 	} catch (Exception e) {
 	    JSONRPCError.throwAsRpcException("Could not send asset due to error: " , e);
 	} finally {
@@ -2081,4 +2128,75 @@ WalletInfoData winfo = wd.getWalletInfo();
 	}
 	return sendTxHash;
     }
+    
+//    @Override
+//    public Boolean test(JSONRPCTestParams params) throws com.bitmechanic.barrister.RpcException {
+//	log.info("TEST");
+//	log.info("walletname = " + params.getWalletname());
+//	log.info("address = " + params.getAddress());
+//	log.info("amount = " + params.getAmount());
+//	log.info("txid = " + params.getTxid());
+//	log.info("vout = " + params.getVout());
+//	log.info("message = " + params.getMessage());
+//	return true;
+//    }
+
+    //
+    // 0.9.4 JSON-RPC Commands
+    //
+    
+    @Override
+    public String sendbitcoinasset(String walletname, String address, Double btc_amount, String assetref, Double asset_qty, Boolean senderpays) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND BITCOIN ASSET");
+	log.info("wallet name = " + walletname);
+	log.info("address     = " + address);
+	log.info("btc amount  = " + btc_amount);
+	log.info("asset ref   = " + assetref);
+	log.info("asset qty   = " + asset_qty);
+	log.info("sender pays = " + senderpays);
+	return sendassetwith_impl(walletname, null, 0L, address, assetref, asset_qty, senderpays, null, btc_amount);
+    }
+    
+    @Override
+    public String sendassetmessage(String walletname, String address, String assetref, Double quantity, Boolean senderpays, String message) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND ASSET");
+	log.info("wallet name = " + walletname);
+	log.info("address     = " + address);
+	log.info("asset ref   = " + assetref);
+	log.info("quantity    = " + quantity);
+	log.info("sender pays = " + senderpays);
+	log.info("message     = " + message);
+	return sendassetwith_impl(walletname, null, 0L, address, assetref, quantity, senderpays, message, null);
+    }
+    
+    @Override
+    public String sendbitcoinmessage(String walletname, String address, Double amount, String message) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND BITCOIN MESSAGE");
+	log.info("wallet name = " + walletname);
+	log.info("address     = " + address);
+	log.info("amount      = " + amount);
+	log.info("message     = " + message);
+	return sendbitcoinwith_impl(walletname, null, 0L, address, amount, message);
+    }
+    
+    @Override
+    public String sendbitcoinassetmessage(String walletname, String address, Double btc_amount, String assetref, Double asset_qty, Boolean senderpays, String message) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND BITCOIN ASSET");
+	log.info("wallet name = " + walletname);
+	log.info("address     = " + address);
+	log.info("btc amount  = " + btc_amount);
+	log.info("asset ref   = " + assetref);
+	log.info("asset qty   = " + asset_qty);
+	log.info("sender pays = " + senderpays);
+	log.info("message     = " + message);
+	return sendassetwith_impl(walletname, null, 0L, address, assetref, asset_qty, senderpays, message, btc_amount);
+	
+    }
+    
+
+    
 }

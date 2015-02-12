@@ -62,6 +62,7 @@ public enum JSONRPCError {
   TXOUT_INDEX_INVALID(32, "Transaction output index is invalid"),
   TXOUT_IS_NOT_AVAILABLE_FOR_SPENDING(33, "Transaction output is not available for spending"),
   TXOUT_NOT_MINE(34, "Transaction output does not belong to wallet"),
+  SEND_MESSAGE_CANNOT_ENCODE(35, "Could not prepare message for sending"),
   
   THROW_EXCEPTION(99999, ""); // RESERVED. For wrapping up a general exception and throwing it.
   

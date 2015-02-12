@@ -424,6 +424,63 @@ func main() {
 			os.Exit(1)
 		}
 		res, err = sparkbit.Sendbitcoin(params[0], params[1], f64)
+	case "sendbitcoinmessage":
+		validateParams(4, method, "WALLETNAME ADDRESS AMOUNT MESSAGE")
+		f64, perr := strconv.ParseFloat(params[2], 64)
+		if perr != nil {
+			fmt.Println("Amount is not a valid number")
+			os.Exit(1)
+		}
+		res, err = sparkbit.Sendbitcoinmessage(params[0], params[1], f64, params[3])
+	case "sendassetmessage":
+		validateParams(6, method, "WALLETNAME ADDRESS ASSETREF QUANTITY SENDERPAYS MESSAGE")
+		f64, perr := strconv.ParseFloat(params[3], 64)
+		if perr != nil {
+			fmt.Println("Quantity must be a valid number")
+			os.Exit(1)
+		}
+		flag, perr := strconv.ParseBool(params[4])
+		if perr != nil {
+			fmt.Println("Sender pays flag must be true or false")
+			os.Exit(1)
+		}
+		res, err = sparkbit.Sendassetmessage(params[0], params[1], params[2], f64, flag, params[5])
+	case "sendbitcoinasset":
+		validateParams(6, method, "WALLETNAME ADDRESS AMOUNT ASSETREF QUANTITY SENDERPAYS")
+		f64, perr := strconv.ParseFloat(params[2], 64)
+		if perr != nil {
+			fmt.Println("Amount is not a valid number")
+			os.Exit(1)
+		}
+		f64_2, perr := strconv.ParseFloat(params[4], 64)
+		if perr != nil {
+			fmt.Println("Quantity must be a valid number")
+			os.Exit(1)
+		}
+		flag, perr := strconv.ParseBool(params[5])
+		if perr != nil {
+			fmt.Println("Sender pays flag must be true or false")
+			os.Exit(1)
+		}
+		res, err = sparkbit.Sendbitcoinasset(params[0], params[1], f64, params[3], f64_2, flag)
+	case "sendbitcoinassetmessage":
+		validateParams(7, method, "WALLETNAME ADDRESS AMOUNT ASSETREF QUANTITY SENDERPAYS MESSAGE")
+		f64, perr := strconv.ParseFloat(params[2], 64)
+		if perr != nil {
+			fmt.Println("Amount is not a valid number")
+			os.Exit(1)
+		}
+		f64_2, perr := strconv.ParseFloat(params[4], 64)
+		if perr != nil {
+			fmt.Println("Quantity must be a valid number")
+			os.Exit(1)
+		}
+		flag, perr := strconv.ParseBool(params[5])
+		if perr != nil {
+			fmt.Println("Sender pays flag must be true or false")
+			os.Exit(1)
+		}
+		res, err = sparkbit.Sendbitcoinassetmessage(params[0], params[1], f64, params[3], f64_2, flag, params[6])
 	case "sendassetwith":
 		validateParams(7, method, "WALLETNAME TXID VOUT ADDRESS ASSETREF QUANTITY SENDERPAYS")
 		vout, perr := strconv.ParseInt(params[2], 10, 64)
