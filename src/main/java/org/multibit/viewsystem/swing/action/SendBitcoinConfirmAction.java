@@ -116,7 +116,6 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 		int flags = csa.getAddressFlags();
 		if ((flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS) > 0) {
 		    paymentRef = csa.getPaymentRef();
-		    log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
 		}
 		
 		// Messages - can send message and BTC to CoinSpark address, without any assets.
@@ -141,8 +140,8 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 
                 // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
 		
-		// Send with payment ref - if it exists
-		if (paymentRef != null) {
+		// Send with payment ref - if it exists and is not 0 which SparkBit treats semantically as null
+		if (paymentRef != null && paymentRef.getRef()!=0) {
 		    sendRequest.setPaymentRef(paymentRef);
 		}
 		

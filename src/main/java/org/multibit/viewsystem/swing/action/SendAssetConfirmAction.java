@@ -184,11 +184,10 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 
                 // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
 		
-		// Send with payment ref - if it exists
-		if (paymentRef != null) {
+		// Send with payment ref - if it exists and is not 0 which SparkBit treats semantically as null
+		if (paymentRef != null && paymentRef.getRef()!=0) {
 		    sendRequest.setPaymentRef(paymentRef);
 		}
-
 		
 		// Send a message if the address will take it and message is not empty
 		boolean willSendMessage = false;

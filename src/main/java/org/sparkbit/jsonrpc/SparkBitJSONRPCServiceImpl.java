@@ -1758,8 +1758,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 		}
 	    }
 	    
-	    // Send with payment ref - if it exists
-	    if (paymentRef != null) {
+	    // Send with payment ref - if it exists and is not 0 which SparkBit treats semantically as null
+	    if (paymentRef != null && paymentRef.getRef() != 0) {
 		sendRequest.setPaymentRef(paymentRef);
 	    }
 
@@ -2046,8 +2046,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 		    }
 		}
 
-	    // Send with payment ref - if it exists
-	    if (paymentRef != null) {
+	    // Send with payment ref - if it exists and is not 0 which SparkBit treats semantically as null
+	    if (paymentRef != null && paymentRef.getRef() != 0) {
 		sendRequest.setPaymentRef(paymentRef);
 	    }
 
