@@ -547,7 +547,7 @@ func main() {
 	}
 
 	bufferString := string(buffer)
-	if (method=="sendbitcoin" || method=="sendasset") {
+	if (strings.HasPrefix(method, "send")) {
 		bufferString = strings.Trim(bufferString, "\"")
 	}
 
