@@ -38,8 +38,11 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.CharBuffer;
 import java.util.concurrent.Executors;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.coinspark.core.CSExceptions;
 import org.coinspark.wallet.CSEvent;
 import org.coinspark.wallet.CSEventBus;
@@ -124,11 +127,12 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
 //	log.debug(">>>> Received event: " + event.getType());
 	CSEventType t = event.getType();
 	if (t == CSEventType.MESSAGE_UPLOAD_STARTED || t == CSEventType.MESSAGE_UPLOAD_ENDED) {
-	    int otherHashCode = (int)event.getInfo();
+	    ImmutablePair<Integer, String> pair = (ImmutablePair<Integer, String>)event.getInfo();
+	    int otherHashCode = pair.getLeft();
 	    if (otherHashCode == sendRequest.hashCode()) {
 		final boolean started = (t == CSEventType.MESSAGE_UPLOAD_STARTED);
 		if (started) {
-		    showSendingMessageText();
+		    showSendingMessageText(pair.getRight());
 		} else {
 		    showSendingBitcoinText();
 		}
@@ -140,8 +144,15 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
 	CSEventBus.INSTANCE.unsubscribe(this);
     }
     
-    private void showSendingMessageText() {
-	sendBitcoinConfirmPanel.setMessageText("Sending message to delivery server...", "");
+    private void showSendingMessageText(String urlString) {
+	String host = null;
+	try {
+	    URI uri = new URI(urlString);
+	    host = " " + uri.getHost();
+	} catch (URISyntaxException e) {
+	    host = " delivery server";
+	}
+	sendBitcoinConfirmPanel.setMessageText("Sending message via" + host + "...", "");
     }
     
     private void showSendingBitcoinText() {
