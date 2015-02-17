@@ -36,6 +36,7 @@ public class CSMessageSendPanel extends javax.swing.JPanel {
     
     public void setMessageText(String text) {
 	this.messageTextArea.setText(text);
+	this.messageTextArea.setCaretPosition(0);
     }
     
     
