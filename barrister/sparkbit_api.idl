@@ -41,6 +41,7 @@ struct JSONRPCTransaction {
 	txid string
 	address string
 	payment_ref int
+	message string [optional]
 	}
 
 struct JSONRPCBalanceAmount {

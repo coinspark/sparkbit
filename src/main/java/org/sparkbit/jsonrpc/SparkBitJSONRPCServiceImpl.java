@@ -945,7 +945,9 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 	    long paymentRef = CSMiscUtils.getPaymentRefFromTx(w, txid);
 	    
-	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, category, amountsArray, fee, txid, address, paymentRef);
+	    String message = CSMiscUtils.getShortTextMessage(w, txid);
+	    
+	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, category, amountsArray, fee, txid, address, paymentRef, message);
 	    resultList.add(atx);
 	}
 	
