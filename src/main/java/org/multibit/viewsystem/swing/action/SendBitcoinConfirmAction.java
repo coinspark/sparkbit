@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.awt.BorderLayout;
 import java.awt.Dialog;
+import java.awt.Dimension;
 import org.multibit.controller.bitcoin.BitcoinController;
 import org.multibit.message.Message;
 import org.multibit.message.MessageManager;
@@ -45,7 +46,6 @@ import java.math.BigInteger;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import org.apache.commons.lang3.ArrayUtils;
-import org.coinspark.core.CSExceptions;
 import org.coinspark.protocol.CoinSparkAddress;
 /* CoinSpark START */
 import org.multibit.utils.CSMiscUtils;
@@ -190,10 +190,15 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 		final JDialog dialog = new JDialog(mainFrame, "SparkBit", Dialog.ModalityType.APPLICATION_MODAL);
 		JProgressBar progressBar = new JProgressBar();
 		progressBar.setIndeterminate(true);
-		JPanel panel = new JPanel(new BorderLayout());
-		//      panel.setPreferredSize(new Dimension(600, 200));
-		panel.add(progressBar, BorderLayout.CENTER);
+		BorderLayout bl= new BorderLayout();
+		JPanel panel = new JPanel(bl);
+		bl.setVgap(20);
+		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+		// panel.setPreferredSize(new Dimension(600, 200));
 		panel.add(new JLabel("Contacting message delivery servers..."), BorderLayout.PAGE_START);
+		panel.add(progressBar, BorderLayout.CENTER);
+		
+		//dialog.getContentPane().add(panel);
 		dialog.add(panel);
 		dialog.pack();
 		dialog.setLocationRelativeTo(mainFrame);
