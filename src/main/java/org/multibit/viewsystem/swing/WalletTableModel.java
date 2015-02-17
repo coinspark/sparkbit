@@ -217,9 +217,9 @@ public class WalletTableModel extends AbstractTableModel {
 			} else if (state == CSMessage.CSMessageState.SELF || state == CSMessage.CSMessageState.VALID) {
 			    String shortMessage = CSMiscUtils.getShortTextMessage(w, txid);
 			    if (shortMessage != null) {
-				icon = ImageLoader.fugue(ImageLoader.FUGUE.balloon_white);
-
-			// Tooltip is a short preview.  We have to show newlines properly,
+//				icon = ImageLoader.fugue(ImageLoader.FUGUE.balloon_white);
+				icon = ImageLoader.fatCow16(ImageLoader.FATCOW.email);
+				// Tooltip is a short preview.  We have to show newlines properly,
 				// so we convert to HTML.
 				final int limit = 140 * 2; // 2 tweets worth...
 				tip = shortMessage;
