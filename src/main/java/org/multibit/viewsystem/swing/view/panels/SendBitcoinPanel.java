@@ -1262,7 +1262,7 @@ constraints.fill = GridBagConstraints.BOTH;
 	    int flags = csa.getAddressFlags();
 	    canSendMessage = (flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_TEXT_MESSAGES)>0;
 	    
-	    if ((flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS) > 0) {
+	    if (validCoinsparkAddress && (flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS) > 0) {
 		CoinSparkPaymentRef paymentRef = csa.getPaymentRef();
 		long ref = paymentRef.getRef();
 		if (ref>0) {
