@@ -100,6 +100,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
     private CSMessageSendPanel messageSendPanel;
     private MultiBitLabel messageLabel;
     private MultiBitLabel paymentRefTextLabel;
+    private MultiBitLabel amountLabel;
     /* CoinSpark END */
 
     public SendBitcoinPanel(BitcoinController bitcoinController, MultiBitFrame mainFrame) {
@@ -671,24 +672,10 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	// instead of setting to 1,000.
 	yGridAssetAmountPanel = yGridPosition;
 	
-	
-	MultiBitLabel amountLabel = new MultiBitLabel(controller.getLocaliser().getString("sendBitcoinPanel.amountLabel"));
-	amountLabel.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinPanel.amountLabel.tooltip")));
-	amountLabel.setHorizontalAlignment(JLabel.TRAILING);
-	constraints.fill = GridBagConstraints.NONE;
-	constraints.gridx = 0;
-	constraints.gridy = yGridPosition;
-	constraints.gridwidth = 1;
-	constraints.gridheight = 1;
-	constraints.weightx = 1.0; //0.1;  // FUDGE: Try to force labels to take more room and be visible.
-	constraints.weighty = 0.2; //1;
-	constraints.anchor = GridBagConstraints.LINE_END;
-	formPanel.add(amountLabel, constraints);
-
+	// Amount label is created in method setAmountPanel()
 	
 	JPanel amountPanel = createAmountPanel();
 	assetAmountPanel = new CSSendAssetPanel();
-	assetAmountPanel.setDesiredWidth(addressTextField.getWidth());
 	bitcoinAmountPanel = amountPanel;
 //	cards = new JPanel(new CardLayout());
 //	cards.add(amountPanel, "BITCOIN");
@@ -831,13 +818,40 @@ constraints.fill = GridBagConstraints.BOTH;
 
     
     public void removeAmountPanel(JPanel formPanel, JPanel panel) {
-	if (panel==null) return;
-	formPanel.remove(panel);
+	if (panel!=null) formPanel.remove(panel);
+	// also remove the label which will recreated in setAmountPanel
+	if (amountLabel!=null) formPanel.remove(amountLabel);
     }
     
     public void setAmountPanel(JPanel formPanel, JPanel panel) {
 	if (panel==null) return;
+
+	// Add the label
 	GridBagConstraints constraints = new GridBagConstraints();
+	amountLabel = new MultiBitLabel(controller.getLocaliser().getString("sendBitcoinPanel.amountLabel"));
+	amountLabel.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinPanel.amountLabel.tooltip")));
+	amountLabel.setHorizontalAlignment(JLabel.TRAILING);
+	constraints.fill = GridBagConstraints.NONE;
+	constraints.gridx = 0;
+	constraints.gridy = yGridAssetAmountPanel;
+	constraints.gridwidth = 1;
+	constraints.gridheight = 1;
+	constraints.weightx = 1.0; //0.1;  // FUDGE: Try to force labels to take more room and be visible.
+	constraints.weighty = 0.2; //1;
+	// The amount label holds a normal position for BTC, but takes a NE position for Assets as the
+	// the asset panel could expand if there are fees, and it looks strange for the label to jump
+	// around.
+	if (panel != bitcoinAmountPanel) {
+	    constraints.anchor = GridBagConstraints.NORTHEAST; // LINE_END;
+	    constraints.insets = new Insets( getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight(), 0,0,0);
+	} else {
+	    constraints.anchor = GridBagConstraints.LINE_END;	    
+	}
+	formPanel.add(amountLabel, constraints);
+	
+	
+	// Add the form panel
+	constraints = new GridBagConstraints();
 	constraints.fill = GridBagConstraints.BOTH;
 	constraints.gridx = 2;
 	constraints.gridy = yGridAssetAmountPanel;
