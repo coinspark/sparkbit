@@ -524,6 +524,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 	    detailPanel.add(msgLabel, constraints);
 
 	    MultiBitTextArea msgText = new MultiBitTextArea("", 4, 20, controller);
+	    msgText.setLineWrap(true);
 	    msgText.setText(msg);
 	    msgText.setEditable(false);
 	    msgText.setFocusable(true);
@@ -542,6 +543,8 @@ public class CSTransactionDetailsPanel extends JPanel {
 	    constraints.gridwidth = 3;
 	    constraints.anchor = GridBagConstraints.LINE_START;
 	    detailPanel.add(msgScrollPane, constraints);
+	    
+	    msgText.setCaretPosition(0);
 
 	    yGridPosition++;
 

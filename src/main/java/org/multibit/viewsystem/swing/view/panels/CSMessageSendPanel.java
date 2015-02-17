@@ -60,6 +60,7 @@ public class CSMessageSendPanel extends javax.swing.JPanel {
 
         messageTextArea.setColumns(20);
         messageTextArea.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
+        messageTextArea.setLineWrap(true);
         messageScrollPane.setViewportView(messageTextArea);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
