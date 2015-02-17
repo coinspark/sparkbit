@@ -426,7 +426,88 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	formPanel.add(paymentRefTextLabel, constraints);
 	
 	
+	
 	yGridPosition++;
+	
+	
+	
+	MultiBitLabel labelLabel = new MultiBitLabel(controller.getLocaliser().getString("sendBitcoinPanel.labelLabel"));
+	labelLabel.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinPanel.labelLabel.tooltip")));
+	labelLabel.setHorizontalAlignment(JLabel.TRAILING);
+	constraints.fill = GridBagConstraints.NONE;
+	constraints.gridx = 0;
+	constraints.gridy = yGridPosition;
+	constraints.weightx = 1.0;
+	constraints.weighty = 0.2; //1.0;
+	constraints.gridwidth = 1;
+	constraints.gridheight = 1;
+	constraints.anchor = GridBagConstraints.LINE_END;
+	formPanel.add(labelLabel, constraints);
+
+	JTextField aTextField = new JTextField();
+	labelTextArea = new MultiBitTextArea("", AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS, 20, controller);
+	labelTextArea.setBorder(aTextField.getBorder());
+	labelTextArea.addKeyListener(new QRCodeKeyListener());
+
+	final JScrollPane labelScrollPane = new JScrollPane(labelTextArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+		JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	labelScrollPane.setOpaque(true);
+	labelScrollPane.setBackground(ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR);
+	labelScrollPane.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+	labelScrollPane.getViewport().addChangeListener(new ChangeListener() {
+	    @Override
+	    public void stateChanged(ChangeEvent e) {
+		if (labelScrollPane.getVerticalScrollBar().isVisible()) {
+		    labelScrollPane.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.LIGHT_GRAY));
+		} else {
+		    labelScrollPane.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+		}
+	    }
+	});
+//	labelScrollPane.setMinimumSize(new Dimension(longFieldWidth,40));
+//	labelScrollPane.setPreferredSize(new Dimension(longFieldWidth,80));
+	Dimension labelDimension = new Dimension(coinsparkFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + 6);// + TEXTFIELD_VERTICAL_DELTA + 6);
+	labelScrollPane.setMinimumSize(labelDimension);
+	//labelScrollPane.setMaximumSize(labelDimension);
+	labelScrollPane.setPreferredSize(labelDimension);
+	
+//	labelScrollPane.setMinimumSize(new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont())
+//		.getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + TEXTFIELD_VERTICAL_DELTA + 6));
+//	labelScrollPane.setPreferredSize(new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont())
+//		.getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + TEXTFIELD_VERTICAL_DELTA + 6));
+	labelScrollPane.getHorizontalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
+	labelScrollPane.getVerticalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
+
+	constraints.fill = GridBagConstraints.BOTH; //HORIZONTAL;
+	constraints.gridx = 2;
+	constraints.gridy = yGridPosition;
+	constraints.weightx = 1; //0.6;
+	constraints.weighty = 0.2; //0; //1; //0.2; //1
+	constraints.gridwidth = 3;
+	constraints.gridheight = 1;
+	constraints.anchor = GridBagConstraints.LINE_START;
+	constraints.insets = new Insets(0, 0, 3, 0);	// when scrollers show to expand height, maintain gap to next grid
+	formPanel.add(labelScrollPane, constraints);
+
+	
+	yGridPosition++;
+	
+	// Move the paste button stent to gridx 10 to act as a buffer area on the right hand side.
+	JPanel myStent1 = MultiBitTitledPanel.createStent((int)labelScrollPane.getPreferredSize().getWidth(), 16 );
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.gridx = 0;
+        constraints.gridy = yGridPosition;
+        constraints.weightx = 1.0; //10.0;
+        constraints.weighty = 0.2;
+        constraints.gridwidth = 4;
+        constraints.gridheight = 1;
+        constraints.anchor = GridBagConstraints.LINE_START;
+        formPanel.add(myStent1, constraints);
+	
+
+	yGridPosition++;
+
+	
 	
 	MultiBitLabel assetTypeLabel = new MultiBitLabel(controller.getLocaliser().getString("sendBitcoinPanel.assetTypeLabel"));
 	assetTypeLabel.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinPanel.sparkAddressLabel.tooltip")));
@@ -508,69 +589,6 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.gridheight = 1;
 	constraints.anchor = GridBagConstraints.LINE_START;
 	formPanel.add(assetComboBox, constraints);
-
-	
-	yGridPosition++;
-	
-
-
-	MultiBitLabel labelLabel = new MultiBitLabel(controller.getLocaliser().getString("sendBitcoinPanel.labelLabel"));
-	labelLabel.setToolTipText(HelpContentsPanel.createTooltipText(controller.getLocaliser().getString("sendBitcoinPanel.labelLabel.tooltip")));
-	labelLabel.setHorizontalAlignment(JLabel.TRAILING);
-	constraints.fill = GridBagConstraints.NONE;
-	constraints.gridx = 0;
-	constraints.gridy = yGridPosition;
-	constraints.weightx = 1.0;
-	constraints.weighty = 0.2; //1.0;
-	constraints.gridwidth = 1;
-	constraints.gridheight = 1;
-	constraints.anchor = GridBagConstraints.LINE_END;
-	formPanel.add(labelLabel, constraints);
-
-	JTextField aTextField = new JTextField();
-	labelTextArea = new MultiBitTextArea("", AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS, 20, controller);
-	labelTextArea.setBorder(aTextField.getBorder());
-	labelTextArea.addKeyListener(new QRCodeKeyListener());
-
-	final JScrollPane labelScrollPane = new JScrollPane(labelTextArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-		JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-	labelScrollPane.setOpaque(true);
-	labelScrollPane.setBackground(ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR);
-	labelScrollPane.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-	labelScrollPane.getViewport().addChangeListener(new ChangeListener() {
-	    @Override
-	    public void stateChanged(ChangeEvent e) {
-		if (labelScrollPane.getVerticalScrollBar().isVisible()) {
-		    labelScrollPane.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.LIGHT_GRAY));
-		} else {
-		    labelScrollPane.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-		}
-	    }
-	});
-//	labelScrollPane.setMinimumSize(new Dimension(longFieldWidth,40));
-//	labelScrollPane.setPreferredSize(new Dimension(longFieldWidth,80));
-	Dimension labelDimension = new Dimension(coinsparkFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + 6);// + TEXTFIELD_VERTICAL_DELTA + 6);
-	labelScrollPane.setMinimumSize(labelDimension);
-	//labelScrollPane.setMaximumSize(labelDimension);
-	labelScrollPane.setPreferredSize(labelDimension);
-	
-//	labelScrollPane.setMinimumSize(new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont())
-//		.getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + TEXTFIELD_VERTICAL_DELTA + 6));
-//	labelScrollPane.setPreferredSize(new Dimension(longFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont())
-//		.getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + TEXTFIELD_VERTICAL_DELTA + 6));
-	labelScrollPane.getHorizontalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
-	labelScrollPane.getVerticalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
-
-	constraints.fill = GridBagConstraints.BOTH; //HORIZONTAL;
-	constraints.gridx = 2;
-	constraints.gridy = yGridPosition;
-	constraints.weightx = 1; //0.6;
-	constraints.weighty = 0.2; //0; //1; //0.2; //1
-	constraints.gridwidth = 3;
-	constraints.gridheight = 1;
-	constraints.anchor = GridBagConstraints.LINE_START;
-	constraints.insets = new Insets(0, 0, 3, 0);	// when scrollers show to expand height, maintain gap to next grid
-	formPanel.add(labelScrollPane, constraints);
 
 
 	sendBitcoinConfirmAction = new SendBitcoinConfirmAction(super.bitcoinController, mainFrame, this);
