@@ -447,7 +447,7 @@ func main() {
 		}
 		res, err = sparkbit.Sendassetmessage(params[0], params[1], params[2], f64, flag, params[5])
 	case "sendbitcoinasset":
-		validateParams(6, method, "WALLETNAME ADDRESS AMOUNT ASSETREF QUANTITY SENDERPAYS")
+		validateParams(6, method, "WALLETNAME ADDRESS BTCAMOUNT ASSETREF ASSETQTY SENDERPAYS")
 		f64, perr := strconv.ParseFloat(params[2], 64)
 		if perr != nil {
 			fmt.Println("Amount is not a valid number")
@@ -465,7 +465,7 @@ func main() {
 		}
 		res, err = sparkbit.Sendbitcoinasset(params[0], params[1], f64, params[3], f64_2, flag)
 	case "sendbitcoinassetmessage":
-		validateParams(7, method, "WALLETNAME ADDRESS AMOUNT ASSETREF QUANTITY SENDERPAYS MESSAGE")
+		validateParams(7, method, "WALLETNAME ADDRESS BTCAMOUNT ASSETREF ASSETQTY SENDERPAYS MESSAGE")
 		f64, perr := strconv.ParseFloat(params[2], 64)
 		if perr != nil {
 			fmt.Println("Amount is not a valid number")
