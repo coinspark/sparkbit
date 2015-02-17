@@ -1662,9 +1662,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("wallet name = " + walletID);
 	log.info("address     = " + address);
 	log.info("amount      = " + amount);
-	return sendbitcoinwith_impl(walletID, null, 0L, address, amount, null);
+	return sendbitcoinusing_impl(walletID, null, 0L, address, amount, null);
     }
     
+    @Deprecated
     @Override
     public synchronized String sendbitcoinwith(String walletID, String txid, Long vout, String address, Double amount) throws com.bitmechanic.barrister.RpcException
     {
@@ -1674,10 +1675,22 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("vout        = " + vout);
 	log.info("address     = " + address);
 	log.info("amount      = " + amount);
-	return sendbitcoinwith_impl(walletID, txid, vout, address, amount, null);
+	return sendbitcoinusing_impl(walletID, txid, vout, address, amount, null);
+    }
+
+    @Override
+    public synchronized String sendbitcoinusing(String walletID, String txid, Long vout, String address, Double amount) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND BITCOIN USING");
+	log.info("wallet name = " + walletID);
+	log.info("txid        = " + txid);
+	log.info("vout        = " + vout);
+	log.info("address     = " + address);
+	log.info("amount      = " + amount);
+	return sendbitcoinusing_impl(walletID, txid, vout, address, amount, null);
     }
     
-    private synchronized String sendbitcoinwith_impl(String walletID, String txid, Long vout, String address, Double amount, String message) throws com.bitmechanic.barrister.RpcException
+    private synchronized String sendbitcoinusing_impl(String walletID, String txid, Long vout, String address, Double amount, String message) throws com.bitmechanic.barrister.RpcException
     {    
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
@@ -1855,9 +1868,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("asset ref   = " + assetRef);
 	log.info("quantity    = " + quantity);
 	log.info("sender pays = " + senderPays);
-	return sendassetwith_impl(walletID, null, 0L, address, assetRef, quantity, senderPays, null, null);
+	return sendassetusing_impl(walletID, null, 0L, address, assetRef, quantity, senderPays, null, null);
     }
     
+    @Deprecated
     @Override
     public synchronized String sendassetwith(String walletID, String txid, Long vout, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
     {
@@ -1869,10 +1883,24 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("asset ref   = " + assetRef);
 	log.info("quantity    = " + quantity);
 	log.info("sender pays = " + senderPays);
-	return sendassetwith_impl(walletID, txid, vout, address, assetRef, quantity, senderPays, null, null);
+	return sendassetusing_impl(walletID, txid, vout, address, assetRef, quantity, senderPays, null, null);
+    }
+
+    @Override
+    public synchronized String sendassetusing(String walletID, String txid, Long vout, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND ASSET USING");
+	log.info("wallet name = " + walletID);
+	log.info("txid        = " + txid);
+	log.info("vout        = " + vout);
+	log.info("address     = " + address);
+	log.info("asset ref   = " + assetRef);
+	log.info("quantity    = " + quantity);
+	log.info("sender pays = " + senderPays);
+	return sendassetusing_impl(walletID, txid, vout, address, assetRef, quantity, senderPays, null, null);
     }
     
-    private synchronized String sendassetwith_impl(String walletID, String txid, Long vout, String address, String assetRef, Double quantity, Boolean senderPays, String message, Double btcAmount) throws com.bitmechanic.barrister.RpcException
+    private synchronized String sendassetusing_impl(String walletID, String txid, Long vout, String address, String assetRef, Double quantity, Boolean senderPays, String message, Double btcAmount) throws com.bitmechanic.barrister.RpcException
     {
 	String sendTxHash = null;
 	boolean sendValidated = false;
@@ -2155,7 +2183,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("asset ref   = " + assetref);
 	log.info("asset qty   = " + asset_qty);
 	log.info("sender pays = " + senderpays);
-	return sendassetwith_impl(walletname, null, 0L, address, assetref, asset_qty, senderpays, null, btc_amount);
+	return sendassetusing_impl(walletname, null, 0L, address, assetref, asset_qty, senderpays, null, btc_amount);
     }
     
     @Override
@@ -2168,7 +2196,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("quantity    = " + quantity);
 	log.info("sender pays = " + senderpays);
 	log.info("message     = " + message);
-	return sendassetwith_impl(walletname, null, 0L, address, assetref, quantity, senderpays, message, null);
+	return sendassetusing_impl(walletname, null, 0L, address, assetref, quantity, senderpays, message, null);
     }
     
     @Override
@@ -2179,7 +2207,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("address     = " + address);
 	log.info("amount      = " + amount);
 	log.info("message     = " + message);
-	return sendbitcoinwith_impl(walletname, null, 0L, address, amount, message);
+	return sendbitcoinusing_impl(walletname, null, 0L, address, amount, message);
     }
     
     @Override
@@ -2193,7 +2221,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("asset qty   = " + asset_qty);
 	log.info("sender pays = " + senderpays);
 	log.info("message     = " + message);
-	return sendassetwith_impl(walletname, null, 0L, address, assetref, asset_qty, senderpays, message, btc_amount);
+	return sendassetusing_impl(walletname, null, 0L, address, assetref, asset_qty, senderpays, message, btc_amount);
 	
     }
     
