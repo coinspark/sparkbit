@@ -158,6 +158,12 @@ public class CSMiscUtils {
 	boolean b = (flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_ASSETS)>0;
 	return b;
     }
+    
+    public static boolean canSendTextMessageToCoinSparkAddress(CoinSparkAddress csa) {
+	int flags = csa.getAddressFlags();
+	boolean b = (flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_TEXT_MESSAGES)>0;
+	return b;	
+    }
  
     /*
      http://coinspark.org/developers/asset-genesis-metadata/

@@ -1726,10 +1726,21 @@ WalletInfoData winfo = wd.getWalletInfo();
 		int flags = csa.getAddressFlags();
 		if ((flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS) > 0) {
 		    paymentRef = csa.getPaymentRef();
-		    log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
+//		    log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
+		}
+
+		if (message != null && !CSMiscUtils.canSendTextMessageToCoinSparkAddress(csa)) {
+		    JSONRPCError.COINSPARK_ADDRESS_MISSING_TEXT_MESSAGE_FLAG.raiseRpcException();
 		}
 	    }
+	} else {
+	    // Cannot send message to a bitcoin address, must be a coinspark address
+	    if (message != null) {
+		JSONRPCError.SEND_MESSAGE_MUST_BE_COINSPARK_ADDRESS.raiseRpcException();
+	    }
 	}
+	
+	
 	boolean isValid = CSMiscUtils.validateBitcoinAddress(bitcoinAddress, controller);
 	if (!isValid) {
 	    JSONRPCError.BITCOIN_ADDRESS_INVALID.raiseRpcException();
@@ -1956,11 +1967,15 @@ WalletInfoData winfo = wd.getWalletInfo();
 		JSONRPCError.COINSPARK_ADDRESS_MISSING_ASSET_FLAG.raiseRpcException();
 	    }
 	    
+	    if (message!=null && !CSMiscUtils.canSendTextMessageToCoinSparkAddress(csa)) {
+		JSONRPCError.COINSPARK_ADDRESS_MISSING_TEXT_MESSAGE_FLAG.raiseRpcException();
+	    }
+	    
 	    // payment ref?
 	    int flags = csa.getAddressFlags();
 	    if ((flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS) > 0) {
 		paymentRef = csa.getPaymentRef();
-		log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
+//		log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
 	    }
 	}
 	boolean isValid = CSMiscUtils.validateBitcoinAddress(bitcoinAddress, controller);
