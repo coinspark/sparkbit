@@ -229,12 +229,15 @@ public class WalletTableModel extends AbstractTableModel {
 				tip = tip.replace("\n\n", "<p>").replace("\n", "<br>");
 				tip = "<html>" + tip + "</html>";
 			    }
+			} else if (message.getIsRetrieving()) {
+			    tip = "Retrieving message...";
+			    icon = ImageLoader.fugue(ImageLoader.FUGUE.download_cloud);
 			} else {
 			// Something else has happened, so let's check and show
 			    // the appropriate icon.
 			    switch (state) {
 				case CSMessage.CSMessageState.NEVERCHECKED:
-				    tip = "Never checked";
+				    tip = "Message is pending retrieval";
 				    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.hourglass);
 				    break;
 				case CSMessage.CSMessageState.NOT_FOUND:

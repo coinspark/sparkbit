@@ -2367,6 +2367,18 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
 	}
 	// SwingUtilities.invokeLater
 	// EventQueue.invokeLater(tickerTimerTask1);
+	
+	if (t == CSEventType.MESSAGE_RETRIEVAL_STARTED || t == CSEventType.MESSAGE_RETRIEVAL_COMPLETED) {
+	    SwingUtilities.invokeLater(new Runnable() {
+		@Override
+		public void run() {
+		    if (View.TRANSACTIONS_VIEW == controller.getCurrentView()) {
+			ShowTransactionsPanel.updateTransactions();
+		    }
+		}
+	    });
+	}
+	
     }
     
     // Programatically quit the application
