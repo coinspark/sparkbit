@@ -28,7 +28,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.awt.BorderLayout;
 import java.awt.Dialog;
-import java.awt.Dimension;
 import org.multibit.controller.bitcoin.BitcoinController;
 import org.multibit.message.Message;
 import org.multibit.message.MessageManager;
@@ -51,6 +50,7 @@ import org.coinspark.protocol.CoinSparkAddress;
 import org.multibit.utils.CSMiscUtils;
 import org.coinspark.protocol.*;
 import org.multibit.viewsystem.dataproviders.AssetFormDataProvider;
+import org.multibit.viewsystem.swing.view.components.FontSizer;
 /* CoinSpark END */
 
 /**
@@ -195,7 +195,9 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 		bl.setVgap(20);
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 		// panel.setPreferredSize(new Dimension(600, 200));
-		panel.add(new JLabel("Contacting message delivery servers..."), BorderLayout.PAGE_START);
+		JLabel label = new JLabel("Contacting message delivery servers...");
+		label.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
+		panel.add(label, BorderLayout.PAGE_START);
 		panel.add(progressBar, BorderLayout.CENTER);
 		
 		//dialog.getContentPane().add(panel);
