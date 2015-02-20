@@ -491,7 +491,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 	    constraints.anchor = GridBagConstraints.LINE_END;
 	    detailPanel.add(msgLabel, constraints);
 	    
-	    MultiBitLabel messageErrorLabel = new MultiBitLabel("Failed to retrieve message. " + CSMiscUtils.getHumanReadableServerError(errorCode) + " (" + errorCode + ").");
+	    MultiBitLabel messageErrorLabel = new MultiBitLabel("Failed to retrieve message. " + CSUtils.getHumanReadableServerError(errorCode) + " (" + errorCode + ").");
 	    constraints.fill = GridBagConstraints.NONE;
 	    constraints.gridx = 2;
 	    constraints.gridy = yGridPosition;

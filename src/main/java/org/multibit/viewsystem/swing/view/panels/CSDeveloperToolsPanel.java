@@ -49,6 +49,7 @@ import com.google.bitcoin.core.Wallet;
 import org.coinspark.wallet.CSTransactionOutput;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionOutput;
+import org.coinspark.wallet.CSMessageDatabase;
 
 // Apache license
 import org.sparkbit.WrapLayout;
@@ -123,6 +124,15 @@ public class CSDeveloperToolsPanel extends JPanel implements Viewable {
 	buttonPanel.add(testButton);
 
 
+	testButton = new JButton("Toggle Message Error Debugging");
+	testButton.addActionListener(new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent evt) {
+		messageErrorToggleButtonPressed();
+	    }
+	});
+	buttonPanel.add(testButton);
+	
 	
 	testButton = new JButton("Toggle JSONRPC Server");
 	testButton.addActionListener(new ActionListener() {
@@ -200,6 +210,31 @@ public class CSDeveloperToolsPanel extends JPanel implements Viewable {
 	logTextArea.append("\n\n");
     }
 
+    public void messageErrorToggleButtonPressed() {
+	logTextArea.append("=============================================================\n");
+	logTextArea.append("toggle message error debugging invoked : " + new Date() + "\n");
+
+	boolean b = CSMessageDatabase.debugWithCustomError;
+	b = !b;
+	CSMessageDatabase.setDebugWithCustomError(b);
+	
+	if (b) {
+	    logTextArea.append("Turned ON.\n");
+	    logTextArea.append("In the message text area, create a custom error by entering\n");
+	    logTextArea.append("on line 1 the method e.g. coinspark_message_pre_create");
+	    logTextArea.append("on line 2 the error code, e.g. -32603");
+	    logTextArea.append("on line 3 a message, e.g. Something went wrong");
+	    logTextArea.append("On receiving a JSON response from the delivery server, for the method,\n");
+	    logTextArea.append("the custom error will replace any actual error or non-error returned.\n");
+	} else {
+	    logTextArea.append("Turned OFF.\n");	
+	}
+	logTextArea.append("=============================================================\n");
+
+	logTextArea.append("\n\n");
+    }
+    
+    
     public void walletTestButtonPressed() {
 	logTextArea.append("=============================================================\n");
 	logTextArea.append("wallet.test() invoked : " + new Date() + "\n");

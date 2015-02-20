@@ -171,6 +171,20 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
     // Implement AssetFormDataProvider
     @Override
     public String getMessage() {
+	// Debugging with custom error, we parse out the custom error information here
+	if (CSMessageDatabase.debugWithCustomError) {
+	    String s = messageSendPanel.getMessageText();
+	    String lines[] = s.split("\\r?\\n");
+	    if (lines.length>=3) {
+		CSMessageDatabase.debugCustomErrorMethod = lines[0].trim();
+		try {
+		CSMessageDatabase.debugCustomErrorCode = Integer.parseInt(lines[1]);
+		} catch (NumberFormatException e) {
+		CSMessageDatabase.debugCustomErrorCode = 0;    
+		}
+		log.debug("Custom error message set: " + CSMessageDatabase.debugCustomErrorCode + ", " + CSMessageDatabase.debugCustomErrorMethod );
+	    }
+	}
 	return messageSendPanel.getMessageText();
     }
     
