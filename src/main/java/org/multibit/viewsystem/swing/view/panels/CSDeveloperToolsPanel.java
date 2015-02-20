@@ -221,9 +221,8 @@ public class CSDeveloperToolsPanel extends JPanel implements Viewable {
 	if (b) {
 	    logTextArea.append("Turned ON.\n");
 	    logTextArea.append("In the message text area, create a custom error by entering\n");
-	    logTextArea.append("on line 1 the method e.g. coinspark_message_pre_create");
-	    logTextArea.append("on line 2 the error code, e.g. -32603");
-	    logTextArea.append("on line 3 a message, e.g. Something went wrong");
+	    logTextArea.append("on line 1 the method e.g. coinspark_message_pre_create\n");
+	    logTextArea.append("on line 2 the error code, e.g. -32603\n");
 	    logTextArea.append("On receiving a JSON response from the delivery server, for the method,\n");
 	    logTextArea.append("the custom error will replace any actual error or non-error returned.\n");
 	} else {

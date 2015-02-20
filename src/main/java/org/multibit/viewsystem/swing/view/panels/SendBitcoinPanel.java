@@ -175,7 +175,7 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	if (CSMessageDatabase.debugWithCustomError) {
 	    String s = messageSendPanel.getMessageText();
 	    String lines[] = s.split("\\r?\\n");
-	    if (lines.length>=3) {
+	    if (lines.length>=2) {
 		CSMessageDatabase.debugCustomErrorMethod = lines[0].trim();
 		try {
 		CSMessageDatabase.debugCustomErrorCode = Integer.parseInt(lines[1]);
