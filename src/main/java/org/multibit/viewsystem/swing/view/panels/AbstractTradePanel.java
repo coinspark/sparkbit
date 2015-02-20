@@ -264,9 +264,14 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
      * get the layout stent for all the keys on the left hand side of the panel
      */
     protected int calculateStentWidth() {
-        String[] keys = new String[] { "sendBitcoinPanel.addressLabel", "sendBitcoinPanel.labelLabel",
-                "sendBitcoinPanel.amountLabel", "receiveBitcoinPanel.addressLabel", "receiveBitcoinPanel.labelLabel",
+	String[] keys = null;
+	if (this.isReceiveBitcoin()) {
+	    keys = new String[] { "receiveBitcoinPanel.addressLabel", "receiveBitcoinPanel.labelLabel",
                 "receiveBitcoinPanel.amountLabel" };
+	} else {
+	    keys = new String[] { "sendBitcoinPanel.addressLabel", "sendBitcoinPanel.labelLabel",
+                "sendBitcoinPanel.amountLabel", "sendBitcoinPanel.assetTypeLabel", "sendBitcoinPanel.messageLabel" };
+	}
 
         return MultiBitTitledPanel.calculateStentWidthForKeys(controller.getLocaliser(), keys, this) + STENT_DELTA + SPARKBIT_STENT_DELTA;
     }
