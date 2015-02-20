@@ -56,6 +56,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Random;
+import org.coinspark.core.CSUtils;
 import org.coinspark.protocol.CoinSparkMessagePart;
 import org.coinspark.wallet.CSMessage;
 import org.coinspark.wallet.CSMessageDatabase;
@@ -433,7 +434,129 @@ public class CSMiscUtils {
 	return n;
     }
     
-
+    
+    public static String getHumanReadableServerError(int code) {
+	CSUtils.CSServerError error = CSUtils.CSServerError.fromCode(code);
+	return getHumanReadableServerError(error);
+    }
+    
+    public static String getHumanReadableServerError(CSUtils.CSServerError error) {
+	if (error==null) return "";
+	switch(error) {
+	    case NOERROR:
+		return "No error";
+	    case UNKNOWN:
+		return "Unknown error";
+	    case RESPONSE_NOT_OBJECT:
+		return "Not a JSON response object";
+	    case RESPONSE_WRONG_ID:
+		return "Wrong JSON response id";
+	    case RESPONSE_WRONG_METHOD:
+		return "Wrong JSON response method";
+	    case RESPONSE_PARSE_ERROR:
+		return "Could not parse JSON response";
+	    case RESPONSE_RESULT_NOT_FOUND:
+		return "Could not find JSON response result";
+	    case RESPONSE_RESULT_NOT_OBJECT:
+		return "JSON response not a result object";
+	    case RESPONSE_INVALID:
+		return "JSON response is invalid";
+	    case RESPONSE_HASH_MISMATCH:
+		return "Message hash does not match what was encoded in transaction metadata.";
+	    case CANNOT_SIGN:
+		return "Cannot sign transaction for sending message";
+	    case METADATA_ENCODE_ERROR:
+		return "Error encoding transaction metadata for message";
+	    case SERVER_NOT_FOUND:
+		return "Server not found";
+	    case SERVER_REDIRECT:
+		return "Server redirect error";
+	    case SERVER_HTTP_ERROR:
+		return "Server returned a HTTP error";
+	    case SERVER_FATAL_ERROR:
+		return "Server returned a fatal error";
+	    case SERVER_CANNOT_CONNECT:
+		return "Cannot connect to server";
+	    case PARSE_ERROR:
+		return "Parse error";
+	    case INVALID_REQUEST:
+		return "Invalid request";
+	    case METHOD_NOT_FOUND:
+		return "Method not fonud";
+	    case INVALID_PARAMS:
+		return "Invalid parameters";
+	    case INTERNAL_ERROR:
+		return "Internal error";
+	    case ASSET_NOT_FOUND:
+		return "Asset not found";
+	    case TXOUT_NOT_FOUND:
+		return "Transaction output not found";
+	    case SENDER_NOT_ACCEPTED:
+		return "Sender not accepted";
+	    case SENDER_IS_SUSPENDED:
+		return "Sender is suspended";
+	    case SENDER_NETWORK_NOT_ACCEPTABLE:
+		return "Sender network not accepted";
+	    case SENDER_IP_NOT_ACCEPTED:
+		return "Sender IP not accepted";
+	    case SENDER_IP_IS_SUSPENDED:
+		return "Sender IP is suspended";
+	    case NO_PUBLIC_MESSAGES:
+		return "Server does not deliver public messages";
+	    case ONLY_PUBLIC_MESSAGES:
+		return "Server only delivers public messages";
+	    case TOO_MANY_RECIPIENTS:
+		return "Too many recipients";
+	    case RECIPIENT_NOT_ACCEPTED_ON_CREATE:
+		return "Recipient not accepted";
+	    case RECIPIENT_IS_SUSPENDED_ON_CREATE:
+		return "Recipient is suspended";
+	    case RECIPIENT_IP_NOT_ACCEPTED_ON_CREATE:
+		return "Recipient IP is not accepted";
+	    case RECIPIENT_IP_IS_SUSPENDED_ON_CREATE:
+		return "Recipient IP is suspended";
+	    case DURATION_NOT_ACCEPTABLE:
+		return "Duration not accepted";
+	    case SEED_NOT_ACCEPTABLE:
+		return "Seed not accepted";
+	    case TOO_MANY_MESSAGE_PARTS:
+		return "Too many message parts";
+	    case TOTAL_MESSAGE_TOO_LARGE:
+		return "Message is too long";
+	    case MIME_TYPE_NOT_ACCEPTABLE:
+		return "Mime type not accepted";
+	    case FILE_NAME_NOT_ACCEPTABLE:
+		return "File name not accpeted";
+	    case CONTENT_TOO_LARGE:
+		return "Content is too large";
+	    case TXID_INVALID:
+		return "Transaction ID is invalid";
+	    case TX_MESSAGE_UNKNOWN:
+		return "Cannot find message for Transaction ID";
+	    case TX_MESSAGE_PENDING:
+		return "Message has been found and is pending delivery";
+	    case TX_MESSAGE_EXPIRED:
+		return "Message has expired";
+	    case RECIPIENT_NOT_ACCEPTED:
+		return "Recipient not accepted";
+	    case RECIPIENT_IS_SUSPENDED:
+		return "Recipient has been suspended";
+	    case RECIPIENT_NETWORK_NOT_ACCEPTABLE:
+		return "Recipient network not accepted";
+	    case RECIPIENT_IP_NOT_ACCEPTED:
+		return "Recipient's IP address is not accepted";
+	    case RECIPIENT_IP_IS_SUSPENDED:
+		return "Recipient's IP address has been suspended";
+	    case NONCE_NOT_FOUND:
+		return "Internal error (nonce not found)";
+	    case SIGNATURE_INCORRECT:
+		return "Signature is not correct";
+	    default:
+	}
+	return "Unknown error";
+    }
+    
+    
     public static String getHumanReadableAssetState(CSAsset.CSAssetState state) {
 	if (state==null) return "";
 	switch(state) {
