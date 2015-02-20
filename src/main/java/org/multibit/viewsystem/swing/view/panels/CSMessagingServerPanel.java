@@ -24,6 +24,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import org.multibit.viewsystem.swing.ColorAndFontConstants;
+import org.multibit.viewsystem.swing.view.components.FontSizer;
 
 /**
  * This panel displays the list of messaging servers to use in a table.
@@ -49,6 +50,9 @@ public class CSMessagingServerPanel extends javax.swing.JPanel {
 		updateRemoveButton();
 	    }
 	});
+	
+	table.getTableHeader().setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
+	// TODO: cell editor font
     }
 
     /**
@@ -123,15 +127,19 @@ public class CSMessagingServerPanel extends javax.swing.JPanel {
         setBackground(ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR);
         setName("Messaging Delivery Servers"); // NOI18N
 
+        label.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
         label.setText("Servers are tried in random order. If none listed, default are used.");
 
         scrollPane.setBackground(ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR);
         scrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
+        table.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
         table.setModel(tableModel);
+        table.setRowHeight(FontSizer.INSTANCE.getAdjustedDefaultFont().getSize());
         table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         scrollPane.setViewportView(table);
 
+        addButton.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
         addButton.setText("Add");
         addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -139,6 +147,7 @@ public class CSMessagingServerPanel extends javax.swing.JPanel {
             }
         });
 
+        removeButton.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
         removeButton.setText("Remove");
         removeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
