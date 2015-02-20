@@ -135,6 +135,9 @@ public enum UpdateAssetBalanceService {
 					    
 					    w.CS.retrieveMessages();
 					    
+					    if (pool.isShutdown()) {
+						return;
+					    }
 					    
 //					log.info("....timer: start validateAllAssets()");
 					    w.CS.validateAllAssets(peerGroup);
