@@ -1,8 +1,7 @@
 /* 
  * SparkBit
  *
- * Copyright 2011-2014 multibit.org
- * Copyright 2014 Coin Sciences Ltd
+ * Copyright 2015 Coin Sciences Ltd
  *
  * Licensed under the MIT license (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.multibit.viewsystem.swing;
+package org.sparkbit;
 
+import org.multibit.viewsystem.swing.*;
 import org.multibit.controller.bitcoin.BitcoinController;
 import org.multibit.model.bitcoin.WalletData;
 
@@ -31,13 +31,13 @@ import java.util.*;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public enum UpdateAssetBalanceService {
+public enum RetrieveMessagesService {
 
     INSTANCE;
 
     public static final int INTERVAL = 5000; // milliseconds
 
-    private static Logger log = LoggerFactory.getLogger(UpdateAssetBalanceService.class);
+    private static Logger log = LoggerFactory.getLogger(RetrieveMessagesService.class);
 
     //private Controller controller;
     private BitcoinController bitcoinController;
@@ -76,27 +76,18 @@ public enum UpdateAssetBalanceService {
 	return result;
     }
 
-    // TODO: Better for task to iterate over wallets and invoke update methods
-    //       or add a separate task for each wallet to the executor queue?
 //    @Override
     public Runnable getRunnable() {
 	return new Runnable() {
 	    @Override
 	    public void run() {
-		log.debug("UpdateAssetBalanceService fired and executing");
+		log.debug("RetrieveMessagesService fired and executing");
 
 		if (pool.isShutdown()) {
 		    return;
 		}
 
 		try {
-
-		    PeerGroup peerGroup = null;
-		    if (bitcoinController.getMultiBitService() != null && bitcoinController.getMultiBitService().getPeerGroup() != null) {
-			peerGroup = bitcoinController.getMultiBitService().getPeerGroup();
-		    }
-//		log.info("....timer: getPeerGroup()");
-
 		    List<WalletData> perWalletModelDataList = bitcoinController.getModel().getPerWalletModelDataList();
 		    if (perWalletModelDataList != null) {
 			// iterator can throw ConcurrentModificationException so we iterate over copy
@@ -108,40 +99,20 @@ public enum UpdateAssetBalanceService {
 			    }
 			    try {
 				WalletData wd = iterator.next();
-
 				List<WalletData> latest = bitcoinController.getModel().getPerWalletModelDataList();
 				if (latest == null || !latest.contains(wd)) {
 				    continue; // this wallet data no longer exists in model so carry on looping 
 				}
-
 				if (wd != null) {
-//                            log.debug("LOOP: Attempting to update assets in wallet: " + wd.getWalletDescription() + "...");
-				    UUID uuid = wd.getReplayTaskUUID();
-				if (uuid!=null) {
-//				    log.debug("....timer: Wallet has replay task: " + wd.getWalletFilename());
-				    continue;
-				}
+
 				    Wallet w = wd.getWallet();
 				    if (w == null) {
 					log.debug("getWallet() returned null");
 				    } else {
-					if (peerGroup == null) {
-					    log.debug("Cannot invoke validateAssets(peerGroup) as peerGroup is null");
-					} else {
-					    if (pool.isShutdown()) {
-						return;
-					    }
-					    
-//					log.info("....timer: start validateAllAssets()");
-					    w.CS.validateAllAssets(peerGroup);
-//					log.info("....timer: finish validateAllAssets()");
-					}
 					if (pool.isShutdown()) {
 					    return;
 					}
-//					log.info("....timer: start calculateBalances()");
-					w.CS.calculateBalances();
-//					log.info("....timer: finish calculateBalances()");
+					w.CS.retrieveMessages();
 				    }
 				}
 			    } catch (java.util.ConcurrentModificationException cme) {
@@ -149,10 +120,9 @@ public enum UpdateAssetBalanceService {
 			    }
 			}
 		    }
-		    //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 		} catch (Exception e) {
 		    // if uncaught, an exception will kill the scheduled executor
-		    log.error("Update asset balance service: Caught exception: " + e);
+		    log.error("Retrieve messages service: Caught exception: " + e);
 		    e.printStackTrace();
 		}
 	    }

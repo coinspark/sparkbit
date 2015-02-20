@@ -66,6 +66,7 @@ import org.coinspark.wallet.CSMessageDatabase;
 import org.multibit.model.bitcoin.WalletAddressBookData;
 import org.multibit.utils.CSMiscUtils;
 import org.multibit.viewsystem.swing.UpdateAssetBalanceService;
+import org.sparkbit.RetrieveMessagesService;
 import org.sparkbit.SparkBitMapDB;
 import org.sparkbit.jsonrpc.JSONRPCController;
 
@@ -244,6 +245,9 @@ public class MultiBitService {
       /* Launch timer to ping tracking servers */
       UpdateAssetBalanceService.INSTANCE.initalize(this.bitcoinController);
       /* Launch timer END */
+      
+      /* Launch timer to retrieve messages */
+      RetrieveMessagesService.INSTANCE.initalize(this.bitcoinController);
   }
 
   private void handleError(Exception e) {

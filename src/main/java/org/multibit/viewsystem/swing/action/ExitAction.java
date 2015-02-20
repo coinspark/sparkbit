@@ -45,6 +45,7 @@ import org.multibit.viewsystem.swing.UpdateAssetBalanceService;
 import org.sparkbit.jsonrpc.JSONRPCController;
 
 import org.mapdb.*;
+import org.sparkbit.RetrieveMessagesService;
 import org.sparkbit.SparkBitMapDB;
 
 /**
@@ -124,6 +125,7 @@ public class ExitAction extends AbstractExitAction {
             
             /* CoinSpark START */
 	    UpdateAssetBalanceService.INSTANCE.cancelAndAwaitTermination();
+	    RetrieveMessagesService.INSTANCE.cancelAndAwaitTermination();
             /* CoinSpark END */
         }
         
