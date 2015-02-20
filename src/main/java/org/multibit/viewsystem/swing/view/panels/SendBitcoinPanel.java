@@ -467,7 +467,8 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	});
 //	labelScrollPane.setMinimumSize(new Dimension(longFieldWidth,40));
 //	labelScrollPane.setPreferredSize(new Dimension(longFieldWidth,80));
-	Dimension labelDimension = new Dimension(coinsparkFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + 6);// + TEXTFIELD_VERTICAL_DELTA + 6);
+//	Dimension labelDimension = new Dimension(coinsparkFieldWidth, getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont()).getHeight() * AbstractTradePanel.PREFERRED_NUMBER_OF_LABEL_ROWS + 6);// + TEXTFIELD_VERTICAL_DELTA + 6);
+	Dimension labelDimension = addressSize;  // looks tidier to have same size as address
 	labelScrollPane.setMinimumSize(labelDimension);
 	//labelScrollPane.setMaximumSize(labelDimension);
 	labelScrollPane.setPreferredSize(labelDimension);
