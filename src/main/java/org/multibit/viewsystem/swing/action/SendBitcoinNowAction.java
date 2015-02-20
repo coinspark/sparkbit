@@ -343,6 +343,7 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
 	  // Success, so let's clear the address and message fields as some users find it confusing.
 	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_ADDRESS, "");
 	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_MESSAGE, "");
+	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_LABEL, "");
 	  
         } else {
           MessageManager.INSTANCE.addMessage(new Message(successMessage));
