@@ -177,34 +177,9 @@ public class SendBitcoinConfirmAction extends MultiBitSubmitAction {
 		// CompleteTX now occurs in background thread so UI does not block
 		// when "Send" is clicked with widget updates frozen.
 		//
-/*
-		// Show option pane
-		 final JOptionPane optionPane = new JOptionPane("Contacting message delivery servers...", JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{}, null);
-		 final JDialog dialog = new JDialog(mainFrame, "SparkBit", Dialog.ModalityType.APPLICATION_MODAL, null);
-		 dialog.setContentPane(optionPane);
-		 dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-		 dialog.setLocationRelativeTo(mainFrame);
-		 dialog.pack();
-		 */
-		// Show dialog with indeterminate progress bar
-		final JDialog dialog = new JDialog(mainFrame, "SparkBit", Dialog.ModalityType.APPLICATION_MODAL);
-		JProgressBar progressBar = new JProgressBar();
-		progressBar.setIndeterminate(true);
-		BorderLayout bl= new BorderLayout();
-		JPanel panel = new JPanel(bl);
-		bl.setVgap(20);
-		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-		// panel.setPreferredSize(new Dimension(600, 200));
-		JLabel label = new JLabel("Contacting message delivery servers...");
-		label.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
-		panel.add(label, BorderLayout.PAGE_START);
-		panel.add(progressBar, BorderLayout.CENTER);
-		
-		//dialog.getContentPane().add(panel);
-		dialog.add(panel);
-		dialog.pack();
-		dialog.setLocationRelativeTo(mainFrame);
 
+		// Show dialog with indeterminate progress bar
+		final JDialog dialog = CSMiscUtils.createModalMessageDialogWithIndeterminateProgress(mainFrame, "SparkBit", "Contacting message delivery servers...");
 		// Dialog is made visible after futures have been set up
 		
 		ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()); //newFixedThreadPool(10));

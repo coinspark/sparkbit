@@ -32,7 +32,6 @@ import java.util.Date;
 import org.coinspark.protocol.CoinSparkAddress;
 import org.coinspark.protocol.CoinSparkAssetRef;
 import org.coinspark.protocol.CoinSparkGenesis;
-import org.coinspark.protocol.CoinSparkPaymentRef;
 import org.coinspark.wallet.CSAsset;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.Transaction;
@@ -51,12 +50,18 @@ import org.multibit.viewsystem.swing.view.components.MultiBitLabel;
 
 import org.multibit.controller.bitcoin.BitcoinController;
 import com.google.bitcoin.core.Wallet.SendRequest;
+import java.awt.BorderLayout;
+import java.awt.Dialog;
+import java.awt.Frame;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.List;
-import java.util.Random;
-import org.coinspark.core.CSUtils;
+import javax.swing.BorderFactory;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import org.coinspark.protocol.CoinSparkMessagePart;
 import org.coinspark.wallet.CSMessage;
 import org.coinspark.wallet.CSMessageDatabase;
@@ -64,6 +69,7 @@ import org.coinspark.wallet.CSMessagePart;
 import org.joda.time.LocalDateTime;
 import org.multibit.model.bitcoin.BitcoinModel;
 import org.multibit.model.core.CoreModel;
+import org.multibit.viewsystem.swing.view.components.FontSizer;
 
 /*
  * Mixed bag of tools.
@@ -887,5 +893,37 @@ public class CSMiscUtils {
 	    part = null;
 	}
 	return part;
+    }
+    
+    
+    /*
+		// Show option pane
+		 final JOptionPane optionPane = new JOptionPane("Contacting message delivery servers...", JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{}, null);
+		 final JDialog dialog = new JDialog(mainFrame, "SparkBit", Dialog.ModalityType.APPLICATION_MODAL, null);
+		 dialog.setContentPane(optionPane);
+		 dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+		 dialog.setLocationRelativeTo(mainFrame);
+		 dialog.pack();
+		 */
+    public static JDialog createModalMessageDialogWithIndeterminateProgress(Frame mainFrame, String title, String message)
+    {
+	// Show dialog with indeterminate progress bar
+	final JDialog dialog = new JDialog(mainFrame, title, Dialog.ModalityType.APPLICATION_MODAL);
+	JProgressBar progressBar = new JProgressBar();
+	progressBar.setIndeterminate(true);
+	BorderLayout bl = new BorderLayout();
+	JPanel panel = new JPanel(bl);
+	bl.setVgap(20);
+	panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+	// panel.setPreferredSize(new Dimension(600, 200));
+	JLabel label = new JLabel(message);
+	label.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
+	panel.add(label, BorderLayout.PAGE_START);
+	panel.add(progressBar, BorderLayout.CENTER);
+	//dialog.getContentPane().add(panel);
+	dialog.add(panel);
+	dialog.pack();
+	dialog.setLocationRelativeTo(mainFrame);
+	return dialog;
     }
 }
