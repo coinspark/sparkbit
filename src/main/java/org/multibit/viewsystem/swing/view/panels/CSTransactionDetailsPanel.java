@@ -525,6 +525,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 
 	    MultiBitTextArea msgText = new MultiBitTextArea("", 4, 20, controller);
 	    msgText.setLineWrap(true);
+	    msgText.setWrapStyleWord(true);
 	    msgText.setText(msg);
 	    msgText.setEditable(false);
 	    msgText.setFocusable(true);
