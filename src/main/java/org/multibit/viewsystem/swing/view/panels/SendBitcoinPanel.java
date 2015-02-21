@@ -430,6 +430,10 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	
 	paymentRefTextLabel = new MultiBitLabel("");
 	paymentRefTextLabel.setHorizontalAlignment(JLabel.LEADING);
+	Font standardFont = FontSizer.INSTANCE.getAdjustedDefaultFont();
+	Font smallerFont = new Font(standardFont.getName(), standardFont.getStyle(), (int)(standardFont.getSize2D()*0.8));
+
+	paymentRefTextLabel.setFont(smallerFont);
 	constraints.fill = GridBagConstraints.HORIZONTAL;
 	constraints.gridx = 2;
 	constraints.gridy = yGridPosition;
