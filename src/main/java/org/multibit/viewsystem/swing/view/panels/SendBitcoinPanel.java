@@ -1300,7 +1300,7 @@ constraints.fill = GridBagConstraints.BOTH;
 		long ref = paymentRef.getRef();
 		if (ref>0) {
 		    showPaymentRef = true;
-		    paymentRefTextLabel.setText("This address has a payment reference: " + ref);
+		    paymentRefTextLabel.setText("Payment reference to be sent: " + ref);
 		}
 	    }
 	    
