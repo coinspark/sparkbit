@@ -150,7 +150,12 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
     public void setAmountFmtRightLabel(String s) {
 	amountFmtRightLabel.setText(s);
     }
-	
+
+    public void clearAmountTextField() {
+	amountAssetTextField.setValue(null);
+    }
+    
+    
     /*
     We need to be able to populate when loading form.
     */
@@ -160,7 +165,7 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
 	try {
 	    amountAssetTextField.commitEdit();
 	} catch (ParseException e) {
-	    
+//	    e.printStackTrace();
 	}
     }
     

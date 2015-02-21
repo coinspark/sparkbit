@@ -908,6 +908,11 @@ constraints.fill = GridBagConstraints.BOTH;
 	String address = this.bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_ADDRESS);
 	String label = this.bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_LABEL);
 	String amountNotLocalised = this.bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_AMOUNT);
+	String assetAmount = this.bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_ASSET_AMOUNT);
+
+	// Set the asset amount, clearing the text field as the numberformatter does not like setting empty strings
+	assetAmountPanel.clearAmountTextField();	
+	setAssetAmount(assetAmount);
 
 	// Load encoded message and if decoded, set it in message area.
 	String encoded = this.bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_MESSAGE);
@@ -1140,6 +1145,10 @@ constraints.fill = GridBagConstraints.BOTH;
 	    
 	    displaySenderRecipientCharges();
 	    displayQRCode(getAddress(), getAssetAmount(), getLabel());
+
+	    // Persist the latest valid asset amount to wallet prefs
+            bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_ASSET_AMOUNT, getAssetAmount());
+            bitcoinController.getModel().getActivePerWalletModelData().setDirty(true);	    
 	}
     }
 

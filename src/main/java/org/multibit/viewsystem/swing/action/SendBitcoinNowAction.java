@@ -344,6 +344,8 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
 	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_ADDRESS, "");
 	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_MESSAGE, "");
 	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_LABEL, "");
+	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_AMOUNT, "");
+	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_ASSET_AMOUNT, "");
 	  
         } else {
           MessageManager.INSTANCE.addMessage(new Message(successMessage));

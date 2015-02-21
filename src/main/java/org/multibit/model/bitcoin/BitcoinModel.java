@@ -91,6 +91,7 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
     public static final String SEND_ADDRESS = "sendAddress";
     public static final String SEND_LABEL = "sendLabel";
     public static final String SEND_AMOUNT = "sendAmount";
+    public static final String SEND_ASSET_AMOUNT = "sendAssetAmount";
     public static final String SEND_FEE = "sendFee";
     public static final String SEND_PERFORM_PASTE_NOW = "sendPerformPasteNow";
     public static final String SHOW_SIDE_PANEL = "showSidePanel";
