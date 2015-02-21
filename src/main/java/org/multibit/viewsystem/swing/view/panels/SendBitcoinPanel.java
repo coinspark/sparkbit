@@ -1317,14 +1317,20 @@ constraints.fill = GridBagConstraints.BOTH;
 	    assetComboBox.setEnabled(false);
 	} else if (validBitcoinAddress) {
 	    assetComboBox.setEnabled(true);
-	    if (assetsAvailable) message = "To send assets to the recipient, ask them for their Coinspark address";
+	    if (assetsAvailable) message = "To send assets or messages, please ask the recipient for their CoinSpark address.";
 	    if (showingAssets) {
 		assetComboBox.getModel().setSelectedItem(assetComboBox.getModel().getElementAt(0));
 	    }
 	    ((WalletAssetComboBoxModel) assetComboBox.getModel()).disableAssets();
-	} else if (validCoinsparkAddress && cannotSendAssetsToValidCoinsparkAddress) {
+	} else if (validCoinsparkAddress && cannotSendAssetsToValidCoinsparkAddress && canSendMessage) {
 	    assetComboBox.setEnabled(false);
-	    message = "The Coinspark address does not support sending assets";
+	    message = "The recipient's CoinSpark wallet does not support assets.";
+	} else if (validCoinsparkAddress && cannotSendAssetsToValidCoinsparkAddress && !canSendMessage) {
+	    assetComboBox.setEnabled(false);
+	    message = "The recipient's CoinSpark wallet does not support assets or messages.";	    
+	} else if (validCoinsparkAddress && !cannotSendAssetsToValidCoinsparkAddress && !canSendMessage) {
+	    assetComboBox.setEnabled(true);
+	    message = "The recipient's CoinSpark wallet does not support messages.";	
 	} else if (validCoinsparkAddress) {
 	    assetComboBox.setEnabled(true);
 	    ((WalletAssetComboBoxModel) assetComboBox.getModel()).enableAssets();
