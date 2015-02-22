@@ -433,6 +433,7 @@ public class CSTransactionDetailsPanel extends JPanel {
         constraints.anchor = GridBagConstraints.LINE_START;
         detailPanel.add(labelScrollPane, constraints);
 
+	descriptionText.setCaretPosition(0);
 	
 	yGridPosition++;
 	
