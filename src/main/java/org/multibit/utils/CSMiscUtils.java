@@ -813,7 +813,7 @@ public class CSMiscUtils {
      * short text message, in ascending part ID order, and use that as the "short message".
      * @param w
      * @param txid
-     * @return 
+     * @return null if no message, "" if a message should exist but no data yet, or message itself
      */
     public static String getShortTextMessage(Wallet w, String txid) {
 	String msg = null;
@@ -829,6 +829,7 @@ public class CSMiscUtils {
 	List<CSMessagePart> parts = message.getMessagePartsSortedByPartID();
 	for (CSMessagePart p : parts) {
 	    if (p.fileName == null && p.mimeType != null && p.mimeType.equals("text/plain")) {
+		msg = ""; // there should be a message even if blob not downloaded yet
 		byte[] content = CSMessageDatabase.getBlobForMessagePart(txid, p.partID);
 		if (content != null) {
 		    try {
@@ -837,12 +838,12 @@ public class CSMiscUtils {
 		    } catch (Exception e) {
 			msg = "Error decoding text message";
 		    }
+		    break;
 		}
 	    }
 	}
 
 	return msg;
-
     }
     
     
