@@ -1377,6 +1377,12 @@ public class ShowTransactionsPanel extends JPanel implements Viewable {
 	SharedListSelectionHandler() {}
 	
 	public void valueChanged(ListSelectionEvent e) {
+	    // This event is fired for both mouse press and mouse release,
+	    // but we only want to perform actions once at the end.
+	    if (e.getValueIsAdjusting()) {
+		return;
+	    }
+	    
             ListSelectionModel lsm = (ListSelectionModel)e.getSource();
 	    if (lsm.isSelectionEmpty()) {
 //		showTransactionDetailsAction.setEnabled(false);
