@@ -114,6 +114,8 @@ public class CSTransactionDetailsPanel extends JPanel {
     private MultiBitTextArea descriptionText;
     private MultiBitLabel messageErrorLabel;
     private MultiBitTextArea msgText;
+    private MultiBitLabel msgLabel;
+    private int messageYGridPosition; // gridbag layout v position
     
     /**
      * Creates a new {@link TransactionDetailsDialog}.
@@ -498,84 +500,33 @@ public class CSTransactionDetailsPanel extends JPanel {
 	
 	yGridPosition++;
 	
-	//
-	// Show message error code if it exists
-	//
-	Integer errorCode = null;
-	CSMessageDatabase messageDB = wallet.CS.getMessageDB();
-	if (messageDB!=null && txid!=null) {
-	    errorCode = messageDB.getServerErrorCode(txid);
-//	    log.debug(">>>> error code = " + errorCode);
-	}
-	if (errorCode != null && errorCode!=0) {
-	    MultiBitLabel msgLabel = new MultiBitLabel("");
-	    msgLabel.setText("Message:"); //controller.getLocaliser().getString("walletData.descriptionText"));
-	    constraints.fill = GridBagConstraints.NONE;
-	    constraints.gridx = 0;
-	    constraints.gridy = yGridPosition;
-	    constraints.weightx = 0.3;
-	    constraints.weighty = 0.1;
-	    constraints.gridwidth = 1;
-	    constraints.anchor = GridBagConstraints.LINE_END;
-	    detailPanel.add(msgLabel, constraints);
+	messageYGridPosition = yGridPosition;
+	
+	// Create the widgets, ready to be populated with data
+	msgLabel = new MultiBitLabel("");
+	msgLabel.setText("Message:");
+	
+	messageErrorLabel = new MultiBitLabel("");
+	
+	msgText = new MultiBitTextArea("", 4, 20, controller);
+	msgText.setLineWrap(true);
+	msgText.setWrapStyleWord(true);
+	msgText.setEditable(false);
+	msgText.setFocusable(true);
+	msgScrollPane = new JScrollPane(msgText, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+		JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	msgScrollPane.setOpaque(true);
+	msgScrollPane.getViewport().setBackground(ColorAndFontConstants.BACKGROUND_COLOR);
+	msgScrollPane.setComponentOrientation(ComponentOrientation.getOrientation(controller.getLocaliser().getLocale()));
+	msgScrollPane.getHorizontalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
+	msgScrollPane.getVerticalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
+
+	// Show the widgets if applicable
+	showMsgWidgets();
 	    
-	    messageErrorLabel = new MultiBitLabel("Failed to retrieve message. " + CSUtils.getHumanReadableServerError(errorCode) + " (" + errorCode + ").");
-	    constraints.fill = GridBagConstraints.NONE;
-	    constraints.gridx = 2;
-	    constraints.gridy = yGridPosition;
-	    constraints.weightx = 0.3;
-	    constraints.weighty = 0.1;
-	    constraints.gridwidth = 3;
-	    constraints.anchor = GridBagConstraints.LINE_START;
-	    detailPanel.add(messageErrorLabel, constraints);
-	    
-	    yGridPosition++;
-	}
+	yGridPosition++;
 	
 	
-	//
-	// Show short text message if it exists
-	//
-	
-	String msg = CSMiscUtils.getShortTextMessage(wallet, txid);
-	if (msg!=null) {
-
-	    MultiBitLabel msgLabel = new MultiBitLabel("");
-	    msgLabel.setText("Message:"); //controller.getLocaliser().getString("walletData.descriptionText"));
-	    constraints.fill = GridBagConstraints.NONE;
-	    constraints.gridx = 0;
-	    constraints.gridy = yGridPosition;
-	    constraints.weightx = 0.3;
-	    constraints.weighty = 0.1;
-	    constraints.gridwidth = 1;
-	    constraints.anchor = GridBagConstraints.LINE_END;
-	    detailPanel.add(msgLabel, constraints);
-
-	    msgText = new MultiBitTextArea("", 4, 20, controller);
-	    msgText.setLineWrap(true);
-	    msgText.setWrapStyleWord(true);
-	    msgText.setText(msg);
-	    msgText.setEditable(false);
-	    msgText.setFocusable(true);
-	    msgScrollPane = new JScrollPane(msgText, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-		    JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-	    msgScrollPane.setOpaque(true);
-	    msgScrollPane.getViewport().setBackground(ColorAndFontConstants.BACKGROUND_COLOR);
-	    msgScrollPane.setComponentOrientation(ComponentOrientation.getOrientation(controller.getLocaliser().getLocale()));
-	    msgScrollPane.getHorizontalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
-	    msgScrollPane.getVerticalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
-	    constraints.fill = GridBagConstraints.BOTH;
-	    constraints.gridx = 2;
-	    constraints.gridy = yGridPosition;
-	    constraints.weightx = 0.3;
-	    constraints.weighty = 0.2;
-	    constraints.gridwidth = 3;
-	    constraints.anchor = GridBagConstraints.LINE_START;
-	    detailPanel.add(msgScrollPane, constraints);
-	    
-	    msgText.setCaretPosition(0);
-
-	    yGridPosition++;
 
 /*	    
 	    // Loop through attachments, if any, and add them to the panel
@@ -703,15 +654,10 @@ public class CSTransactionDetailsPanel extends JPanel {
 	    }
 	    
 	    */
+
+	
 	    
-	    
-	}
-	
-	
-	
-	
-	
-	        MultiBitLabel txidLabel = new MultiBitLabel("Transaction ID:");
+	MultiBitLabel txidLabel = new MultiBitLabel("Transaction ID:");
 //        txidLabel.setText(controller.getLocaliser().getString("transactionDetailsDialog.transactionDetailText"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 0;
@@ -901,56 +847,112 @@ public class CSTransactionDetailsPanel extends JPanel {
     }
     
     
+    /**
+     * Refresh parts of the transaction detail dialog which may have changed over time
+     */
     private void refreshUI() {
 	
 	// Confidence has probably changed and needs refreshing
 	confidenceText.setText(createStatusText(rowTableData.getTransaction()));
 
-
-	// Override the amount text with asset info.
+	// Incoming assets may have changed the amount text
 	Wallet wallet = this.bitcoinController.getModel().getActiveWallet();
 	amountText.setText( CSMiscUtils.getDescriptionOfTransactionAssetChanges(wallet, rowTableData.getTransaction(), true, false));	
-	// Description text should not currently change
-	/*
-	String newDescription = rowTableData.getDescription();
-	String oldDescription = descriptionText.getText();
-	if (oldDescription!=null && oldDescription.equals(newDescription)) {
-	    // same as before, so do nothing
-	} else {
-	    descriptionText.setText(newDescription);
-	    descriptionText.setCaretPosition(0);
-	}
-	*/
-	
-	
-	String txid = rowTableData.getTransaction().getHashAsString();	
 
-		
-	// Message server error code could change so update
+	// Message server error code could change or message might take a while to retrieve
+	showMsgWidgets();
+    }
+    
+    /**
+     * Remove message widgets from detail panel so they are no longer visible
+     */
+    private void removeMsgWidgets() {
+	detailPanel.remove(msgLabel);
+	detailPanel.remove(messageErrorLabel);
+	detailPanel.remove(msgScrollPane);
+    }
+    
+    /**
+     * Add message widgets to the detail panel if required, and update with latest data
+     */
+    private void showMsgWidgets() {
+	GridBagConstraints constraints = new GridBagConstraints();
+	boolean showMessageOrError = false;
+
+	// Show message error code if it exists
 	Integer errorCode = null;
+	Wallet wallet = this.bitcoinController.getModel().getActiveWallet();
+	String txid = previousTxid;
 	CSMessageDatabase messageDB = wallet.CS.getMessageDB();
 	if (messageDB!=null && txid!=null) {
 	    errorCode = messageDB.getServerErrorCode(txid);
-//	    log.debug(">>>> error code = " + errorCode);
 	}
-	if (errorCode != null && errorCode!=0) {
-	    String s = "Failed to retrieve message. " + CSUtils.getHumanReadableServerError(errorCode) + " (" + errorCode + ").";
-	    messageErrorLabel.setText(s);
-	}
-	
+	if (errorCode != null && errorCode != 0) {
+	    showMessageOrError = true;
 
-	// Message might take time to retrieve
-	String newMsg = CSMiscUtils.getShortTextMessage(wallet, txid);
-	if (newMsg != null) {
-	    String oldMsg = msgText.getText();
-	    if (oldMsg != null && oldMsg.equals(newMsg)) {
-		// same as before, so do nothing
-	    } else {
-		msgText.setText(newMsg);
-		msgText.setCaretPosition(0);
+	    messageErrorLabel.setText("Failed to retrieve message. " + CSUtils.getHumanReadableServerError(errorCode) + " (" + errorCode + ").");
+	    
+	    // Add widget to detail panel if not already added
+	    if (!detailPanel.isAncestorOf(messageErrorLabel)) {
+		constraints.fill = GridBagConstraints.NONE;
+		constraints.gridx = 2;
+		constraints.gridy = messageYGridPosition;
+		constraints.weightx = 0.3;
+		constraints.weighty = 0.1;
+		constraints.gridwidth = 3;
+		constraints.anchor = GridBagConstraints.LINE_START;
+		detailPanel.add(messageErrorLabel, constraints);
+	    }
+	} else {
+	    // If message exists, show it
+	    String msg = CSMiscUtils.getShortTextMessage(wallet, txid);
+
+	    if (msg != null) {
+		showMessageOrError = true;
+
+		// Add widget to detail panel if not already added
+		if (!detailPanel.isAncestorOf(msgScrollPane)) {
+
+		    constraints.fill = GridBagConstraints.BOTH;
+		    constraints.gridx = 2;
+		    constraints.gridy = messageYGridPosition;
+		    constraints.weightx = 0.3;
+		    constraints.weighty = 0.2;
+		    constraints.gridwidth = 3;
+		    constraints.anchor = GridBagConstraints.LINE_START;
+		    detailPanel.add(msgScrollPane, constraints);
+		}
+
+		// If yes, did text change?
+		String oldMsg = msgText.getText();
+		if (oldMsg != null && oldMsg.equals(msg)) {
+		    // No, so do nothing
+		} else {
+		    msgText.setText(msg);
+		    msgText.setCaretPosition(0);
+		}
 	    }
 	}
+
+	// Are we showing a message or message error?
+	if (showMessageOrError) {
+	    // Add widget to detail panel if not already added
+	    if (!detailPanel.isAncestorOf(msgLabel)) {
+		constraints.fill = GridBagConstraints.NONE;
+		constraints.gridx = 0;
+		constraints.gridy = messageYGridPosition;
+		constraints.weightx = 0.3;
+		constraints.weighty = 0.1;
+		constraints.gridwidth = 1;
+		constraints.anchor = GridBagConstraints.LINE_END;
+		detailPanel.add(msgLabel, constraints);
+	    }
+	} else {
+	    removeMsgWidgets();
+	}
     }
+    
+    
     
     
     private String createStatusText(Transaction transaction) {
