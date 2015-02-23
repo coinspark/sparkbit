@@ -160,6 +160,8 @@ public final class SparkBitInExecutableJar {
 		l.setLevel(root.getLevel());
 		l = (Logger) LoggerFactory.getLogger("org.coinspark");
 		l.setLevel(root.getLevel());
+		l = (Logger) LoggerFactory.getLogger("com.j256.ormlite");
+		l.setLevel(root.getLevel());		
 		// If CSLogger has a null filename, we can set the level and filter
 		// otherwise it just writes to a specified file.
 //		l = (Logger) LoggerFactory.getLogger(CSLogger.class);
