@@ -227,7 +227,10 @@ public class WalletTableModel extends AbstractTableModel {
 				    tip = shortMessage.substring(0, limit);
 				}
 				tip = tip.replace("\n\n", "<p>").replace("\n", "<br>");
-				tip = "<html>" + tip + "</html>";
+				
+				//Font tooltipFont  = (Font)UIManager.get("ToolTip.font");
+				// stringWidth
+				tip = "<html><div style=\"width: 300px\">" + tip + "</div></html>";
 			    }
 			} else if (message.getIsRetrieving()) {
 			    tip = "Retrieving message...";
