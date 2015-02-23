@@ -207,17 +207,17 @@ public enum ReplayManager {
     int startHeight = replayTask.getStartHeight();
     if (startHeight == ReplayTask.UNKNOWN_START_HEIGHT) {
       File checkpointsFile = new File(controller.getMultiBitService().getCheckpointsFilename());
-      System.out.println("ReplayManager#offerReplayTask checkpointsFile = " + checkpointsFile.getAbsolutePath());
+      log.debug("ReplayManager#offerReplayTask checkpointsFile = " + checkpointsFile.getAbsolutePath());
       if (checkpointsFile.exists() && replayTask.getStartDate() != null) {
         FileInputStream stream = null;
         try {
           stream = new FileInputStream(checkpointsFile);
           CheckpointManager checkpointManager = new CheckpointManager(controller.getModel().getNetworkParameters(), stream);
           StoredBlock checkpoint = checkpointManager.getCheckpointBefore(replayTask.getStartDate().getTime() / 1000);
-          System.out.println("ReplayManager#offerReplayTask checkpoint = " + checkpoint);
+          log.debug("ReplayManager#offerReplayTask checkpoint = " + checkpoint);
           if (checkpoint != null) {
             startHeight = checkpoint.getHeight();
-            System.out.println("ReplayManager#offerReplayTask startHeight = " + startHeight);
+            log.debug("ReplayManager#offerReplayTask startHeight = " + startHeight);
 
             // Store it in the replay task as it will be used for percents.
             replayTask.setStartHeight(startHeight);
