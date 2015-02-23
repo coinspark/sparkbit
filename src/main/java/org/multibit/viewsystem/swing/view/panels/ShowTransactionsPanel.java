@@ -1405,7 +1405,7 @@ public class ShowTransactionsPanel extends JPanel implements Viewable {
 			/* CoinSpark START */
 
 			WalletTableData data = getSelectedRowData();
-			transactionDetailsPanel.createUI(data);
+			transactionDetailsPanel.updateUI(data);
 			//transactionDetailPanel.updateViewForData(data);
 			transactionDetailsPanel.setVisible(true);
 			transactionDetailsPanel.validate();

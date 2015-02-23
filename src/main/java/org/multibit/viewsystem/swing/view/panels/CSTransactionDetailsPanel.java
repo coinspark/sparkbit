@@ -109,7 +109,12 @@ public class CSTransactionDetailsPanel extends JPanel {
     private boolean initialisedOk = false;
     
     private MultiBitFrame mainFrame;
-
+    
+    private String previousTxid;	// store txid so we know if we are refreshing the panel
+    private MultiBitTextArea descriptionText;
+    private MultiBitLabel messageErrorLabel;
+    private MultiBitTextArea msgText;
+    
     /**
      * Creates a new {@link TransactionDetailsDialog}.
      */
@@ -130,7 +135,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 //                setIconImage(imageIcon.getImage());
 //            }
 
-            createUI(this.rowTableData);
+            createUI(); // will try to create with this.rowTableData
 
             applyComponentOrientation(ComponentOrientation.getOrientation(controller.getLocaliser().getLocale()));
 /*
@@ -163,16 +168,38 @@ public class CSTransactionDetailsPanel extends JPanel {
     }
     
     /**
-     * Initialise transaction details dialog.
+     * Update transaction details dialog, creating or refreshing where necessary
      */
-    public void createUI(WalletTableData objectData) {
+    public void updateUI(WalletTableData objectData) {
 	if (objectData == null) {
 	    return;
 	}
 	
 	this.rowTableData = objectData;
-	this.removeAll();
+
+	// Get txid 
+	String txid = rowTableData.getTransaction().getHashAsString();
+	boolean sameTxidFlag = txid.equals(previousTxid);
+	this.previousTxid = txid;
 	
+	if (sameTxidFlag) {
+	    refreshUI();
+	} else {
+	    createUI();
+	}
+    }
+
+    
+    /**
+     * Initialise transaction details dialog.
+     */
+    public void createUI() {
+	if (this.rowTableData == null) {
+	    return;
+	}
+	
+	//this.rowTableData = objectData;
+	this.removeAll();
 	
 	// Increment this after each row in the grid
 	int yGridPosition = 0;
@@ -412,7 +439,7 @@ public class CSTransactionDetailsPanel extends JPanel {
         constraints.anchor = GridBagConstraints.LINE_END;
         detailPanel.add(descriptionLabel, constraints);
 
-        MultiBitTextArea descriptionText = new MultiBitTextArea("", 2, 20, controller);
+        descriptionText = new MultiBitTextArea("", 2, 20, controller);
 //        descriptionText.setText(createTransactionDescription(rowTableData.getTransaction()));
 	descriptionText.setText(rowTableData.getDescription());
         descriptionText.setEditable(false);
@@ -492,7 +519,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 	    constraints.anchor = GridBagConstraints.LINE_END;
 	    detailPanel.add(msgLabel, constraints);
 	    
-	    MultiBitLabel messageErrorLabel = new MultiBitLabel("Failed to retrieve message. " + CSUtils.getHumanReadableServerError(errorCode) + " (" + errorCode + ").");
+	    messageErrorLabel = new MultiBitLabel("Failed to retrieve message. " + CSUtils.getHumanReadableServerError(errorCode) + " (" + errorCode + ").");
 	    constraints.fill = GridBagConstraints.NONE;
 	    constraints.gridx = 2;
 	    constraints.gridy = yGridPosition;
@@ -524,7 +551,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 	    constraints.anchor = GridBagConstraints.LINE_END;
 	    detailPanel.add(msgLabel, constraints);
 
-	    MultiBitTextArea msgText = new MultiBitTextArea("", 4, 20, controller);
+	    msgText = new MultiBitTextArea("", 4, 20, controller);
 	    msgText.setLineWrap(true);
 	    msgText.setWrapStyleWord(true);
 	    msgText.setText(msg);
@@ -872,6 +899,59 @@ public class CSTransactionDetailsPanel extends JPanel {
 	// Make sure txid is visible
 //	transactionDetailText.setCaretPosition(0);
     }
+    
+    
+    private void refreshUI() {
+	
+	// Confidence has probably changed and needs refreshing
+	confidenceText.setText(createStatusText(rowTableData.getTransaction()));
+
+
+	// Override the amount text with asset info.
+	Wallet wallet = this.bitcoinController.getModel().getActiveWallet();
+	amountText.setText( CSMiscUtils.getDescriptionOfTransactionAssetChanges(wallet, rowTableData.getTransaction(), true, false));	
+	// Description text should not currently change
+	/*
+	String newDescription = rowTableData.getDescription();
+	String oldDescription = descriptionText.getText();
+	if (oldDescription!=null && oldDescription.equals(newDescription)) {
+	    // same as before, so do nothing
+	} else {
+	    descriptionText.setText(newDescription);
+	    descriptionText.setCaretPosition(0);
+	}
+	*/
+	
+	
+	String txid = rowTableData.getTransaction().getHashAsString();	
+
+		
+	// Message server error code could change so update
+	Integer errorCode = null;
+	CSMessageDatabase messageDB = wallet.CS.getMessageDB();
+	if (messageDB!=null && txid!=null) {
+	    errorCode = messageDB.getServerErrorCode(txid);
+//	    log.debug(">>>> error code = " + errorCode);
+	}
+	if (errorCode != null && errorCode!=0) {
+	    String s = "Failed to retrieve message. " + CSUtils.getHumanReadableServerError(errorCode) + " (" + errorCode + ").";
+	    messageErrorLabel.setText(s);
+	}
+	
+
+	// Message might take time to retrieve
+	String newMsg = CSMiscUtils.getShortTextMessage(wallet, txid);
+	if (newMsg != null) {
+	    String oldMsg = msgText.getText();
+	    if (oldMsg != null && oldMsg.equals(newMsg)) {
+		// same as before, so do nothing
+	    } else {
+		msgText.setText(newMsg);
+		msgText.setCaretPosition(0);
+	    }
+	}
+    }
+    
     
     private String createStatusText(Transaction transaction) {
         if (transaction.getLockTime() > 0) {
