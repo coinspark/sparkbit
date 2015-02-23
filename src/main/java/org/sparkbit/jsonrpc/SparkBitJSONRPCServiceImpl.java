@@ -1255,7 +1255,6 @@ WalletInfoData winfo = wd.getWalletInfo();
 		    } else {
 			bal = createBitcoinBalance(w, qty, null);
 		    }
-		    System.out.println(">>> bal = " + bal.toString());
 		    balancesList.add(bal);
 		    continue;
 		}
