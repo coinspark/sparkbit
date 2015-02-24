@@ -258,9 +258,9 @@
                     <urn>org.joda:joda-money:0.8:jar:null:compile:29e5cdf8cb4af8fffb0b013b1dc63d493cb02115</urn>
                     <urn>org.simplericity.macify:macify:1.6:jar:null:compile:969fedd5d187e92bec18cf4a88cf82fa9668c8d3</urn>
                     <urn>org.slf4j:slf4j-api:1.6.2:jar:null:compile:8619e95939167fb37245b5670135e4feb0ec7d50</urn>
-					<!--
-                    <urn>org.coinspark.library:coinspark-library:2.0.3:jar:null:compile:55f5647e6b17a58d3f50a44c6c03c251f7775164</urn>
- 				 	-->
+					
+                    <urn>org.coinspark.library:coinspark-library:2.1:jar:null:compile:a5361b7b731bca19a55fed9e9aaa23f565a5ee1b</urn>
+ 				 	
 					<!--
 					<urn>org.coinspark.library:coinspark-library:1.0-SNAPSHOT:jar:null:compile:6f7ec6ed6dfbdddcb834175cae416d8cb34025a2</urn>
 
@@ -540,6 +540,6 @@
         <jetty.version>9.2.3.v20140905</jetty.version>
 
 		<!-- Version of CoinSpark library to use -->
-		<coinspark.version>2.0.4-DEVELOP</coinspark.version>
+		<coinspark.version>2.1</coinspark.version>
     </properties>
 </project>
