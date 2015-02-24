@@ -129,6 +129,7 @@ public final class ImageLoader {
 	help,
 	hourglass,
 	information,
+	key,
 	lock,
 	new_new, // renamed file from new as the java keyword new caused problems
 	note_pin,
