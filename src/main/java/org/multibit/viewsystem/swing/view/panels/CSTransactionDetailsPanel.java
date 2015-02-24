@@ -49,16 +49,13 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 
 import com.google.bitcoin.script.Script;
-import java.io.File;
-import java.rmi.ServerError;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
+import java.nio.CharBuffer;
+import org.bitcoinj.wallet.Protos;
 import org.coinspark.core.CSUtils;
 import org.coinspark.wallet.CSMessage;
 import org.coinspark.wallet.CSMessageDatabase;
-import org.coinspark.wallet.CSMessagePart;
 import org.multibit.utils.CSMiscUtils;
-import org.sparkbit.WrapLayout;
+import org.spongycastle.crypto.params.KeyParameter;
 
 /**
  * The transaction details dialog.
@@ -112,11 +109,16 @@ public class CSTransactionDetailsPanel extends JPanel {
     
     private String previousTxid;	// store txid so we know if we are refreshing the panel
     private MultiBitTextArea descriptionText;
+    
+    // Message widgets are added/removed from detail panel as needed
     private MultiBitLabel messageErrorLabel;
+    private MultiBitLabel messageErrorTextLabel;
     private MultiBitTextArea msgText;
     private MultiBitLabel msgLabel;
+    private MultiBitButton msgGetPasswordButton;
+    private int messageErrorYGridPosition;
     private int messageYGridPosition; // gridbag layout v position
-    
+
     /**
      * Creates a new {@link TransactionDetailsDialog}.
      */
@@ -499,14 +501,16 @@ public class CSTransactionDetailsPanel extends JPanel {
 	
 	
 	yGridPosition++;
-	
+	messageErrorYGridPosition = yGridPosition;
+	yGridPosition++;	
 	messageYGridPosition = yGridPosition;
 	
 	// Create the widgets, ready to be populated with data
 	msgLabel = new MultiBitLabel("");
 	msgLabel.setText("Message:");
 	
-	messageErrorLabel = new MultiBitLabel("");
+	messageErrorLabel = new MultiBitLabel("Message Error:");
+	messageErrorTextLabel = new MultiBitLabel("");
 	
 	msgText = new MultiBitTextArea("", 4, 20, controller);
 	msgText.setLineWrap(true);
@@ -521,9 +525,55 @@ public class CSTransactionDetailsPanel extends JPanel {
 	msgScrollPane.getHorizontalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
 	msgScrollPane.getVerticalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
 
+	msgGetPasswordButton = new MultiBitButton("Enter Password To Retrieve Message");
+	msgGetPasswordButton.setIcon(ImageLoader.fatCow16(ImageLoader.FATCOW.key));
+	msgGetPasswordButton.addActionListener(new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent arg0) {
+		try {
+		    JPanel panel = new JPanel();
+		    JLabel label = new JLabel("Enter your wallet password:");
+		    JPasswordField pass = new JPasswordField(24);  // 24 character password, taken from send confirmation panel
+		    panel.add(label);
+		    panel.add(pass);
+		    String[] options = new String[]{"OK", "Cancel"};
+		    int option = JOptionPane.showOptionDialog(mainFrame, panel, "SparkBit",
+			    JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,
+			    ImageLoader.fatCow16(ImageLoader.FATCOW.key), options, options[0]);
+		    
+		    if (option == 0) // pressing OK button
+		    {
+			char[] walletPassword = pass.getPassword();
+			Wallet wallet = bitcoinController.getModel().getActiveWallet();
+			if (wallet.checkPassword(CharBuffer.wrap(walletPassword)))
+			{
+			    KeyParameter aesKey = null;
+			    //if (wallet.getEncryptionType() != Protos.Wallet.EncryptionType.UNENCRYPTED) {
+			    aesKey = wallet.getKeyCrypter().deriveKey(CharBuffer.wrap(walletPassword));
+			    //}
+			    String txid = rowTableData.getTransaction().getHashAsString();
+			    CSMessage message = wallet.CS.getMessageDB().getMessage(txid);
+			    if (message != null) {
+				message.setAesKey(aesKey);
+			    }
+			    
+			    // Trigger an update
+			    ShowTransactionsPanel.updateTransactions();
+
+			} else {
+			    JOptionPane.showMessageDialog(mainFrame, "The wallet password is incorrect", "SparkBit", JOptionPane.ERROR_MESSAGE);
+			}
+		    }
+		} catch (Exception e) {
+		    log.debug(e.getMessage());
+		}
+
+	    }
+	});
+
 	// Show the widgets if applicable
 	showMsgWidgets();
-	    
+		
 	yGridPosition++;
 	
 	
@@ -868,16 +918,24 @@ public class CSTransactionDetailsPanel extends JPanel {
      */
     private void removeMsgWidgets() {
 	detailPanel.remove(msgLabel);
-	detailPanel.remove(messageErrorLabel);
 	detailPanel.remove(msgScrollPane);
+	detailPanel.remove(msgGetPasswordButton);
+    }
+    
+    private void removeMsgErrorWidgets() {
+ 	detailPanel.remove(messageErrorLabel);
+	detailPanel.remove(messageErrorTextLabel);
     }
     
     /**
      * Add message widgets to the detail panel if required, and update with latest data
+     * Row 1: Server error when retrieving
+     * Row 2: Message text in scrollpane... or ask for Wallet Password button
      */
     private void showMsgWidgets() {
 	GridBagConstraints constraints = new GridBagConstraints();
-	boolean showMessageOrError = false;
+	boolean showMessageFlag = false;
+	boolean showErrorFlag = false;
 
 	// Show message error code if it exists
 	Integer errorCode = null;
@@ -887,32 +945,52 @@ public class CSTransactionDetailsPanel extends JPanel {
 	if (messageDB!=null && txid!=null) {
 	    errorCode = messageDB.getServerErrorCode(txid);
 	}
-	if (errorCode != null && errorCode != 0) {
-	    showMessageOrError = true;
 
-	    messageErrorLabel.setText("Failed to retrieve message. " + CSUtils.getHumanReadableServerError(errorCode) + " (" + errorCode + ").");
+	if (errorCode != null && errorCode != 0) {
+	    showErrorFlag = true;
+
+	    messageErrorTextLabel.setText("Failed to retrieve message. " + CSUtils.getHumanReadableServerError(errorCode) + " (" + errorCode + ").");
 	    
 	    // Add widget to detail panel if not already added
-	    if (!detailPanel.isAncestorOf(messageErrorLabel)) {
+	    if (!detailPanel.isAncestorOf(messageErrorTextLabel)) {
 		constraints.fill = GridBagConstraints.NONE;
 		constraints.gridx = 2;
-		constraints.gridy = messageYGridPosition;
+		constraints.gridy = messageErrorYGridPosition;
 		constraints.weightx = 0.3;
 		constraints.weighty = 0.1;
 		constraints.gridwidth = 3;
 		constraints.anchor = GridBagConstraints.LINE_START;
-		detailPanel.add(messageErrorLabel, constraints);
+		detailPanel.add(messageErrorTextLabel, constraints);
 	    }
-	} else {
-	    // If message exists, show it
+	}
+	
+	// If message exists, or we need to unlock the wallet
+	CSMessage message = wallet.CS.getMessageDB().getMessage(txid);
+	if (message != null) {
 	    String msg = CSMiscUtils.getShortTextMessage(wallet, txid);
+	    boolean getPassword = (message!=null && !message.hasAesKey() && message.getMessageState()==CSMessage.CSMessageState.ENCRYPTED_KEY) ;
+	    // if msg is null and message state is ENCRYPT error then show button
+	    if (msg==null && getPassword) {
+		showMessageFlag = true;
 
-	    if (msg != null) {
-		showMessageOrError = true;
+		if (!detailPanel.isAncestorOf(msgGetPasswordButton)) {
+		    constraints.fill = GridBagConstraints.NONE;
+		    constraints.gridx = 2;
+		    constraints.gridy = messageYGridPosition;
+		    constraints.weightx = 0.3;
+		    constraints.weighty = 0.2;
+		    constraints.gridwidth = 1;
+		    constraints.anchor = GridBagConstraints.LINE_START;
+		    detailPanel.add(msgGetPasswordButton, constraints);
+		}	    
+	    } else if (msg==null) {
+		// maybe retrieving, or error, so do nothing for now
+		showMessageFlag = false;
+	    } else if (msg != null) {
+		showMessageFlag = true;
 
 		// Add widget to detail panel if not already added
 		if (!detailPanel.isAncestorOf(msgScrollPane)) {
-
 		    constraints.fill = GridBagConstraints.BOTH;
 		    constraints.gridx = 2;
 		    constraints.gridy = messageYGridPosition;
@@ -934,8 +1012,25 @@ public class CSTransactionDetailsPanel extends JPanel {
 	    }
 	}
 
-	// Are we showing a message or message error?
-	if (showMessageOrError) {
+
+	if (showErrorFlag) {
+	    // Add widget to detail panel if not already added
+	    if (!detailPanel.isAncestorOf(messageErrorLabel)) {
+		constraints.fill = GridBagConstraints.NONE;
+		constraints.gridx = 0;
+		constraints.gridy = messageErrorYGridPosition;
+		constraints.weightx = 0.3;
+		constraints.weighty = 0.1;
+		constraints.gridwidth = 1;
+		constraints.anchor = GridBagConstraints.LINE_END;
+		detailPanel.add(messageErrorLabel, constraints);
+	    }	    
+	} else {
+	    removeMsgErrorWidgets();
+	}
+	
+	
+	if (showMessageFlag) {
 	    // Add widget to detail panel if not already added
 	    if (!detailPanel.isAncestorOf(msgLabel)) {
 		constraints.fill = GridBagConstraints.NONE;
