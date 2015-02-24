@@ -272,7 +272,7 @@ public class WalletTableModel extends AbstractTableModel {
 				    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.server_error);
 				    break;
 				case CSMessage.CSMessageState.ENCRYPTED_KEY:
-				    if (message.hasAesKey()) {
+				    if (message.hasAesKey(txid)) {
 					tip = "Message is pending retrieval";
 					icon = ImageLoader.fatCow16(ImageLoader.FATCOW.hourglass);
 				    } else {

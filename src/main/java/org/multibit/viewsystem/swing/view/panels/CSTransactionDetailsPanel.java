@@ -552,10 +552,8 @@ public class CSTransactionDetailsPanel extends JPanel {
 			    aesKey = wallet.getKeyCrypter().deriveKey(CharBuffer.wrap(walletPassword));
 			    //}
 			    String txid = rowTableData.getTransaction().getHashAsString();
-			    CSMessage message = wallet.CS.getMessageDB().getMessage(txid);
-			    if (message != null) {
-				message.setAesKey(aesKey);
-			    }
+			    
+			    CSMessage.addTxidWalletPassword(txid, aesKey);
 			    
 			    // Trigger an update
 			    ShowTransactionsPanel.updateTransactions();
@@ -968,7 +966,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 	CSMessage message = wallet.CS.getMessageDB().getMessage(txid);
 	if (message != null) {
 	    String msg = CSMiscUtils.getShortTextMessage(wallet, txid);
-	    boolean getPassword = (message!=null && !message.hasAesKey() && message.getMessageState()==CSMessage.CSMessageState.ENCRYPTED_KEY) ;
+	    boolean getPassword = (message!=null && !message.hasAesKey(txid) && message.getMessageState()==CSMessage.CSMessageState.ENCRYPTED_KEY) ;
 	    // if msg is null and message state is ENCRYPT error then show button
 	    if (msg==null && getPassword) {
 		showMessageFlag = true;
