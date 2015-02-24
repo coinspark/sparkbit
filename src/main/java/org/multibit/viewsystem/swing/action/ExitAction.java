@@ -40,10 +40,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
+import org.coinspark.wallet.CSMessageDatabase;
 import org.multibit.viewsystem.swing.UpdateAssetBalanceService;
 import org.sparkbit.jsonrpc.JSONRPCController;
 
 import org.mapdb.*;
+import org.sparkbit.RetrieveMessagesService;
 import org.sparkbit.SparkBitMapDB;
 
 /**
@@ -123,6 +125,7 @@ public class ExitAction extends AbstractExitAction {
             
             /* CoinSpark START */
 	    UpdateAssetBalanceService.INSTANCE.cancelAndAwaitTermination();
+	    RetrieveMessagesService.INSTANCE.cancelAndAwaitTermination();
             /* CoinSpark END */
         }
         
@@ -210,14 +213,9 @@ public class ExitAction extends AbstractExitAction {
         }
 
 		    
-	    // Shut down mapDB
-	    DB db = SparkBitMapDB.INSTANCE.getMapDB();
-	    if (db!=null) {
-		if (!db.isClosed()) {
-		    db.commit();
-		    db.close();
-		}
-	    }
+	// Shut down SparkBit Databases
+	SparkBitMapDB.INSTANCE.shutdown();
+	CSMessageDatabase.shutdownBlobStore();
 	
         log.debug("Shutting down Bitcoin URI checker ...");
         ApplicationInstanceManager.shutdownSocket();

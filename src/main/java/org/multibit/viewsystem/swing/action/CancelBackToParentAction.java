@@ -54,8 +54,13 @@ public class CancelBackToParentAction extends AbstractAction {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (dialog != null) {
-            dialog.setVisible(false);
-        }
+	if (dialog != null) {
+	    //dialog.setVisible(false);
+	    dialog.dispose();
+
+	   // Dispose does not always send WINDOW_CLOSING event
+	    // http://stackoverflow.com/questions/8681466/jdialog-with-windowlistener-windowclosing-not-fired
+	    // http://stackoverflow.com/questions/1343542/programmatically-close-a-jdialog
+	}
     }
 }

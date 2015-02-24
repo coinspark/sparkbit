@@ -43,6 +43,7 @@ import java.util.Set;
 import org.coinspark.wallet.CSAssetDatabase;
 import org.coinspark.wallet.CSAsset;
 import org.coinspark.wallet.CSBalanceDatabase;
+import org.coinspark.wallet.CSMessageDatabase;
 
 /**
  * This {@link Action} resets the blockchain and transactions.
@@ -170,8 +171,11 @@ public class ResetTransactionsSubmitAction extends MultiBitSubmitAction {
             }            
         }
 	
+	// Shut down message db and kvstore.
+	CSMessageDatabase messageDB = activePerWalletModelData.getWallet().CS.getMessageDB();
+	messageDB.shutdown();
 
-	
+
 	
         // Save the wallet without the transactions.
         try {

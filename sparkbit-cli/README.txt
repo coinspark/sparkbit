@@ -6,6 +6,13 @@ Requirements:
 
 * Go version 1.3.3 or greater
 * Barrister-Go (patched version)
+* Misc Go libraries
+
+### Misc Go libraries
+
+go get github.com/magiconair/goproperties
+go get github.com/ogier/pflag
+
 
 ### Barrister-Go
 We use Barrister-Go to generate stub files for the SparkBit JSON API.  You need to use a patched version of Barrister-Go which provides the option of insecure ssl connections, for example, to a development server running a self-signed certificate.

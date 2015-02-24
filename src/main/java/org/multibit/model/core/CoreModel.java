@@ -56,7 +56,9 @@ public class CoreModel extends BaseModel<CoreModel> {
     public static final String PREVIOUS_UNDO_CHANGES_TEXT = "previousUndoChangesText";
     public static final String CAN_UNDO_PREFERENCES_CHANGES = "canUndoPreferencesChanges";
     
-    
+    // User preference other
+    public static final String MESSAGING_SERVERS = "messagingServers";
+    public static final String[] DEFAULT_MESSAGING_SERVER_URLS = {"https://msg1.coinspark.org/", "https://msg2.coinspark.org/", "https://msg3.coinspark.org/"};
     
     public CoreModel() {
         this(null);

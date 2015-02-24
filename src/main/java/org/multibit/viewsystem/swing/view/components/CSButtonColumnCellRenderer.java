@@ -32,6 +32,8 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
 import java.awt.Font;
+import javax.swing.Icon;
+import org.multibit.viewsystem.swing.ColorAndFontConstants;
 
 
 /**
@@ -47,6 +49,7 @@ public class CSButtonColumnCellRenderer extends AbstractCellEditor implements Ta
     Action action;
     Object editorValue;
     boolean isEditing;
+    public boolean useAlternateRowColors;  // set this to true to stripe based on table colors.
 
     public CSButtonColumnCellRenderer(JTable table, Action action) {
 	this.table = table;
@@ -96,13 +99,29 @@ public class CSButtonColumnCellRenderer extends AbstractCellEditor implements Ta
 	    renderButton.setToolTipText(null);
 	} else {
 	    HashMap<String, Object> map = (HashMap<String, Object>) value;
-	    ImageIcon icon = (ImageIcon) (map.get("icon"));
+	    Icon icon = (Icon) (map.get("icon"));
 	    String text = (String) (map.get("text"));
 	    String tooltip = (String) (map.get("tooltip"));
 	    renderButton.setIcon(icon);
 	    renderButton.setText(text);
 	    renderButton.setToolTipText(tooltip);
 	}
+	
+	if (useAlternateRowColors) {
+	    if (isSelected) {
+		renderButton.setBackground(table.getSelectionBackground());
+		renderButton.setForeground(table.getSelectionForeground());
+	    } else {
+		renderButton.setForeground(table.getForeground());
+		if (row % 2 == 1) {
+		    renderButton.setBackground(ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR);
+		} else {
+		    renderButton.setBackground(ColorAndFontConstants.ALTERNATE_TABLE_COLOR);
+		    renderButton.setOpaque(true);
+		}
+	    }
+	}
+	
 	return renderButton;
     }
 
@@ -114,7 +133,7 @@ public class CSButtonColumnCellRenderer extends AbstractCellEditor implements Ta
 	    editButton.setIcon(null);
 	} else {
 	    HashMap<String, Object> map = (HashMap<String, Object>) value;
-	    ImageIcon icon = (ImageIcon) (map.get("icon"));
+	    Icon icon = (Icon) (map.get("icon"));
 	    String text = (String) (map.get("text"));
 	    String tooltip = (String) (map.get("tooltip"));
 	    renderButton.setIcon(icon);

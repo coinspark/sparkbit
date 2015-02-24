@@ -18,15 +18,9 @@
 package org.multibit.viewsystem.swing.view.panels;
 
 import java.awt.BorderLayout;
-import java.awt.ComponentOrientation;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.multibit.controller.Controller;
@@ -36,7 +30,6 @@ import org.multibit.viewsystem.View;
 import org.multibit.viewsystem.Viewable;
 import org.multibit.viewsystem.swing.ColorAndFontConstants;
 import org.multibit.viewsystem.swing.MultiBitFrame;
-import org.multibit.viewsystem.swing.view.components.MultiBitLabel;
 
 import org.multibit.controller.bitcoin.BitcoinController;
 
@@ -56,10 +49,10 @@ import com.google.bitcoin.core.Wallet;
 import org.coinspark.wallet.CSTransactionOutput;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionOutput;
+import org.coinspark.wallet.CSMessageDatabase;
 
 // Apache license
-import java.util.List;
-import java.util.LinkedList;
+import org.sparkbit.WrapLayout;
 
 import org.sparkbit.jsonrpc.JSONRPCController;
 
@@ -89,7 +82,8 @@ public class CSDeveloperToolsPanel extends JPanel implements Viewable {
 	setLayout(new BorderLayout());
 
 	JPanel buttonPanel = new JPanel();
-	buttonPanel.setLayout(new FlowLayout());
+	WrapLayout wrapLayout = new WrapLayout(WrapLayout.LEFT);
+	buttonPanel.setLayout(wrapLayout);
 	
         JButton clearLogButton = new JButton("Clear Log");
         clearLogButton.addActionListener(new ActionListener() {
@@ -130,6 +124,15 @@ public class CSDeveloperToolsPanel extends JPanel implements Viewable {
 	buttonPanel.add(testButton);
 
 
+	testButton = new JButton("Toggle Message Error Debugging");
+	testButton.addActionListener(new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent evt) {
+		messageErrorToggleButtonPressed();
+	    }
+	});
+	buttonPanel.add(testButton);
+	
 	
 	testButton = new JButton("Toggle JSONRPC Server");
 	testButton.addActionListener(new ActionListener() {
@@ -207,6 +210,30 @@ public class CSDeveloperToolsPanel extends JPanel implements Viewable {
 	logTextArea.append("\n\n");
     }
 
+    public void messageErrorToggleButtonPressed() {
+	logTextArea.append("=============================================================\n");
+	logTextArea.append("toggle message error debugging invoked : " + new Date() + "\n");
+
+	boolean b = CSMessageDatabase.debugWithCustomError;
+	b = !b;
+	CSMessageDatabase.setDebugWithCustomError(b);
+	
+	if (b) {
+	    logTextArea.append("Turned ON.\n");
+	    logTextArea.append("In the message text area, create a custom error by entering\n");
+	    logTextArea.append("on line 1 the method e.g. coinspark_message_pre_create\n");
+	    logTextArea.append("on line 2 the error code, e.g. -32603\n");
+	    logTextArea.append("On receiving a JSON response from the delivery server, for the method,\n");
+	    logTextArea.append("the custom error will replace any actual error or non-error returned.\n");
+	} else {
+	    logTextArea.append("Turned OFF.\n");	
+	}
+	logTextArea.append("=============================================================\n");
+
+	logTextArea.append("\n\n");
+    }
+    
+    
     public void walletTestButtonPressed() {
 	logTextArea.append("=============================================================\n");
 	logTextArea.append("wallet.test() invoked : " + new Date() + "\n");

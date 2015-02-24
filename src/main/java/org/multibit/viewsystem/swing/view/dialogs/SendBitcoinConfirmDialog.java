@@ -34,6 +34,9 @@ import org.multibit.viewsystem.swing.view.components.FontSizer;
 import org.multibit.viewsystem.swing.view.components.MultiBitDialog;
 
 import com.google.bitcoin.core.Wallet.SendRequest;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import javax.swing.WindowConstants;
 
 /**
  * The send bitcoin confirm dialog.
@@ -72,8 +75,26 @@ public class SendBitcoinConfirmDialog extends MultiBitDialog {
         
         sendBitcoinConfirmPanel.getCancelButton().requestFocusInWindow();
         applyComponentOrientation(ComponentOrientation.getOrientation(controller.getLocaliser().getLocale()));
+	
+	// Closing via [x] window frame button or via cancel button will behave the same now.
+	this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+	this.addWindowListener(new WindowAdapter() {
+//	    @Override
+//	    public void windowDeactivated(WindowEvent e) {
+////		System.out.println(">>>> window deactivated");
+//	    }
+//	    @Override
+//	    public void windowClosing(WindowEvent e) {
+////		System.out.println(">>>> window closing");
+//	    }
+	    @Override
+	    public void windowClosed(WindowEvent e) {
+//		System.out.println(">>>> window closed");
+		sendBitcoinConfirmPanel.cleanUp();
+	    }
+	});
     }
-
+    
     /**
      * Initialise bitcoin confirm dialog.
      */

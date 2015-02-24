@@ -32,7 +32,6 @@ import org.multibit.model.core.CoreModel;
 import org.multibit.utils.ImageLoader;
 import org.multibit.viewsystem.swing.ColorAndFontConstants;
 import org.multibit.viewsystem.swing.MultiBitFrame;
-import org.multibit.viewsystem.swing.action.OkBackToParentAction;
 import org.multibit.viewsystem.swing.view.components.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +40,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -52,7 +49,13 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 
 import com.google.bitcoin.script.Script;
+import java.nio.CharBuffer;
+import org.bitcoinj.wallet.Protos;
+import org.coinspark.core.CSUtils;
+import org.coinspark.wallet.CSMessage;
+import org.coinspark.wallet.CSMessageDatabase;
 import org.multibit.utils.CSMiscUtils;
+import org.spongycastle.crypto.params.KeyParameter;
 
 /**
  * The transaction details dialog.
@@ -81,6 +84,7 @@ public class CSTransactionDetailsPanel extends JPanel {
     private MultiBitLabel amountText;
     private MultiBitLabel feeText;
     private MultiBitLabel sizeText;
+    private MultiBitLabel paymentRefText;
     
     private MultiBitLabel txidText;
 
@@ -95,10 +99,25 @@ public class CSTransactionDetailsPanel extends JPanel {
 
     private JScrollPane labelScrollPane;
     private JScrollPane detailScrollPane;
+    private JScrollPane msgScrollPane;
 
     private SimpleDateFormat dateFormatter;
     
     private boolean initialisedOk = false;
+    
+    private MultiBitFrame mainFrame;
+    
+    private String previousTxid;	// store txid so we know if we are refreshing the panel
+    private MultiBitTextArea descriptionText;
+    
+    // Message widgets are added/removed from detail panel as needed
+    private MultiBitLabel messageErrorLabel;
+    private MultiBitLabel messageErrorTextLabel;
+    private MultiBitTextArea msgText;
+    private MultiBitLabel msgLabel;
+    private MultiBitButton msgGetPasswordButton;
+    private int messageErrorYGridPosition;
+    private int messageYGridPosition; // gridbag layout v position
 
     /**
      * Creates a new {@link TransactionDetailsDialog}.
@@ -108,6 +127,7 @@ public class CSTransactionDetailsPanel extends JPanel {
         
         this.bitcoinController = bitcoinController;
         this.controller = this.bitcoinController;
+	this.mainFrame = mainFrame;
         
         this.rowTableData = rowTableData;
 
@@ -119,7 +139,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 //                setIconImage(imageIcon.getImage());
 //            }
 
-            createUI(this.rowTableData);
+            createUI(); // will try to create with this.rowTableData
 
             applyComponentOrientation(ComponentOrientation.getOrientation(controller.getLocaliser().getLocale()));
 /*
@@ -152,18 +172,41 @@ public class CSTransactionDetailsPanel extends JPanel {
     }
     
     /**
-     * Initialise transaction details dialog.
+     * Update transaction details dialog, creating or refreshing where necessary
      */
-    public void createUI(WalletTableData objectData) {
+    public void updateUI(WalletTableData objectData) {
 	if (objectData == null) {
 	    return;
 	}
 	
 	this.rowTableData = objectData;
+
+	// Get txid 
+	String txid = rowTableData.getTransaction().getHashAsString();
+	boolean sameTxidFlag = txid.equals(previousTxid);
+	this.previousTxid = txid;
+	
+	if (sameTxidFlag) {
+	    refreshUI();
+	} else {
+	    createUI();
+	}
+    }
+
+    
+    /**
+     * Initialise transaction details dialog.
+     */
+    public void createUI() {
+	if (this.rowTableData == null) {
+	    return;
+	}
+	
+	//this.rowTableData = objectData;
 	this.removeAll();
 	
-	
-	
+	// Increment this after each row in the grid
+	int yGridPosition = 0;
 	
 
         FontMetrics fontMetrics = getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont());
@@ -202,7 +245,7 @@ public class CSTransactionDetailsPanel extends JPanel {
         confidenceLabel.setText("Status:"); //controller.getLocaliser().getString("walletData.statusText"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 0;
-        constraints.gridy = 0;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
@@ -211,29 +254,47 @@ public class CSTransactionDetailsPanel extends JPanel {
 
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridx = 1;
-        constraints.gridy = 0;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.1;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
         constraints.anchor = GridBagConstraints.LINE_START;
         detailPanel.add(MultiBitTitledPanel.createStent(FIELD_SEPARATION), constraints);
 
+	
+	// Ctreat a stent on right hand side, so scrollpanes don't hug right hand side
+	constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.gridx = 20;
+        constraints.gridy = yGridPosition;
+        constraints.weightx = 0.3;
+        constraints.weighty = 0.1;
+        constraints.gridwidth = 1;
+        constraints.anchor = GridBagConstraints.LINE_START;
+        detailPanel.add(MultiBitTitledPanel.createStent(50), constraints);
+
+	
+	
+	
         confidenceText = new MultiBitLabel("");
         confidenceText.setText(createStatusText(rowTableData.getTransaction()));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 2;
-        constraints.gridy = 0;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 3;
         constraints.anchor = GridBagConstraints.LINE_START;
         detailPanel.add(confidenceText, constraints);
 
+	
+	yGridPosition++;
+	
+	
         MultiBitLabel dateLabel = new MultiBitLabel("");
         dateLabel.setText("Date:"); //controller.getLocaliser().getString("walletData.dateText"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 0;
-        constraints.gridy = 1;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
@@ -246,17 +307,21 @@ public class CSTransactionDetailsPanel extends JPanel {
         }
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 2;
-        constraints.gridy = 1;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 3;
         constraints.anchor = GridBagConstraints.LINE_START;
         detailPanel.add(dateText, constraints);
 
+	
+	yGridPosition++;
+	
+	
         MultiBitLabel amountLabel = new MultiBitLabel("");
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 0;
-        constraints.gridy = 2;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
@@ -266,19 +331,23 @@ public class CSTransactionDetailsPanel extends JPanel {
         amountText = new MultiBitLabel("");
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 2;
-        constraints.gridy = 2;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 3;
         constraints.anchor = GridBagConstraints.LINE_START;
         detailPanel.add(amountText, constraints);
 
+	
+	yGridPosition++;
+	
+	
         MultiBitLabel feeLabel = new MultiBitLabel("");
         feeLabel.setText("Fee:"); //controller.getLocaliser().getString("transactionDetailsDialog.feeLabel.text"));
         feeLabel.setToolTipText(controller.getLocaliser().getString("transactionDetailsDialog.feeLabel.tooltip"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 0;
-        constraints.gridy = 3;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
@@ -288,18 +357,22 @@ public class CSTransactionDetailsPanel extends JPanel {
         feeText = new MultiBitLabel("");
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 2;
-        constraints.gridy = 3;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 3;
         constraints.anchor = GridBagConstraints.LINE_START;
         detailPanel.add(feeText, constraints);
 
+	
+	yGridPosition++;
+	
+	
         MultiBitLabel totalDebitLabel = new MultiBitLabel("");
         totalDebitLabel.setText("Total Debit:"); //controller.getLocaliser().getString("transactionDetailsDialog.totalDebit"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 0;
-        constraints.gridy = 4;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
@@ -309,7 +382,7 @@ public class CSTransactionDetailsPanel extends JPanel {
         MultiBitLabel totalDebitText = new MultiBitLabel("");
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 2;
-        constraints.gridy = 4;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 3;
@@ -351,6 +424,10 @@ public class CSTransactionDetailsPanel extends JPanel {
             feeText.setVisible(false);
         }
 	
+	
+	yGridPosition++;
+	
+	
 	// Override the amount text with asset info.
 	Wallet wallet = this.bitcoinController.getModel().getActiveWallet();
 	amountText.setText( CSMiscUtils.getDescriptionOfTransactionAssetChanges(wallet, rowTableData.getTransaction(), true, false));
@@ -359,14 +436,14 @@ public class CSTransactionDetailsPanel extends JPanel {
         descriptionLabel.setText("Description:"); //controller.getLocaliser().getString("walletData.descriptionText"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 0;
-        constraints.gridy = 5;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
         constraints.anchor = GridBagConstraints.LINE_END;
         detailPanel.add(descriptionLabel, constraints);
 
-        MultiBitTextArea descriptionText = new MultiBitTextArea("", 2, 20, controller);
+        descriptionText = new MultiBitTextArea("", 2, 20, controller);
 //        descriptionText.setText(createTransactionDescription(rowTableData.getTransaction()));
 	descriptionText.setText(rowTableData.getDescription());
         descriptionText.setEditable(false);
@@ -380,25 +457,268 @@ public class CSTransactionDetailsPanel extends JPanel {
         labelScrollPane.getVerticalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 2;
-        constraints.gridy = 5;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.2;
         constraints.gridwidth = 3;
         constraints.anchor = GridBagConstraints.LINE_START;
         detailPanel.add(labelScrollPane, constraints);
 
-	        MultiBitLabel txidLabel = new MultiBitLabel("Transaction ID:");
+	descriptionText.setCaretPosition(0);
+	
+	yGridPosition++;
+	
+	
+	//
+	// Show Payment Reference if it exists
+	//
+	String txid = rowTableData.getTransaction().getHashAsString();
+
+	long paymentRef = CSMiscUtils.getPaymentRefFromTx(wallet, txid);
+	if (paymentRef > 0) {
+	    MultiBitLabel paymentRefLabel = new MultiBitLabel("");
+	    paymentRefLabel.setText(controller.getLocaliser().getString("transactionDetailsDialog.paymentRefLabel.text"));
+	    paymentRefLabel.setToolTipText(controller.getLocaliser().getString("transactionDetailsDialog.paymentRefLabel.tooltip"));
+	    constraints.fill = GridBagConstraints.NONE;
+	    constraints.gridx = 0;
+	    constraints.gridy = yGridPosition;
+	    constraints.weightx = 0.3;
+	    constraints.weighty = 0.1;
+	    constraints.gridwidth = 1;
+	    constraints.anchor = GridBagConstraints.LINE_END;
+	    detailPanel.add(paymentRefLabel, constraints);
+
+	    paymentRefText = new MultiBitLabel("" + paymentRef);
+	    constraints.fill = GridBagConstraints.NONE;
+	    constraints.gridx = 2;
+	    constraints.gridy = yGridPosition;
+	    constraints.weightx = 0.3;
+	    constraints.weighty = 0.1;
+	    constraints.gridwidth = 3;
+	    constraints.anchor = GridBagConstraints.LINE_START;
+	    detailPanel.add(paymentRefText, constraints);
+	}
+	
+	
+	yGridPosition++;
+	messageErrorYGridPosition = yGridPosition;
+	yGridPosition++;	
+	messageYGridPosition = yGridPosition;
+	
+	// Create the widgets, ready to be populated with data
+	msgLabel = new MultiBitLabel("");
+	msgLabel.setText("Message:");
+	
+	messageErrorLabel = new MultiBitLabel("Message Error:");
+	messageErrorTextLabel = new MultiBitLabel("");
+	
+	msgText = new MultiBitTextArea("", 4, 20, controller);
+	msgText.setLineWrap(true);
+	msgText.setWrapStyleWord(true);
+	msgText.setEditable(false);
+	msgText.setFocusable(true);
+	msgScrollPane = new JScrollPane(msgText, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+		JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	msgScrollPane.setOpaque(true);
+	msgScrollPane.getViewport().setBackground(ColorAndFontConstants.BACKGROUND_COLOR);
+	msgScrollPane.setComponentOrientation(ComponentOrientation.getOrientation(controller.getLocaliser().getLocale()));
+	msgScrollPane.getHorizontalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
+	msgScrollPane.getVerticalScrollBar().setUnitIncrement(CoreModel.SCROLL_INCREMENT);
+
+	msgGetPasswordButton = new MultiBitButton("Enter Password To Retrieve Message");
+	msgGetPasswordButton.setIcon(ImageLoader.fatCow16(ImageLoader.FATCOW.key));
+	msgGetPasswordButton.addActionListener(new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent arg0) {
+		try {
+		    JPanel panel = new JPanel();
+		    JLabel label = new JLabel("Enter your wallet password:");
+		    JPasswordField pass = new JPasswordField(24);  // 24 character password, taken from send confirmation panel
+		    panel.add(label);
+		    panel.add(pass);
+		    String[] options = new String[]{"OK", "Cancel"};
+		    int option = JOptionPane.showOptionDialog(mainFrame, panel, "SparkBit",
+			    JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,
+			    ImageLoader.fatCow16(ImageLoader.FATCOW.key), options, options[0]);
+		    
+		    if (option == 0) // pressing OK button
+		    {
+			char[] walletPassword = pass.getPassword();
+			Wallet wallet = bitcoinController.getModel().getActiveWallet();
+			if (wallet.checkPassword(CharBuffer.wrap(walletPassword)))
+			{
+			    KeyParameter aesKey = null;
+			    //if (wallet.getEncryptionType() != Protos.Wallet.EncryptionType.UNENCRYPTED) {
+			    aesKey = wallet.getKeyCrypter().deriveKey(CharBuffer.wrap(walletPassword));
+			    //}
+			    String txid = rowTableData.getTransaction().getHashAsString();
+			    CSMessage message = wallet.CS.getMessageDB().getMessage(txid);
+			    if (message != null) {
+				message.setAesKey(aesKey);
+			    }
+			    
+			    // Trigger an update
+			    ShowTransactionsPanel.updateTransactions();
+
+			} else {
+			    JOptionPane.showMessageDialog(mainFrame, "The wallet password is incorrect", "SparkBit", JOptionPane.ERROR_MESSAGE);
+			}
+		    }
+		} catch (Exception e) {
+		    log.debug(e.getMessage());
+		}
+
+	    }
+	});
+
+	// Show the widgets if applicable
+	showMsgWidgets();
+		
+	yGridPosition++;
+	
+	
+
+/*	    
+	    // Loop through attachments, if any, and add them to the panel
+	    CSMessage m = wallet.CS.getMessageDB().getMessage(txid);
+	    List<CSMessagePart> parts = m.getMessagePartsSortedByPartID();
+
+	    if (parts.size() > 0) {
+		MultiBitLabel attachmentsLabel = new MultiBitLabel("");
+		attachmentsLabel.setText("Attachments:"); //controller.getLocaliser().getString("transactionDetailsDialog.paymentRefLabel.text"));
+		//xLabel.setToolTipText(controller.getLocaliser().getString("transactionDetailsDialog.paymentRefLabel.tooltip"));
+		constraints.fill = GridBagConstraints.NONE;
+		constraints.gridx = 0;
+		constraints.gridy = yGridPosition;
+		constraints.weightx = 0.3;
+		constraints.weighty = 0.1;
+		constraints.gridwidth = 1;
+		constraints.anchor = GridBagConstraints.LINE_END; //FIRST_LINE_END;
+		detailPanel.add(attachmentsLabel, constraints);
+
+		JPanel attachmentsPanel = new JPanel();
+		attachmentsPanel.setBackground(ColorAndFontConstants.BACKGROUND_COLOR);
+
+		// Thanks to Rob Camick for WrapLayout!!! :-)
+		WrapLayout wrapLayout = new WrapLayout(WrapLayout.LEFT);
+		attachmentsPanel.setLayout(wrapLayout);
+
+		for (CSMessagePart part : parts) {
+
+		    String mimeType = part.mimeType;
+		    CSUtils.CSMimeType mt = CSUtils.CSMimeType.fromType(mimeType);
+		    String extension = mt.getExtension();
+		    if (extension == null) {
+			extension = "bin"; // generic binary data
+		    }
+
+		    //MultiBitLabel yLabel  = new MultiBitLabel("Document " + part.partID + ", name = " + part.fileName + ", " + part.contentSize + " bytes");
+		    MultiBitButton attachmentButton = new MultiBitButton("file_" + part.partID + ((part.fileName != null) ? "_" + part.fileName : extension));
+		    attachmentButton.setIcon(ImageLoader.createImageIconForFileExtension(extension));
+
+		    final String ext = (extension!=null) ? extension : "bin";
+		    final String name = part.fileName;//(part.fileName!=null) ? part.fileName : ext;
+		    final String theTXID = txid;
+		    final int thePartID = part.partID;
+		    final String partNum = String.format("%02d", thePartID);
+		    attachmentButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+			    try {
+				JFileChooser j = new JFileChooser();
+				j.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				Integer opt = j.showSaveDialog(mainFrame);
+				if (JFileChooser.APPROVE_OPTION == opt) {
+				    // Torvalds on using 12 character abbreviated hash for Git, not 7
+				    // https://lkml.org/lkml/2013/9/30/365
+				    String txidAbbrev = theTXID.substring(0, 12);
+				    //JOptionPane.showMessageDialog(mainFrame, "try to download part " + partID);
+				    String suffix = name;
+				    if (suffix==null) suffix = ext;
+				    
+				    File dir = j.getSelectedFile();
+				    String saveName = txidAbbrev + "." + partNum + "." + suffix;
+				    File f = FileUtils.getFile(dir, saveName);
+				    int counter = 1;
+				    while (f.exists()) {
+					f = FileUtils.getFile(dir, saveName + "_" + counter++);		
+				    }
+				    
+				    byte[] buffer = CSMessageDatabase.getBlobForMessagePart(theTXID, thePartID);
+				    try {
+					FileUtils.writeByteArrayToFile(f, buffer);
+					String questionTitle = "Attachment Saved";
+					String questionText = "The attachment has been saved to:\n\n" + f.getPath() + "\n\nDo you want to open the attachment now?";
+					String yesText = "Open Now";
+					String noText = "Finished";
+					ImageIcon icon = ImageLoader.createImageIconForFileExtension(ext);
+					int selection = JOptionPane.showOptionDialog(mainFrame, questionText, questionTitle, JOptionPane.YES_NO_OPTION,
+					JOptionPane.QUESTION_MESSAGE, icon, new String[] {
+                            yesText, noText }, noText);
+            if (selection != JOptionPane.YES_OPTION) {
+                return;
+            }
+	    
+	    	if (Desktop.isDesktopSupported()) {
+			Desktop.getDesktop().open(f);
+		    }
+			    
+				    } catch (IOException e) {
+					JOptionPane.showMessageDialog(mainFrame, "There was an error saving the message attachment to:\n\n" + f.getPath());
+				    } finally {
+					buffer = null; // g.c.
+				    }
+				}
+
+			    } catch (Exception e) {
+				log.debug(e.getMessage());
+			    }
+
+			}
+		    });
+
+		    String sizeText = FileUtils.byteCountToDisplaySize(part.contentSize);
+		    JLabel sizeLabel = new JLabel(sizeText);
+
+		    JPanel p = new JPanel();
+		    p.setLayout(new FlowLayout(FlowLayout.LEFT));
+		    p.add(attachmentButton);
+		    p.add(sizeLabel);
+		    p.setBackground(ColorAndFontConstants.BACKGROUND_COLOR);
+
+		    attachmentsPanel.add(p);
+
+		}
+
+		constraints.fill = GridBagConstraints.HORIZONTAL;
+		constraints.gridx = 2;
+		constraints.gridy = yGridPosition;
+		constraints.weightx = 0.3;
+		constraints.weighty = 0.1;
+		constraints.gridwidth = 3;
+		constraints.anchor = GridBagConstraints.LINE_START;
+		detailPanel.add(attachmentsPanel, constraints);
+
+		yGridPosition++;
+
+	    }
+	    
+	    */
+
+	
+	    
+	MultiBitLabel txidLabel = new MultiBitLabel("Transaction ID:");
 //        txidLabel.setText(controller.getLocaliser().getString("transactionDetailsDialog.transactionDetailText"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 0;
-        constraints.gridy = 6;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
         constraints.anchor = GridBagConstraints.ABOVE_BASELINE_TRAILING;
         detailPanel.add(txidLabel, constraints);
 	
-	String txid = rowTableData.getTransaction().getHashAsString();
+//	String txid = rowTableData.getTransaction().getHashAsString();
 	//MultiBitLabel txidText = new MultiBitLabel(txid);
 	// http://stackoverflow.com/questions/997942/selecting-text-from-a-jlabel
         JTextField f = new JTextField(txid);
@@ -408,7 +728,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 	f.setFont( FontSizer.INSTANCE.getAdjustedDefaultFont());
 	constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 2;
-        constraints.gridy = 6;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 3;
@@ -459,12 +779,17 @@ public class CSTransactionDetailsPanel extends JPanel {
         constraints.anchor = GridBagConstraints.LINE_START;
         detailPanel.add(filler2, constraints);
   */
+	
+	
+	yGridPosition++;
+	
+	
         MultiBitLabel sizeLabel = new MultiBitLabel("");
         feeLabel.setText("Fee:"); //controller.getLocaliser().getString("showPreferencesPanel.feeLabel.text"));
         feeLabel.setToolTipText(controller.getLocaliser().getString("transactionDetailsDialog.feeLabel.tooltip"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 0;
-        constraints.gridy = 7;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 1;
@@ -476,7 +801,7 @@ public class CSTransactionDetailsPanel extends JPanel {
         sizeLabel.setToolTipText(controller.getLocaliser().getString("transactionDetailsDialog.sizeLabel.tooltip"));
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridx = 2;
-        constraints.gridy = 7;
+        constraints.gridy = yGridPosition;
         constraints.weightx = 0.3;
         constraints.weighty = 0.1;
         constraints.gridwidth = 3;
@@ -492,6 +817,9 @@ public class CSTransactionDetailsPanel extends JPanel {
         }
 
 
+	yGridPosition++;
+	
+	
         if (isBrowserSupported()) {
             MultiBitButton openInBlockExplorerButton = new MultiBitButton(controller.getLocaliser().getString("transactionDetailsDialog.viewAtBlockExplorer"));
             openInBlockExplorerButton.addActionListener(new ActionListener() {
@@ -509,7 +837,7 @@ public class CSTransactionDetailsPanel extends JPanel {
             
             constraints.fill = GridBagConstraints.NONE;
             constraints.gridx = 2;
-            constraints.gridy = 8;
+            constraints.gridy = yGridPosition;
             constraints.weightx = 0.4;
             constraints.weighty = 0.1;
             constraints.gridwidth = 1;
@@ -531,7 +859,7 @@ public class CSTransactionDetailsPanel extends JPanel {
             
             constraints.fill = GridBagConstraints.NONE;
             constraints.gridx = 3;
-            constraints.gridy = 8;
+            constraints.gridy = yGridPosition;
             constraints.weightx = 0.4;
             constraints.weighty = 0.1;
             constraints.gridwidth = 1;
@@ -540,6 +868,9 @@ public class CSTransactionDetailsPanel extends JPanel {
             detailPanel.add(openInBlockChainInfoButton, constraints);
         }
 
+	yGridPosition++;
+	
+	
 	/*
         OkBackToParentAction okAction = new OkBackToParentAction(controller, this);
         okButton = new MultiBitButton(okAction, controller);
@@ -564,6 +895,160 @@ public class CSTransactionDetailsPanel extends JPanel {
 	// Make sure txid is visible
 //	transactionDetailText.setCaretPosition(0);
     }
+    
+    
+    /**
+     * Refresh parts of the transaction detail dialog which may have changed over time
+     */
+    private void refreshUI() {
+	
+	// Confidence has probably changed and needs refreshing
+	confidenceText.setText(createStatusText(rowTableData.getTransaction()));
+
+	// Incoming assets may have changed the amount text
+	Wallet wallet = this.bitcoinController.getModel().getActiveWallet();
+	amountText.setText( CSMiscUtils.getDescriptionOfTransactionAssetChanges(wallet, rowTableData.getTransaction(), true, false));	
+
+	// Message server error code could change or message might take a while to retrieve
+	showMsgWidgets();
+    }
+    
+    /**
+     * Remove message widgets from detail panel so they are no longer visible
+     */
+    private void removeMsgWidgets() {
+	detailPanel.remove(msgLabel);
+	detailPanel.remove(msgScrollPane);
+	detailPanel.remove(msgGetPasswordButton);
+    }
+    
+    private void removeMsgErrorWidgets() {
+ 	detailPanel.remove(messageErrorLabel);
+	detailPanel.remove(messageErrorTextLabel);
+    }
+    
+    /**
+     * Add message widgets to the detail panel if required, and update with latest data
+     * Row 1: Server error when retrieving
+     * Row 2: Message text in scrollpane... or ask for Wallet Password button
+     */
+    private void showMsgWidgets() {
+	GridBagConstraints constraints = new GridBagConstraints();
+	boolean showMessageFlag = false;
+	boolean showErrorFlag = false;
+
+	// Show message error code if it exists
+	Integer errorCode = null;
+	Wallet wallet = this.bitcoinController.getModel().getActiveWallet();
+	String txid = previousTxid;
+	CSMessageDatabase messageDB = wallet.CS.getMessageDB();
+	if (messageDB!=null && txid!=null) {
+	    errorCode = messageDB.getServerErrorCode(txid);
+	}
+
+	if (errorCode != null && errorCode != 0) {
+	    showErrorFlag = true;
+
+	    messageErrorTextLabel.setText("Failed to retrieve message. " + CSUtils.getHumanReadableServerError(errorCode) + " (" + errorCode + ").");
+	    
+	    // Add widget to detail panel if not already added
+	    if (!detailPanel.isAncestorOf(messageErrorTextLabel)) {
+		constraints.fill = GridBagConstraints.NONE;
+		constraints.gridx = 2;
+		constraints.gridy = messageErrorYGridPosition;
+		constraints.weightx = 0.3;
+		constraints.weighty = 0.1;
+		constraints.gridwidth = 3;
+		constraints.anchor = GridBagConstraints.LINE_START;
+		detailPanel.add(messageErrorTextLabel, constraints);
+	    }
+	}
+	
+	// If message exists, or we need to unlock the wallet
+	CSMessage message = wallet.CS.getMessageDB().getMessage(txid);
+	if (message != null) {
+	    String msg = CSMiscUtils.getShortTextMessage(wallet, txid);
+	    boolean getPassword = (message!=null && !message.hasAesKey() && message.getMessageState()==CSMessage.CSMessageState.ENCRYPTED_KEY) ;
+	    // if msg is null and message state is ENCRYPT error then show button
+	    if (msg==null && getPassword) {
+		showMessageFlag = true;
+
+		if (!detailPanel.isAncestorOf(msgGetPasswordButton)) {
+		    constraints.fill = GridBagConstraints.NONE;
+		    constraints.gridx = 2;
+		    constraints.gridy = messageYGridPosition;
+		    constraints.weightx = 0.3;
+		    constraints.weighty = 0.2;
+		    constraints.gridwidth = 1;
+		    constraints.anchor = GridBagConstraints.LINE_START;
+		    detailPanel.add(msgGetPasswordButton, constraints);
+		}	    
+	    } else if (msg==null) {
+		// maybe retrieving, or error, so do nothing for now
+		showMessageFlag = false;
+	    } else if (msg != null) {
+		showMessageFlag = true;
+
+		// Add widget to detail panel if not already added
+		if (!detailPanel.isAncestorOf(msgScrollPane)) {
+		    constraints.fill = GridBagConstraints.BOTH;
+		    constraints.gridx = 2;
+		    constraints.gridy = messageYGridPosition;
+		    constraints.weightx = 0.3;
+		    constraints.weighty = 0.2;
+		    constraints.gridwidth = 3;
+		    constraints.anchor = GridBagConstraints.LINE_START;
+		    detailPanel.add(msgScrollPane, constraints);
+		}
+
+		// If yes, did text change?
+		String oldMsg = msgText.getText();
+		if (oldMsg != null && oldMsg.equals(msg)) {
+		    // No, so do nothing
+		} else {
+		    msgText.setText(msg);
+		    msgText.setCaretPosition(0);
+		}
+	    }
+	}
+
+
+	if (showErrorFlag) {
+	    // Add widget to detail panel if not already added
+	    if (!detailPanel.isAncestorOf(messageErrorLabel)) {
+		constraints.fill = GridBagConstraints.NONE;
+		constraints.gridx = 0;
+		constraints.gridy = messageErrorYGridPosition;
+		constraints.weightx = 0.3;
+		constraints.weighty = 0.1;
+		constraints.gridwidth = 1;
+		constraints.anchor = GridBagConstraints.LINE_END;
+		detailPanel.add(messageErrorLabel, constraints);
+	    }	    
+	} else {
+	    removeMsgErrorWidgets();
+	}
+	
+	
+	if (showMessageFlag) {
+	    // Add widget to detail panel if not already added
+	    if (!detailPanel.isAncestorOf(msgLabel)) {
+		constraints.fill = GridBagConstraints.NONE;
+		constraints.gridx = 0;
+		constraints.gridy = messageYGridPosition;
+		constraints.weightx = 0.3;
+		constraints.weighty = 0.1;
+		constraints.gridwidth = 1;
+		constraints.anchor = GridBagConstraints.LINE_END;
+		detailPanel.add(msgLabel, constraints);
+	    }
+	} else {
+	    removeMsgWidgets();
+	}
+    }
+    
+    
+    
     
     private String createStatusText(Transaction transaction) {
         if (transaction.getLockTime() > 0) {

@@ -60,6 +60,8 @@ import java.util.*;
 import java.util.List;
 import java.util.Timer;
 import org.multibit.utils.CSMiscUtils;
+import org.multibit.viewsystem.swing.WalletAssetSummaryTableModel;
+import org.multibit.viewsystem.swing.view.components.CSButtonColumnCellRenderer;
 
 
 public class ShowTransactionsPanel extends JPanel implements Viewable {
@@ -212,6 +214,9 @@ public class ShowTransactionsPanel extends JPanel implements Viewable {
 	// Set up table columns for easy use
 	TableColumnModel columnModel = table.getColumnModel();
 	TableColumn statusColumn = columnModel.getColumn(walletTableModel.getColumnIndex("status"));
+	TableColumn extrasColumn = columnModel.getColumn(walletTableModel.getColumnIndex("extras"));
+	TableColumn messageColumn = columnModel.getColumn(walletTableModel.getColumnIndex("message"));
+//	TableColumn attachmentsColumn = columnModel.getColumn(walletTableModel.getColumnIndex("attachments"));
 	TableColumn dateColumn = columnModel.getColumn(walletTableModel.getColumnIndex("date"));
 	TableColumn descriptionColumn = columnModel.getColumn(walletTableModel.getColumnIndex("description"));
 //	TableColumn btcAmountColumn = columnModel.getColumn(walletTableModel.getColumnIndex("btcAmount"));
@@ -220,7 +225,34 @@ public class ShowTransactionsPanel extends JPanel implements Viewable {
 //	TableColumn assetAmountColumn = columnModel.getColumn(walletTableModel.getColumnIndex("assetAmount"));
 	TableColumn descriptionOfAssetChangesColumn = columnModel.getColumn(walletTableModel.getColumnIndex("descriptionOfAssetChanges"));
 	
-		
+	// Set up the payment ref column
+	final int BUTTON_ICON_COLUMN_WIDTH = 20;
+
+	CSButtonColumnCellRenderer extrasCellRenderer = new CSButtonColumnCellRenderer(table, null);
+	extrasCellRenderer.useAlternateRowColors = true;
+	extrasColumn.setCellRenderer(extrasCellRenderer);
+	extrasColumn.setMinWidth(BUTTON_ICON_COLUMN_WIDTH);
+	extrasColumn.setMaxWidth(BUTTON_ICON_COLUMN_WIDTH);
+	extrasColumn.setWidth(BUTTON_ICON_COLUMN_WIDTH);
+	extrasColumn.setPreferredWidth(BUTTON_ICON_COLUMN_WIDTH);
+
+	CSButtonColumnCellRenderer messageCellRenderer = new CSButtonColumnCellRenderer(table, null);
+	messageCellRenderer.useAlternateRowColors = true;
+	messageColumn.setCellRenderer(messageCellRenderer);
+	messageColumn.setMinWidth(BUTTON_ICON_COLUMN_WIDTH);
+	messageColumn.setMaxWidth(BUTTON_ICON_COLUMN_WIDTH);
+	messageColumn.setWidth(BUTTON_ICON_COLUMN_WIDTH);
+	messageColumn.setPreferredWidth(BUTTON_ICON_COLUMN_WIDTH);
+/*
+	CSButtonColumnCellRenderer attachmentsCellRenderer = new CSButtonColumnCellRenderer(table, null);
+	attachmentsCellRenderer.useAlternateRowColors = true;
+	attachmentsColumn.setCellRenderer(attachmentsCellRenderer);
+	attachmentsColumn.setMinWidth(BUTTON_ICON_COLUMN_WIDTH);
+	attachmentsColumn.setMaxWidth(BUTTON_ICON_COLUMN_WIDTH);
+	attachmentsColumn.setWidth(BUTTON_ICON_COLUMN_WIDTH);
+	attachmentsColumn.setPreferredWidth(BUTTON_ICON_COLUMN_WIDTH);
+	*/
+	
 	// Use status icons.
 	statusColumn.setCellRenderer(new ImageRenderer());
 	table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -1345,6 +1377,12 @@ public class ShowTransactionsPanel extends JPanel implements Viewable {
 	SharedListSelectionHandler() {}
 	
 	public void valueChanged(ListSelectionEvent e) {
+	    // This event is fired for both mouse press and mouse release,
+	    // but we only want to perform actions once at the end.
+	    if (e.getValueIsAdjusting()) {
+		return;
+	    }
+	    
             ListSelectionModel lsm = (ListSelectionModel)e.getSource();
 	    if (lsm.isSelectionEmpty()) {
 //		showTransactionDetailsAction.setEnabled(false);
@@ -1367,7 +1405,7 @@ public class ShowTransactionsPanel extends JPanel implements Viewable {
 			/* CoinSpark START */
 
 			WalletTableData data = getSelectedRowData();
-			transactionDetailsPanel.createUI(data);
+			transactionDetailsPanel.updateUI(data);
 			//transactionDetailPanel.updateViewForData(data);
 			transactionDetailsPanel.setVisible(true);
 			transactionDetailsPanel.validate();

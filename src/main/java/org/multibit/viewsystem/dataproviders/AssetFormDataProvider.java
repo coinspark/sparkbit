@@ -31,4 +31,7 @@ public interface AssetFormDataProvider extends BitcoinFormDataProvider {
     public boolean isSenderPays();
     
     public String getAssetAmountText(); // the raw text that was typed
+    
+    public String getMessage();	    // get the message to send in this CoinSpark transaction
+    
 }

@@ -642,7 +642,7 @@ public class WalletAssetSummaryTableModel extends WalletAssetTableModel {
 		else if (assetState==CSAsset.CSAssetState.HASH_MISMATCH) {
 		    tip = "Caution: contract does not match asset details encoded by issuer.<br><br>" + tip;
 		    //tip = "Caution: asset details do not match what was encoded by issuer.<br><br>" + tip;
-		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.warning);
+		    icon = ImageLoader.fugue(ImageLoader.FUGUE.traffic_cone__exclamation);
 		} else if (assetState==CSAsset.CSAssetState.CONTRACT_INVALID) {
 		    tip = "Caution: contract is missing or damaged.<br><br>" + tip;
 		    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.warning);

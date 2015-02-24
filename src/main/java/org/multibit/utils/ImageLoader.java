@@ -98,16 +98,26 @@ public final class ImageLoader {
      public static final String CS_CONTRACT_ICON_FILE = "/images-coinspark/fatcow/16/document_index.png";
      
     
-    public static final String CS_FILE_EXTENSION_ICON_FILE_FORMAT_STRING = "/images-coinspark/fatcow/file_extension_%s.png";
+    public static final String CS_FILE_EXTENSION_ICON_FILE_FORMAT_STRING = "/images-coinspark/fatcow/16/file_extension_%s.png";
+    
+    // Rename icon files, if they have a hypen - replace with underscore
+    public enum FUGUE {
+	balloon_ellipsis,
+	balloon_white,
+	clock__exclamation,
+	download_cloud,
+	tag_hash,
+	traffic_cone__exclamation,
+    }
     
     public enum FATCOW {
 	add,
 	arrow_refresh,
 	arrow_refresh_small,
+	attach,
 	baggage_cart_box,
 	ceo,
 	clock,
-	clock_red,
 	delete,
 	document_index,
 	document_signature,
@@ -119,7 +129,10 @@ public final class ImageLoader {
 	help,
 	hourglass,
 	information,
+	key,
+	lock,
 	new_new, // renamed file from new as the java keyword new caused problems
+	note_pin,
 	page_white,
 	page_white_acrobat,
 	page_white_database,
@@ -127,7 +140,8 @@ public final class ImageLoader {
 	page_white_error,
 	page_white_text,
 	picture,
-	question,
+//	question,
+	server_connect,
 	server_error,
 	skull_old,
 	support,
@@ -168,6 +182,14 @@ public final class ImageLoader {
     }
     
     /*CoinSpark START*/
+    
+    public static ImageIcon fugue(FUGUE fc) {
+	return createImageIcon("/images-coinspark/fugue/"+fc.toString()+".png");	
+    }
+    
+    public static ImageIcon fugue(String name) {
+	return createImageIcon("/images-coinspark/fugue/"+name+".png");		
+    }
     
     public static ImageIcon fatCow16(FATCOW fc) {
 	return createImageIcon("/images-coinspark/fatcow/16/"+fc.toString()+".png");

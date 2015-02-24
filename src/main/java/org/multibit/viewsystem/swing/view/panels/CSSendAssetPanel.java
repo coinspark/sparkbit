@@ -103,13 +103,13 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
 	btcFeeLabel.setText("Bitcoin transfer amount (" + transferAmount + " BTC) and transaction fee (" + miningFee + " BTC) applies.");
     }
     
-    // Try to adjust width to match desired value
-    public void setDesiredWidth(int width) {
-	Dimension d = getPreferredSize();
-	d.width = width;
-	d.height = 1000;
+
+    // This resizes the panel correctly
+    public void refreshPreferredLayoutSize() {
+	Dimension d = getLayout().preferredLayoutSize(this);
+// 	System.out.println("preferredLayoutSize = " + d);
 	setPreferredSize(d);
-    }
+   }
     
     public void formatAmountToDecimalPlaces() {
 	if (amountFormat != null) {
@@ -150,7 +150,12 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
     public void setAmountFmtRightLabel(String s) {
 	amountFmtRightLabel.setText(s);
     }
-	
+
+    public void clearAmountTextField() {
+	amountAssetTextField.setValue(null);
+    }
+    
+    
     /*
     We need to be able to populate when loading form.
     */
@@ -160,7 +165,7 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
 	try {
 	    amountAssetTextField.commitEdit();
 	} catch (ParseException e) {
-	    
+//	    e.printStackTrace();
 	}
     }
     
@@ -223,6 +228,8 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
 	senderPaysRadioButton.setVisible(b);
 	recipientPaysRadioButton.setVisible(b);
 	chargeLabel.setVisible(b);
+	// Change size of panel based on visibility of charge widgets
+	refreshPreferredLayoutSize();
     }
     
 //    Dimension computeAssetTextFieldPreferredSize() {
@@ -385,12 +392,15 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
         gridBagConstraints.gridwidth = 9;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         add(btcFeeLabel, gridBagConstraints);
+
+        amountFmtLeftLabel.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         add(amountFmtLeftLabel, gridBagConstraints);
 
+        amountFmtRightLabel.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
         amountFmtRightLabel.setText("Units");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 8;

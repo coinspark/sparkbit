@@ -49,4 +49,9 @@
     <logger name="com.google.bitcoin" level="INFO" />
     <logger name="com.google.bitcoin.core.Wallet" level="DEBUG" />
     <logger name="com.google.bitcoin.utils.Threading" level="ERROR" />
+    
+    <logger name="com.j256.ormlite" level="DEBUG"/>
+    <!--<logger name="com.j256.ormlite.stmt.mapped.BaseMappedStatement" level="TRACE"/>
+    <logger name="com.j256.ormlite.stmt.mapped.MappedCreate" level="TRACE"/>
+    <logger name="com.j256.ormlite.stmt.StatementExecutor" level="TRACE"/>-->
 </configuration>

@@ -62,9 +62,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import org.coinspark.core.CSExceptions;
+import org.coinspark.wallet.CSMessageDatabase;
 import org.multibit.model.bitcoin.WalletAddressBookData;
 import org.multibit.utils.CSMiscUtils;
 import org.multibit.viewsystem.swing.UpdateAssetBalanceService;
+import org.sparkbit.RetrieveMessagesService;
 import org.sparkbit.SparkBitMapDB;
 import org.sparkbit.jsonrpc.JSONRPCController;
 
@@ -164,6 +166,9 @@ public class MultiBitService {
     networkParameters = this.bitcoinController.getModel().getNetworkParameters();
     log.debug("Network parameters = " + networkParameters);
 
+    boolean isTestNet3 = isTestNet3();
+    CSMessageDatabase.testnet3 = isTestNet3;
+    
     try {
       // Load or create the blockStore..
       log.debug("Loading/ creating blockstore ...");
@@ -179,8 +184,8 @@ public class MultiBitService {
       log.debug("Attaching .fbhchain to blockchain...");
     attachFullBlockHashChain(false, blockChain);
 
-      log.debug("Initializing mapDB storage...");
-      SparkBitMapDB.INSTANCE.initialize(this.bitcoinController);
+      log.debug("Initializing map storage...");
+      SparkBitMapDB.INSTANCE.initialize(this.bitcoinController, isTestNet3);
 /* CoinSpark END */
       
       log.debug("Creating peergroup ...");
@@ -240,6 +245,9 @@ public class MultiBitService {
       /* Launch timer to ping tracking servers */
       UpdateAssetBalanceService.INSTANCE.initalize(this.bitcoinController);
       /* Launch timer END */
+      
+      /* Launch timer to retrieve messages */
+      RetrieveMessagesService.INSTANCE.initalize(this.bitcoinController);
   }
 
   private void handleError(Exception e) {
@@ -650,7 +658,7 @@ public class MultiBitService {
    */
 
   public Transaction sendCoins(WalletData perWalletModelData, SendRequest sendRequest,
-                               CharSequence password) throws java.io.IOException, AddressFormatException, KeyCrypterException {
+                               CharSequence password) throws java.io.IOException, AddressFormatException, KeyCrypterException, CSExceptions.CannotEncode {
 
     // Ping the peers to check the bitcoin network connection
     List<Peer> connectedPeers = peerGroup.getConnectedPeers();
@@ -714,6 +722,7 @@ public class MultiBitService {
       e1.printStackTrace();
     } catch (CSExceptions.CannotEncode ex) {
 	ex.printStackTrace();
+	throw ex;
     }
 
     Transaction sendTransaction = sendRequest.tx;

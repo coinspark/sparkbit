@@ -358,10 +358,10 @@ public enum BackupManager {
             
             fileOutputStream.write(salt); // 8 bytes.
             fileOutputStream.write(encryptedData.getInitialisationVector()); // 16 bytes.
-            System.out.println(Utils.bytesToHexString(encryptedData.getInitialisationVector()));
+            log.debug(Utils.bytesToHexString(encryptedData.getInitialisationVector()));
             
             fileOutputStream.write(encryptedData.getEncryptedBytes());
-            System.out.println(Utils.bytesToHexString(encryptedData.getEncryptedBytes()));
+            log.debug(Utils.bytesToHexString(encryptedData.getEncryptedBytes()));
         } finally {
             if (fileOutputStream != null) {
                 fileOutputStream.flush();

@@ -57,6 +57,7 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * The show preferences view.
@@ -88,6 +89,8 @@ public class ShowPreferencesPanel extends JPanel implements Viewable, Preference
     
     private MultiBitFrame mainFrame;
 
+    private CSMessagingServerPanel messagingServerPanel;
+    
     SortedSet<LanguageData> languageDataSet;
 
     private JRadioButton useDefaultLocale;
@@ -103,6 +106,8 @@ public class ShowPreferencesPanel extends JPanel implements Viewable, Preference
 
     private MultiBitLabel exchangeInformationLabel;
 
+    private String[] originalMessagingServerURLs;
+    
     private String originalFontName;
     private String originalFontStyle;
     private String originalFontSize;
@@ -262,6 +267,18 @@ public class ShowPreferencesPanel extends JPanel implements Viewable, Preference
         originalOERApiCode = controller.getModel().getUserPreference(ExchangeModel.OPEN_EXCHANGE_RATES_API_CODE);
         oerApiCodeTextField.setText(originalOERApiCode);
 */
+	
+	// Messaging server URLs
+	String servers = controller.getModel().getUserPreference(CoreModel.MESSAGING_SERVERS);
+	if (servers==null) {
+	    servers = StringUtils.join(CoreModel.DEFAULT_MESSAGING_SERVER_URLS, "|");
+	    controller.getModel().setUserPreference(CoreModel.MESSAGING_SERVERS, servers);
+	}
+	String[] urls = servers.split("\\|"); // regex so we have to escape | character
+	messagingServerPanel.setURLs(urls);
+
+	originalMessagingServerURLs = urls;
+	
         invalidate();
         validate();
         repaint();
@@ -307,6 +324,16 @@ public class ShowPreferencesPanel extends JPanel implements Viewable, Preference
         constraints.anchor = GridBagConstraints.ABOVE_BASELINE_LEADING;
         mainPanel.add(createAppearancePanel(stentWidth), constraints);
 
+	constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.gridx = 0;
+        constraints.gridy = 3;
+        constraints.gridwidth = 2;
+        constraints.weightx = 1;
+        constraints.weighty = 1.6;
+        constraints.anchor = GridBagConstraints.ABOVE_BASELINE_LEADING;
+        mainPanel.add(createMessagingServerPanel(stentWidth), constraints);
+
+		
 	/*
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridx = 0;
@@ -507,6 +534,76 @@ public class ShowPreferencesPanel extends JPanel implements Viewable, Preference
         return languagePanel;
     }
 
+    /**
+     * Create the messaging server panel which consists of MultiBit style header
+     * and our Netbean visual editor designed panel
+     * @param stentWidth
+     * @return 
+     */
+    private JPanel createMessagingServerPanel(int stentWidth) {
+	
+        MultiBitTitledPanel panel = new MultiBitTitledPanel("Messaging Servers", ComponentOrientation.getOrientation(controller.getLocaliser().getLocale()));
+
+	// Create layout like other panels
+	GridBagConstraints constraints = new GridBagConstraints();
+
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.gridx = 0;
+        constraints.gridy = 3;
+        constraints.weightx = 0.1;
+        constraints.weighty = 0.3;
+        constraints.gridwidth = 1;
+        constraints.gridheight = 1;
+        constraints.anchor = GridBagConstraints.LINE_START;
+        JPanel indent = MultiBitTitledPanel.getIndentPanel(1);
+        panel.add(indent, constraints);
+
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.gridx = 1;
+        constraints.gridy = 4;
+        constraints.weightx = 0.3;
+        constraints.weighty = 0.3;
+        constraints.gridwidth = 1;
+        constraints.anchor = GridBagConstraints.LINE_START;
+        JPanel stent = MultiBitTitledPanel.createStent(stentWidth);
+        panel.add(stent, constraints);
+
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.gridx = 2;
+        constraints.gridy = 3;
+        constraints.weightx = 0.05;
+        constraints.weighty = 0.3;
+        constraints.gridwidth = 1;
+        constraints.anchor = GridBagConstraints.CENTER;
+        panel.add(MultiBitTitledPanel.createStent(MultiBitTitledPanel.SEPARATION_BETWEEN_NAME_VALUE_PAIRS), constraints);
+	
+	// Now insert our custom panel
+
+	messagingServerPanel = new CSMessagingServerPanel();
+        constraints.fill = GridBagConstraints.NONE;
+        constraints.gridx = 1;
+        constraints.gridy = 5;
+        constraints.weightx = 1;
+        constraints.weighty = 1;
+        constraints.gridwidth = 1;
+        constraints.anchor = GridBagConstraints.LINE_START;
+        panel.add(messagingServerPanel, constraints);
+	
+	// fill up right side
+	JPanel fill1 = new JPanel();
+        fill1.setOpaque(false);
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.gridx = 4;
+        constraints.gridy = 10;
+        constraints.weightx = 20;
+        constraints.weighty = 1;
+        constraints.gridwidth = 1;
+        constraints.anchor = GridBagConstraints.LINE_END;
+        panel.add(fill1, constraints);
+	
+	return panel;
+    }
+    
     private JPanel createAppearancePanel(int stentWidth) {
         MultiBitTitledPanel appearancePanel = new MultiBitTitledPanel(controller.getLocaliser().getString(
                 "showPreferencesPanel.appearanceTitle"), ComponentOrientation.getOrientation(controller.getLocaliser().getLocale()));
@@ -1808,6 +1905,17 @@ public class ShowPreferencesPanel extends JPanel implements Viewable, Preference
         return (Boolean.valueOf(useUri)).toString();
     }
 
+    @Override
+    public String[] getPreviousMessagingServerURLs() {
+	return originalMessagingServerURLs;
+    }
+    
+    @Override
+    public String[] getNewMessagingServerURLs() {
+	return messagingServerPanel.getURLs();
+    }
+    
+    
     @Override
     public String getPreviousFontName() {
         return originalFontName;

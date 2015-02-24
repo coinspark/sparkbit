@@ -23,7 +23,6 @@ package org.multibit.utils;
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.TransactionOutput;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
@@ -33,7 +32,6 @@ import java.util.Date;
 import org.coinspark.protocol.CoinSparkAddress;
 import org.coinspark.protocol.CoinSparkAssetRef;
 import org.coinspark.protocol.CoinSparkGenesis;
-import org.coinspark.protocol.CoinSparkPaymentRef;
 import org.coinspark.wallet.CSAsset;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.Transaction;
@@ -42,11 +40,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.TreeMap;
-import org.coinspark.wallet.CSAssetDatabase;
 import org.apache.commons.lang3.StringUtils;
 
 import org.joda.time.DateTime;
@@ -56,8 +50,26 @@ import org.multibit.viewsystem.swing.view.components.MultiBitLabel;
 
 import org.multibit.controller.bitcoin.BitcoinController;
 import com.google.bitcoin.core.Wallet.SendRequest;
+import java.awt.BorderLayout;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.List;
+import javax.swing.BorderFactory;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import org.coinspark.protocol.CoinSparkMessagePart;
+import org.coinspark.wallet.CSMessage;
+import org.coinspark.wallet.CSMessageDatabase;
+import org.coinspark.wallet.CSMessagePart;
 import org.joda.time.LocalDateTime;
 import org.multibit.model.bitcoin.BitcoinModel;
+import org.multibit.model.core.CoreModel;
+import org.multibit.viewsystem.swing.view.components.FontSizer;
 
 /*
  * Mixed bag of tools.
@@ -136,15 +148,14 @@ public class CSMiscUtils {
     
     /*
     Based on examples listed: http://coinspark.org/developers/coinspark-addresses/
+    A CoinSpark address will be created with a payment reference of 0 by default
+    which is semantically the same as null.
     */
     public static String convertBitcoinAddressToCoinSparkAddress(String bitcoinAddress) {
 	CoinSparkAddress csa = new CoinSparkAddress();
-        int flags=CoinSparkAddress.COINSPARK_ADDRESS_FLAG_ASSETS;
-	//| CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS;
+        int flags=CoinSparkAddress.COINSPARK_ADDRESS_FLAG_ASSETS | CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS | CoinSparkAddress.COINSPARK_ADDRESS_FLAG_TEXT_MESSAGES;
 	csa.setAddressFlags(flags);
 	csa.setBitcoinAddress(bitcoinAddress);
-	//csa.setPaymentRef(new CoinSparkPaymentRef(0));
-
 	String s = csa.encode();
 	return s;
     }
@@ -153,6 +164,12 @@ public class CSMiscUtils {
 	int flags = csa.getAddressFlags();
 	boolean b = (flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_ASSETS)>0;
 	return b;
+    }
+    
+    public static boolean canSendTextMessageToCoinSparkAddress(CoinSparkAddress csa) {
+	int flags = csa.getAddressFlags();
+	boolean b = (flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_TEXT_MESSAGES)>0;
+	return b;	
     }
  
     /*
@@ -423,7 +440,9 @@ public class CSMiscUtils {
 	return n;
     }
     
-
+    
+    
+    
     public static String getHumanReadableAssetState(CSAsset.CSAssetState state) {
 	if (state==null) return "";
 	switch(state) {
@@ -739,5 +758,172 @@ public class CSMiscUtils {
             return true;
         }
 	return false;
+    }
+    
+    /**
+     * Get the payment reference from a transaction, given it's hash.
+     * 
+     * @param w Wallet
+     * @param txid Transaction hash, lower case.
+     * @return 0 if no payment reference exists.
+     */
+    public static long getPaymentRefFromTx(Wallet w, String txid) {
+	if (txid==null || w==null) return 0;
+	CSMessage message = w.CS.getMessageDB().getMessage(txid);
+	long l = 0L;
+	if (message != null) {
+	    l = message.getPaymentRefValue();
+	}
+	return l;
+    }
+    
+    /**
+     * Return URLs of delivery servers set in preferences.
+     * URLs are URL decoded using UTF-8.  If a URL cannot be decoded, it is skipped.
+     * @return 
+     */
+    public static String[] getDeliveryServers(BitcoinController controller) {
+	String serverString = controller.getModel().getUserPreference(CoreModel.MESSAGING_SERVERS);
+	if (serverString==null) {
+	    return CoreModel.DEFAULT_MESSAGING_SERVER_URLS;
+	}
+
+	String[] encodedURLs = serverString.split("\\|"); // regex so we have to escape | character
+	int n = encodedURLs.length;
+	if (n == 0) {
+	    return new String[0];
+	}
+	ArrayList<String> list = new ArrayList<>();
+	for (int i = 0; i < n; i++) {
+	    try {
+		String encoded = URLEncoder.encode(encodedURLs[i], "UTF-8");
+		list.add(encoded);
+	    } catch (UnsupportedEncodingException e) {
+	    }
+	}
+	return list.toArray(new String[0]);
+    }
+    
+    /**
+     * Get the short message for a transaction.
+     * For SparkBit, this would be the first message part, which should be UTF-8 encoded,
+     * have a mimetype of plain/text and no filename.
+     * From the CS protocol perspective, there is no guarantee that other clients will
+     * do the same.  So for SparkBit, we will search for something which looks like a
+     * short text message, in ascending part ID order, and use that as the "short message".
+     * @param w
+     * @param txid
+     * @return 
+     */
+    public static String getShortTextMessage(Wallet w, String txid) {
+	String msg = null;
+	
+	//other methos i could use.
+	//CSMessagePart part = w.CS.getMessageDB().getMessagePart(txid, 1);
+
+	// We are probably here because the message sender was not using SparkBit
+	CSMessage message = w.CS.getMessageDB().getMessage(txid);
+	if (message==null || message.getMessageState()==CSMessage.CSMessageState.PAYMENTREF_ONLY) {
+	    return null;
+	}
+	List<CSMessagePart> parts = message.getMessagePartsSortedByPartID();
+	for (CSMessagePart p : parts) {
+	    if (p.fileName == null && p.mimeType != null && p.mimeType.equals("text/plain")) {
+		byte[] content = CSMessageDatabase.getBlobForMessagePart(txid, p.partID);
+		if (content != null) {
+		    try {
+			msg = new String(content, "UTF-8");
+			break;
+		    } catch (Exception e) {
+			msg = "Error decoding text message";
+		    }
+		}
+	    }
+	}
+
+	return msg;
+
+    }
+    
+    
+    public static String[] getMessageDeliveryServersArray(BitcoinController controller) {
+	List<String> servers = getMessageDeliveryServers(controller);
+	String[] serverURLs = servers.toArray(new String[0]);
+	return serverURLs;
+    }
+    
+    public static List<String> getMessageDeliveryServers(BitcoinController controller) {
+	//String[] servers = new String[]{"assets1.coinspark.org/","assets1.coinspark.org/abc"};//,"144.76.175.228/" };					
+	// Servers are URL encoded, and CSUtils looks for "://" to decide whether
+	// or not to add prefix of "http://" but encoded this is %3A%2F%2F.
+	String servers = controller.getModel().getUserPreference(CoreModel.MESSAGING_SERVERS);
+	if (servers == null) {
+	    servers = StringUtils.join(CoreModel.DEFAULT_MESSAGING_SERVER_URLS, "|");
+	    controller.getModel().setUserPreference(CoreModel.MESSAGING_SERVERS, servers);
+	}
+	String[] urls = servers.split("\\|"); // regex so we have to escape | character
+	ArrayList<String> list = new ArrayList<>();
+	for (String url : urls) {
+	    try {
+		String decoded = URLDecoder.decode(url, "UTF-8");
+		URI test = new URI(decoded); // filter out << double-click to edit >>
+		list.add(decoded);
+	    } catch (UnsupportedEncodingException ue) {
+		// don't add it
+	    } catch (URISyntaxException ue2) {
+		// don't add it
+	    }
+	}
+	return list;
+    }
+    
+    /**
+     * createPlainTextCoinSparkMessagePart
+     * @param text
+     * @return null if encoding error or there is no message (empty string)
+     */
+    public static CoinSparkMessagePart createPlainTextCoinSparkMessagePart(String text) {
+	if (text==null || text.trim().isEmpty()) return null;
+	CoinSparkMessagePart part = new CoinSparkMessagePart();
+	part.fileName = null;
+	part.mimeType = "text/plain";
+	try {
+	    part.content = text.getBytes("UTF-8");
+	} catch (UnsupportedEncodingException e) {
+	    part = null;
+	}
+	return part;
+    }
+    
+    
+    /*
+		// Show option pane
+		 final JOptionPane optionPane = new JOptionPane("Contacting message delivery servers...", JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{}, null);
+		 final JDialog dialog = new JDialog(mainFrame, "SparkBit", Dialog.ModalityType.APPLICATION_MODAL, null);
+		 dialog.setContentPane(optionPane);
+		 dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+		 dialog.setLocationRelativeTo(mainFrame);
+		 dialog.pack();
+		 */
+    public static JDialog createModalMessageDialogWithIndeterminateProgress(Frame mainFrame, String title, String message)
+    {
+	// Show dialog with indeterminate progress bar
+	final JDialog dialog = new JDialog(mainFrame, title, Dialog.ModalityType.APPLICATION_MODAL);
+	JProgressBar progressBar = new JProgressBar();
+	progressBar.setIndeterminate(true);
+	BorderLayout bl = new BorderLayout();
+	JPanel panel = new JPanel(bl);
+	bl.setVgap(20);
+	panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+	// panel.setPreferredSize(new Dimension(600, 200));
+	JLabel label = new JLabel(message);
+	label.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
+	panel.add(label, BorderLayout.PAGE_START);
+	panel.add(progressBar, BorderLayout.CENTER);
+	//dialog.getContentPane().add(panel);
+	dialog.add(panel);
+	dialog.pack();
+	dialog.setLocationRelativeTo(mainFrame);
+	return dialog;
     }
 }

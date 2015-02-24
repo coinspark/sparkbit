@@ -17,21 +17,16 @@
  */
 package org.sparkbit.jsonrpc;
 
-import com.bitmechanic.barrister.RpcException;
 import org.multibit.controller.bitcoin.BitcoinController;
 import org.sparkbit.jsonrpc.autogen.*;
 import java.util.List;
 import java.util.ArrayList;
 import org.multibit.model.bitcoin.WalletData;
-import org.multibit.viewsystem.swing.MultiBitFrame;
-import org.multibit.model.core.StatusEnum;
-import org.multibit.network.ReplayManager;
 import com.google.bitcoin.core.*;
 //import java.util.HashMap;
 import java.util.Iterator;
 //import org.apache.commons.codec.digest.DigestUtils;
 import org.coinspark.protocol.CoinSparkAddress;
-import org.coinspark.protocol.CoinSparkAssetRef;
 import org.coinspark.wallet.CSAsset;
 import org.coinspark.wallet.CSAssetDatabase;
 import org.coinspark.wallet.CSEventBus;
@@ -41,7 +36,6 @@ import org.coinspark.protocol.CoinSparkAssetRef;
 import org.multibit.model.bitcoin.BitcoinModel;
 import org.multibit.model.bitcoin.WalletAddressBookData;
 import org.multibit.model.bitcoin.WalletInfoData;
-import com.google.bitcoin.crypto.KeyCrypter;
 import org.multibit.file.FileHandler;
 import java.io.*;
 import org.multibit.file.BackupManager;
@@ -50,13 +44,10 @@ import com.google.bitcoin.script.Script;
 import com.google.bitcoin.wallet.DefaultCoinSelector;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
 import org.coinspark.protocol.CoinSparkGenesis;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
-import org.multibit.exchange.CurrencyConverter;
 import org.sparkbit.SBEvent;
 import org.sparkbit.SBEventType;
 import org.multibit.network.MultiBitService;
@@ -64,11 +55,8 @@ import org.multibit.store.MultiBitWalletVersion;
 import java.util.Date;
 import org.multibit.file.WalletSaveException;
 import static org.multibit.model.bitcoin.WalletAssetComboBoxModel.NUMBER_OF_CONFIRMATIONS_TO_SEND_ASSET_THRESHOLD;
-import java.util.concurrent.ConcurrentHashMap;
-import org.coinspark.core.CSUtils;
 import java.text.SimpleDateFormat;
 import static org.multibit.network.MultiBitService.WALLET_SUFFIX;
-import static org.multibit.network.MultiBitService.getFilePrefix;
 import org.sparkbit.utils.FileNameCleaner;
 import org.apache.commons.io.FilenameUtils;
 import java.util.TimeZone;
@@ -86,8 +74,9 @@ import java.util.Set;
 import org.coinspark.wallet.CSBalance;
 import org.coinspark.wallet.CSTransactionOutput;
 import java.util.HashSet;
-import java.util.LinkedList;
-import org.spongycastle.util.encoders.Hex;
+import org.coinspark.core.CSExceptions;
+import org.coinspark.protocol.*;
+
 
 /**
  * For now, synchronized access to commands which mutate
@@ -913,15 +902,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		    }
 		    // If to myself, lets see if CoinSpark or not
 		    if (myReceiveAddress != null && toMyself) {
-			String myCoinSparkAddress = null;
-			
-			Map<String,String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-			if (m != null) {
-			    myCoinSparkAddress = m.get(tx.getHashAsString());
-			}
-			
-//			myCoinSparkAddress = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(tx.getHashAsString());
-			
+			String myCoinSparkAddress = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(tx.getHashAsString());
 			if (myCoinSparkAddress!=null) {
 			    myReceiveAddress = myCoinSparkAddress;
 			}
@@ -933,10 +914,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 		 if (theirOutput != null) {
 		    // First let's see if we have stored the recipient in our map
 		    try {
-			Map<String,String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-			if (m != null) {
-			    theirAddress = m.get(tx.getHashAsString());
-			}
+			theirAddress = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(tx.getHashAsString());
 		    } catch (Exception e) {
 		    }
 
@@ -965,7 +943,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    
 	    String category = (incoming) ? "receive" : "send";
 
-	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, category, amountsArray, fee, txid, address);
+	    long paymentRef = CSMiscUtils.getPaymentRefFromTx(w, txid);
+	    
+	    String message = CSMiscUtils.getShortTextMessage(w, txid);
+	    
+	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, category, amountsArray, fee, txid, address, paymentRef, message);
 	    resultList.add(atx);
 	}
 	
@@ -1205,8 +1187,6 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    skipAddresses = true;
 	}
 	
-	Map<String, String> csAddressMap = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-	
 	ArrayList<JSONRPCUnspentTransactionOutput> resultList = new ArrayList<>();
 
 	Map<CSTransactionOutput, Map<Integer,CSBalance>> map = w.CS.getAllAssetTxOuts();
@@ -1275,7 +1255,6 @@ WalletInfoData winfo = wd.getWalletInfo();
 		    } else {
 			bal = createBitcoinBalance(w, qty, null);
 		    }
-		    System.out.println(">>> bal = " + bal.toString());
 		    balancesList.add(bal);
 		    continue;
 		}
@@ -1314,12 +1293,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    // First let's see if we have stored the recipient in our map and use it instead
 		// of generating a new one from bitcoin address
 		try {
-		    if (csAddressMap != null) {
-			String spk = csAddressMap.get(tx.getHashAsString());
-			String btc = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(spk);
-			if (btc.equals(btcAddress)) {
-			    sparkAddress = spk;
-			}
+		    String spk = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(tx.getHashAsString());
+		    String btc = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(spk);
+		    if (btc.equals(btcAddress)) {
+			sparkAddress = spk;
 		    }
 		} catch (Exception e) {
 		}
@@ -1686,9 +1663,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("wallet name = " + walletID);
 	log.info("address     = " + address);
 	log.info("amount      = " + amount);
-	return sendbitcoinwith_impl(walletID, null, 0L, address, amount);
+	return sendbitcoinusing_impl(walletID, null, 0L, address, amount, null);
     }
     
+    @Deprecated
     @Override
     public synchronized String sendbitcoinwith(String walletID, String txid, Long vout, String address, Double amount) throws com.bitmechanic.barrister.RpcException
     {
@@ -1698,10 +1676,22 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("vout        = " + vout);
 	log.info("address     = " + address);
 	log.info("amount      = " + amount);
-	return sendbitcoinwith_impl(walletID, txid, vout, address, amount);
+	return sendbitcoinusing_impl(walletID, txid, vout, address, amount, null);
+    }
+
+    @Override
+    public synchronized String sendbitcoinusing(String walletID, String txid, Long vout, String address, Double amount) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND BITCOIN USING");
+	log.info("wallet name = " + walletID);
+	log.info("txid        = " + txid);
+	log.info("vout        = " + vout);
+	log.info("address     = " + address);
+	log.info("amount      = " + amount);
+	return sendbitcoinusing_impl(walletID, txid, vout, address, amount, null);
     }
     
-    private synchronized String sendbitcoinwith_impl(String walletID, String txid, Long vout, String address, Double amount) throws com.bitmechanic.barrister.RpcException
+    private synchronized String sendbitcoinusing_impl(String walletID, String txid, Long vout, String address, Double amount, String message) throws com.bitmechanic.barrister.RpcException
     {    
 	Wallet w = getWalletForWalletName(walletID);
 	if (w==null) {
@@ -1724,13 +1714,34 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    canSpendSendWithTxOut = isTxOutSpendable(w, sendWithTxidHash, vout.intValue());
 	}
 	
+	CoinSparkPaymentRef paymentRef = null;
+	
 	String bitcoinAddress = address;
 	if (address.startsWith("s")) {
 	    bitcoinAddress = CSMiscUtils.getBitcoinAddressFromCoinSparkAddress(address);
 	    if (bitcoinAddress==null) {
 		JSONRPCError.COINSPARK_ADDRESS_INVALID.raiseRpcException();
+	    } else {
+		CoinSparkAddress csa = new CoinSparkAddress();
+		csa.decode(address);
+		int flags = csa.getAddressFlags();
+		if ((flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS) > 0) {
+		    paymentRef = csa.getPaymentRef();
+//		    log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
+		}
+
+		if (message != null && !CSMiscUtils.canSendTextMessageToCoinSparkAddress(csa)) {
+		    JSONRPCError.COINSPARK_ADDRESS_MISSING_TEXT_MESSAGE_FLAG.raiseRpcException();
+		}
+	    }
+	} else {
+	    // Cannot send message to a bitcoin address, must be a coinspark address
+	    if (message != null) {
+		JSONRPCError.SEND_MESSAGE_MUST_BE_COINSPARK_ADDRESS.raiseRpcException();
 	    }
 	}
+	
+	
 	boolean isValid = CSMiscUtils.validateBitcoinAddress(bitcoinAddress, controller);
 	if (!isValid) {
 	    JSONRPCError.BITCOIN_ADDRESS_INVALID.raiseRpcException();
@@ -1771,6 +1782,28 @@ WalletInfoData winfo = wd.getWalletInfo();
 		    JSONRPCError.SEND_WITH_TXID_VOUT_FAILED.raiseRpcException();
 		}
 	    }
+	    
+	    // Send with payment ref - if it exists and is not 0 which SparkBit treats semantically as null
+	    if (paymentRef != null && paymentRef.getRef() != 0) {
+		sendRequest.setPaymentRef(paymentRef);
+	    }
+
+	    
+	    // Set up message if one exists
+	    boolean isEmptyMessage = false;
+	    if (message == null || message.isEmpty() || message.trim().length() == 0) {
+		isEmptyMessage = true;
+	    }
+	    if (!isEmptyMessage) {
+		CoinSparkMessagePart[] parts = {CSMiscUtils.createPlainTextCoinSparkMessagePart(message)};
+		String[] serverURLs = CSMiscUtils.getMessageDeliveryServersArray(this.controller);
+		sendRequest.setMessage(parts, serverURLs);
+//			log.debug(">>>> Messaging servers = " + ArrayUtils.toString(serverURLs));
+//			log.debug(">>>> parts[0] = " + parts[0]);
+//			log.debug(">>>> parts[0].fileName = " + parts[0].fileName);
+//			log.debug(">>>> parts[0].mimeType = " + parts[0].mimeType);
+//			log.debug(">>>> parts[0].content = " + new String(parts[0].content, "UTF-8"))
+	    }
 
 	    
 	    // Note - Request is populated with the AES key in the SendBitcoinNowAction after the user has entered it on the SendBitcoinConfirm form.
@@ -1798,13 +1831,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 		
 		/* If sending assets or BTC to a coinspark address, record transaction id --> coinspark address, into hashmap so we can use when displaying transactions */
 		if (address.startsWith("s")) {
-		    java.util.Map<String, String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-		    if (m != null) {
-			m.put(sendTxHash, address);
-			SparkBitMapDB.INSTANCE.getMapDB().commit();
-		    }
+		    SparkBitMapDB.INSTANCE.putSendCoinSparkAddressForTxid(sendTxHash, address);
 		}
-		
 	    } else {
 		// There is not enough money
 	    }
@@ -1813,6 +1841,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 //      } catch (KeyCrypterException e1) {
 	} catch (InsufficientMoneyException e) {
 	    JSONRPCError.SEND_BITCOIN_INSUFFICIENT_MONEY.raiseRpcException();
+	} catch (CSExceptions.CannotEncode e) {
+	    JSONRPCError.SEND_MESSAGE_CANNOT_ENCODE.raiseRpcException(e.getMessage());
 	} catch (Exception e) {
 	    JSONRPCError.throwAsRpcException("Could not send bitcoin due to error", e);
 	} finally {
@@ -1850,9 +1880,10 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("asset ref   = " + assetRef);
 	log.info("quantity    = " + quantity);
 	log.info("sender pays = " + senderPays);
-	return sendassetwith_impl(walletID, null, 0L, address, assetRef, quantity, senderPays);
+	return sendassetusing_impl(walletID, null, 0L, address, assetRef, quantity, senderPays, null, null);
     }
     
+    @Deprecated
     @Override
     public synchronized String sendassetwith(String walletID, String txid, Long vout, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
     {
@@ -1864,10 +1895,24 @@ WalletInfoData winfo = wd.getWalletInfo();
 	log.info("asset ref   = " + assetRef);
 	log.info("quantity    = " + quantity);
 	log.info("sender pays = " + senderPays);
-	return sendassetwith_impl(walletID, txid, vout, address, assetRef, quantity, senderPays);
+	return sendassetusing_impl(walletID, txid, vout, address, assetRef, quantity, senderPays, null, null);
+    }
+
+    @Override
+    public synchronized String sendassetusing(String walletID, String txid, Long vout, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND ASSET USING");
+	log.info("wallet name = " + walletID);
+	log.info("txid        = " + txid);
+	log.info("vout        = " + vout);
+	log.info("address     = " + address);
+	log.info("asset ref   = " + assetRef);
+	log.info("quantity    = " + quantity);
+	log.info("sender pays = " + senderPays);
+	return sendassetusing_impl(walletID, txid, vout, address, assetRef, quantity, senderPays, null, null);
     }
     
-    private synchronized String sendassetwith_impl(String walletID, String txid, Long vout, String address, String assetRef, Double quantity, Boolean senderPays) throws com.bitmechanic.barrister.RpcException
+    private synchronized String sendassetusing_impl(String walletID, String txid, Long vout, String address, String assetRef, Double quantity, Boolean senderPays, String message, Double btcAmount) throws com.bitmechanic.barrister.RpcException
     {
 	String sendTxHash = null;
 	boolean sendValidated = false;
@@ -1896,6 +1941,19 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.SEND_ASSET_AMOUNT_TOO_LOW.raiseRpcException();
 	}
 	
+	// BTC send amount, if null, use default amount of 10,000 satoshis.
+	String sendAmount;
+	if (btcAmount==null) {
+	    sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);	    
+	} else {
+	    double d = btcAmount.doubleValue();
+	    if (d<=0.0) {
+		JSONRPCError.SEND_BITCOIN_AMOUNT_TOO_LOW.raiseRpcException();
+	    }
+	    sendAmount = btcAmount.toString();
+	}
+	
+	CoinSparkPaymentRef paymentRef = null;
 	String bitcoinAddress = address;
 	if (!address.startsWith("s")) {
 	    JSONRPCError.ADDRESS_NOT_COINSPARK_ADDRESS.raiseRpcException();
@@ -1908,6 +1966,17 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    CoinSparkAddress csa = CSMiscUtils.decodeCoinSparkAddress(address);
 	    if (!CSMiscUtils.canSendAssetsToCoinSparkAddress(csa)) {
 		JSONRPCError.COINSPARK_ADDRESS_MISSING_ASSET_FLAG.raiseRpcException();
+	    }
+	    
+	    if (message!=null && !CSMiscUtils.canSendTextMessageToCoinSparkAddress(csa)) {
+		JSONRPCError.COINSPARK_ADDRESS_MISSING_TEXT_MESSAGE_FLAG.raiseRpcException();
+	    }
+	    
+	    // payment ref?
+	    int flags = csa.getAddressFlags();
+	    if ((flags & CoinSparkAddress.COINSPARK_ADDRESS_FLAG_PAYMENT_REFS) > 0) {
+		paymentRef = csa.getPaymentRef();
+//		log.debug(">>>> CoinSpark address has payment refs flag set: " + paymentRef.toString());
 	    }
 	}
 	boolean isValid = CSMiscUtils.validateBitcoinAddress(bitcoinAddress, controller);
@@ -1972,7 +2041,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    
 	    log.info("Want to send: " + assetAmountRawUnits + " , AssetID=" + assetID + ", total="+w.CS.getAssetBalance(assetID).total + ", spendable=" + w.CS.getAssetBalance(assetID).spendable );       
             
-	    String sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);	    
+//	    String sendAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);	    
 	    	    CoinSparkGenesis genesis = asset.getGenesis();
 
 	    	    long desiredRawUnits = assetAmountRawUnits.longValue();
@@ -2021,6 +2090,24 @@ WalletInfoData winfo = wd.getWalletInfo();
 		    }
 		}
 
+	    // Send with payment ref - if it exists and is not 0 which SparkBit treats semantically as null
+	    if (paymentRef != null && paymentRef.getRef() != 0) {
+		sendRequest.setPaymentRef(paymentRef);
+	    }
+
+	    
+	    // Set up message if one exists
+	    boolean isEmptyMessage = false;
+	    if (message == null || message.trim().isEmpty()) {
+		isEmptyMessage = true;
+	    }
+	    if (!isEmptyMessage) {
+		CoinSparkMessagePart[] parts = {CSMiscUtils.createPlainTextCoinSparkMessagePart(message)};
+		String[] serverURLs = CSMiscUtils.getMessageDeliveryServersArray(this.controller);
+		sendRequest.setMessage(parts, serverURLs);
+	    }
+
+	    
                 // Complete it (which works out the fee) but do not sign it yet.
                 log.info("Just about to complete the tx (and calculate the fee)...");
 
@@ -2045,12 +2132,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 		
 		/* If sending assets or BTC to a coinspark address, record transaction id --> coinspark address, into hashmap so we can use when displaying transactions */
 		if (address.startsWith("s")) {
-		    java.util.Map<String, String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-		    if (m != null) {
-			m.put(sendTxHash, address);
-			SparkBitMapDB.INSTANCE.getMapDB().commit();
-		    }
-		}
+		    SparkBitMapDB.INSTANCE.putSendCoinSparkAddressForTxid(sendTxHash, address);
+		}		
 	    } else {
 		// There is not enough money
 	    }
@@ -2060,6 +2143,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.ASSET_INSUFFICIENT_BALANCE.raiseRpcException();
 	} catch (com.bitmechanic.barrister.RpcException e) {
 	    throw(e);
+	} catch (CSExceptions.CannotEncode e) {
+	    JSONRPCError.SEND_MESSAGE_CANNOT_ENCODE.raiseRpcException(e.getMessage());
 	} catch (Exception e) {
 	    JSONRPCError.throwAsRpcException("Could not send asset due to error: " , e);
 	} finally {
@@ -2087,4 +2172,75 @@ WalletInfoData winfo = wd.getWalletInfo();
 	}
 	return sendTxHash;
     }
+    
+//    @Override
+//    public Boolean test(JSONRPCTestParams params) throws com.bitmechanic.barrister.RpcException {
+//	log.info("TEST");
+//	log.info("walletname = " + params.getWalletname());
+//	log.info("address = " + params.getAddress());
+//	log.info("amount = " + params.getAmount());
+//	log.info("txid = " + params.getTxid());
+//	log.info("vout = " + params.getVout());
+//	log.info("message = " + params.getMessage());
+//	return true;
+//    }
+
+    //
+    // 0.9.4 JSON-RPC Commands
+    //
+    
+    @Override
+    public String sendbitcoinasset(String walletname, String address, Double btc_amount, String assetref, Double asset_qty, Boolean senderpays) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND BITCOIN ASSET");
+	log.info("wallet name = " + walletname);
+	log.info("address     = " + address);
+	log.info("btc amount  = " + btc_amount);
+	log.info("asset ref   = " + assetref);
+	log.info("asset qty   = " + asset_qty);
+	log.info("sender pays = " + senderpays);
+	return sendassetusing_impl(walletname, null, 0L, address, assetref, asset_qty, senderpays, null, btc_amount);
+    }
+    
+    @Override
+    public String sendassetmessage(String walletname, String address, String assetref, Double quantity, Boolean senderpays, String message) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND ASSET");
+	log.info("wallet name = " + walletname);
+	log.info("address     = " + address);
+	log.info("asset ref   = " + assetref);
+	log.info("quantity    = " + quantity);
+	log.info("sender pays = " + senderpays);
+	log.info("message     = " + message);
+	return sendassetusing_impl(walletname, null, 0L, address, assetref, quantity, senderpays, message, null);
+    }
+    
+    @Override
+    public String sendbitcoinmessage(String walletname, String address, Double amount, String message) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND BITCOIN MESSAGE");
+	log.info("wallet name = " + walletname);
+	log.info("address     = " + address);
+	log.info("amount      = " + amount);
+	log.info("message     = " + message);
+	return sendbitcoinusing_impl(walletname, null, 0L, address, amount, message);
+    }
+    
+    @Override
+    public String sendbitcoinassetmessage(String walletname, String address, Double btc_amount, String assetref, Double asset_qty, Boolean senderpays, String message) throws com.bitmechanic.barrister.RpcException
+    {
+	log.info("SEND BITCOIN ASSET");
+	log.info("wallet name = " + walletname);
+	log.info("address     = " + address);
+	log.info("btc amount  = " + btc_amount);
+	log.info("asset ref   = " + assetref);
+	log.info("asset qty   = " + asset_qty);
+	log.info("sender pays = " + senderpays);
+	log.info("message     = " + message);
+	return sendassetusing_impl(walletname, null, 0L, address, assetref, asset_qty, senderpays, message, btc_amount);
+	
+    }
+    
+
+    
 }

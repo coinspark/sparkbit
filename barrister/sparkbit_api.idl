@@ -40,6 +40,8 @@ struct JSONRPCTransaction {
 	fee float [optional]
 	txid string
 	address string
+	payment_ref int
+	message string [optional]
 	}
 
 struct JSONRPCBalanceAmount {
@@ -98,6 +100,20 @@ struct JSONRPCUnspentTransactionOutput {
     confirmations int
 }
 
+// Experimental
+//struct JSONRPCTestParams {
+//	walletname string
+//	address string
+//	amount float
+//	txid string [optional]
+//	vout string [optional]
+//	message string [optional]
+//	assetref string [optional]
+//	assetamount float [optional]
+//	assetsenderpays bool [optional]
+//}
+
+
 interface sparkbit {
 	createwallet(walletname string) bool
   	sendasset(walletname string, address string, assetref string, quantity float, senderpays bool) string
@@ -123,8 +139,28 @@ interface sparkbit {
 
 // onlyvisible bool <--- would be useful
 	listunspent(walletname string, minconf int, maxconf int, addresses []string) []JSONRPCUnspentTransactionOutput
+
+	// 0.9.3, deprecated from 0.9.4, replaced with sentbitcoinusing and sendassetusing
   	sendbitcoinwith(walletname string, txid string, vout int, address string, amount float) string
 	sendassetwith(walletname string, txid string, vout int, address string, assetref string, quantity float, senderpays bool) string
 
+	// 0.9.4 and later
+  	sendbitcoinusing(walletname string, txid string, vout int, address string, amount float) string
+	sendassetusing(walletname string, txid string, vout int, address string, assetref string, quantity float, senderpays bool) string
+
+	// 0.9.4 and later
+	sendbitcoinasset(walletname string, address string, btc_amount float, assetref string, asset_qty float, senderpays bool) string
+	sendassetmessage(walletname string, address string, assetref string, quantity float, senderpays bool, message string) string
+	sendbitcoinmessage(walletname string, address string, amount float, message string) string
+	sendbitcoinassetmessage(walletname string, address string, btc_amount float, assetref string, asset_qty float, senderpays bool, message string) string
+
+	// Experimental
+	// Return a reference, unique to the wallet
+	//createmessage(walletname string, reuse bool, message string) string
+	// Add an attachment to a message, attachment must be base64 encoded 
+	//appendtomessage(walletname string, messageid string, attachment string) bool
+	//sendmsgbitcoin(walletname string, address string, amount float, messageid string) string
+	//sendmsgshortbitcoin(walletname string, address string, amount float, message string) string
+	//test(params JSONRPCTestParams) bool
 }
 

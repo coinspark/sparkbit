@@ -22,6 +22,7 @@ import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.Wallet.SendRequest;
 import com.google.bitcoin.crypto.KeyCrypterException;
+import com.google.common.eventbus.Subscribe;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.multibit.controller.Controller;
 import org.multibit.controller.bitcoin.BitcoinController;
@@ -37,9 +38,15 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.CharBuffer;
-
-import org.mapdb.*;
+import java.util.concurrent.Executors;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.coinspark.core.CSExceptions;
+import org.coinspark.wallet.CSEvent;
+import org.coinspark.wallet.CSEventBus;
+import org.coinspark.wallet.CSEventType;
 import org.sparkbit.SparkBitMapDB;
 
 /**
@@ -107,7 +114,53 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
     // This action is a WalletBusyListener.
     this.bitcoinController.registerWalletBusyListener(this);
     walletBusyChange(this.bitcoinController.getModel().getActivePerWalletModelData().isBusy());
+    
+    // Listen for event updates if sending a message
+    if (sendRequest.getMessageParts() != null) {
+	CSEventBus.INSTANCE.registerAsyncSubscriber(this);
+    }
   }
+  
+  
+    @Subscribe
+    public void listen(CSEvent event) throws Exception {
+//	log.debug(">>>> Received event: " + event.getType());
+	CSEventType t = event.getType();
+	if (t == CSEventType.MESSAGE_UPLOAD_STARTED || t == CSEventType.MESSAGE_UPLOAD_ENDED) {
+	    ImmutablePair<Integer, String> pair = (ImmutablePair<Integer, String>)event.getInfo();
+	    int otherHashCode = pair.getLeft();
+	    if (otherHashCode == sendRequest.hashCode()) {
+		final boolean started = (t == CSEventType.MESSAGE_UPLOAD_STARTED);
+		if (started) {
+		    showSendingMessageText(pair.getRight());
+		} else {
+		    showSendingBitcoinText();
+		}
+	    }
+	}
+    }
+    
+    public void cleanUp() {
+	CSEventBus.INSTANCE.unsubscribe(this);
+    }
+    
+    private void showSendingMessageText(String urlString) {
+	String host = null;
+	try {
+	    URI uri = new URI(urlString);
+	    host = " " + uri.getHost();
+	} catch (URISyntaxException e) {
+	    host = " delivery server";
+	}
+	sendBitcoinConfirmPanel.setMessageText("Sending message via" + host + "...", "");
+    }
+    
+    private void showSendingBitcoinText() {
+	sendBitcoinConfirmPanel.setMessageText(controller.getLocaliser().getString(assetify("sendBitcoinNowAction.sendingBitcoin")), "");
+    }
+  
+    
+  
   
   /**
    * Actually send the bitcoin.
@@ -117,7 +170,7 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
     sendBitcoinConfirmPanel.setMessageText(" ", " ");
 
     // Check to see if the wallet files have changed.
-    WalletData perWalletModelData = this.bitcoinController.getModel().getActivePerWalletModelData();
+    final WalletData perWalletModelData = this.bitcoinController.getModel().getActivePerWalletModelData();
     boolean haveFilesChanged = this.bitcoinController.getFileHandler().haveFilesChanged(perWalletModelData);
 
     if (haveFilesChanged) {
@@ -137,7 +190,7 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
         addressBook.addSendingAddress(new WalletAddressBookData(sendLabel, sendAddress));
       }
 
-      char[] walletPassword = walletPasswordField.getPassword();
+      final char[] walletPassword = walletPasswordField.getPassword();
 
       if (this.bitcoinController.getModel().getActiveWallet() != null
               && this.bitcoinController.getModel().getActiveWallet().getEncryptionType() != EncryptionType.UNENCRYPTED) {
@@ -172,12 +225,25 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
         perWalletModelData.setBusyTaskVerbKey(assetify("sendBitcoinNowAction.sendingBitcoin"));
 
         this.bitcoinController.fireWalletBusyChange(true);
-        sendBitcoinConfirmPanel.setMessageText(controller.getLocaliser().getString(assetify("sendBitcoinNowAction.sendingBitcoin")), "");
+        sendBitcoinConfirmPanel.setMessageText(controller.getLocaliser().getString("sendBitcoinNowAction.preparingToSend"), "");
+		//assetify("sendBitcoinNowAction.sendingBitcoin")), "");
         sendBitcoinConfirmPanel.invalidate();
         sendBitcoinConfirmPanel.validate();
         sendBitcoinConfirmPanel.repaint();
 
-        performSend(perWalletModelData, sendRequest, CharBuffer.wrap(walletPassword));
+	
+	// Message delivery could take a while and we can't cancel it, so disable button
+	sendBitcoinConfirmPanel.getCancelButton().setVisible(false);
+	
+	// Perform send
+	Executors.newSingleThreadExecutor().execute(new Runnable() {
+	      @Override
+	      public void run() {
+		  performSend(perWalletModelData, sendRequest, CharBuffer.wrap(walletPassword));
+	      }
+	});
+	
+ //       performSend(perWalletModelData, sendRequest, CharBuffer.wrap(walletPassword));
       }
     }
   }
@@ -230,6 +296,16 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
     } catch (IllegalStateException e) {
       log.error(e.getMessage(), e);
       message = controller.getLocaliser().getString("sendBitcoinNowAction.pingFailure");
+    } catch (CSExceptions.CannotEncode e) {
+      log.error(e.getMessage(), e);
+      message = "Message delivery failed. " + e.getMessage();
+      final String dialogMessage = "Message delivery failed.\n\n" + e.getMessage();
+      SwingUtilities.invokeLater(new Runnable() {
+	  @Override
+	  public void run() {
+	      JOptionPane.showMessageDialog(mainFrame, dialogMessage, "SparkBit Error", JOptionPane.ERROR_MESSAGE);
+	  }
+      });
     } catch (Exception e) {
       // Really trying to catch anything that goes wrong with the send bitcoin.
       log.error(e.getMessage(), e);
@@ -248,11 +324,7 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
 	  /* If sending assets or BTC to a coinspark address, record transaction id --> coinspark address, into hashmap so we can use when displaying transactions */
 	String sendAddress = bitcoinController.getModel().getActiveWalletPreference(BitcoinModel.SEND_ADDRESS);
 	if (sendAddress.startsWith("s")) {
-	    java.util.Map<String,String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-	    if (m != null) {
-		m.put(transaction.getHashAsString(), sendAddress);
-		SparkBitMapDB.INSTANCE.getMapDB().commit();
-	    }
+	    SparkBitMapDB.INSTANCE.putSendCoinSparkAddressForTxid(transaction.getHashAsString(), sendAddress);
 	}
 
         String successMessage = controller.getLocaliser().getString(assetify("sendBitcoinNowAction.bitcoinSentOk"));
@@ -267,6 +339,14 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
 	  if (this.isAsset) {
 	    mainFrame.sendPanelTransaction = transaction;
 	  }
+	  
+	  // Success, so let's clear the address and message fields as some users find it confusing.
+	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_ADDRESS, "");
+	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_MESSAGE, "");
+	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_LABEL, "");
+	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_AMOUNT, "");
+	  bitcoinController.getModel().setActiveWalletPreference(BitcoinModel.SEND_ASSET_AMOUNT, "");
+	  
         } else {
           MessageManager.INSTANCE.addMessage(new Message(successMessage));
         }

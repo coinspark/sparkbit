@@ -22,6 +22,7 @@ import com.google.bitcoin.core.*;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.uri.BitcoinURI;
 import com.google.bitcoin.uri.BitcoinURIParseException;
+import com.google.common.eventbus.Subscribe;
 import org.multibit.controller.AbstractController;
 import org.multibit.controller.AbstractEventHandler;
 import org.multibit.controller.core.CoreController;
@@ -46,9 +47,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import org.coinspark.wallet.CSEvent;
 import org.coinspark.wallet.CSEventBus;
+import org.coinspark.wallet.CSEventType;
 import org.sparkbit.SBEvent;
 import org.sparkbit.SBEventType;
+import org.sparkbit.SparkBitMapDB;
 
 /**
  * The MVC controller for MultiBit.
@@ -98,7 +103,33 @@ public class BitcoinController extends AbstractController<CoreController> implem
         this.peerEventListener = new BitcoinPeerEventListener(this);
         
         this.addEventHandler(this.getEventHandler());
+	
+//	CSEventBus.INSTANCE.registerAsyncSubscriber(this);
     }
+    
+    /*
+    @Subscribe
+    public void listen(CSEvent event) throws Exception {	
+	CSEventType t = event.getType();
+	if (t == CSEventType.TRANSACTION_PAYMENT_REFERENCE_RECEIVED) {
+	    Object o = event.getInfo();
+	    Map<String,Long> map = (Map<String,Long>)o;
+	    if (map != null) {
+		Map<String, Long> paymentRefMap = SparkBitMapDB.INSTANCE.getTransactionPaymentRefMap();
+		paymentRefMap.putAll(map);
+//	    for (Map.Entry<String, Long> entrySet : paymentRefMap.entrySet()) {
+//		String key = entrySet.getKey();
+//		Long value = entrySet.getValue();
+//	    }
+		SparkBitMapDB.INSTANCE.getMapDB().commit();
+
+		log.debug(">>>> Stored payment references in MapDB: " + map);
+		
+	    }
+	}
+    }
+    */
+    
     
     @Override
     public BitcoinModel getModel() {

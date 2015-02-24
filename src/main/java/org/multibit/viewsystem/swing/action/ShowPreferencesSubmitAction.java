@@ -40,7 +40,9 @@ import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Arrays;
 import java.util.Timer;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * This {@link Action} applies changes to the preferences panel.
@@ -180,6 +182,22 @@ public class ShowPreferencesSubmitAction extends AbstractAction {
                 controller.getModel().setUserPreference(BitcoinModel.OPEN_URI_USE_URI, openUriUseUri);
             }
 
+	    // Messaging servers
+	    boolean messagingServersHasChanged = false;
+	    String[] previousMessagingServerURLs = dataProvider.getPreviousMessagingServerURLs();
+	    String[] newMessagingServerURLs = dataProvider.getNewMessagingServerURLs();
+	    // newMessagingServerURLs might be NULL, and thus clear out the user preference.
+	    // So let's be explicit and say if no urls are set, we use the default.
+	    if (newMessagingServerURLs==null) {
+		newMessagingServerURLs = CoreModel.DEFAULT_MESSAGING_SERVER_URLS; // not URL encoded but is okay as no strange characters.
+	    }
+	    if (!Arrays.equals(previousMessagingServerURLs, newMessagingServerURLs)) {
+		messagingServersHasChanged = true;
+	    	String s = StringUtils.join(newMessagingServerURLs, "|");
+		controller.getModel().setUserPreference(CoreModel.MESSAGING_SERVERS, s);
+	    }
+	    
+	    
             // Font data.
             boolean fontHasChanged = false;
             String previousFontName = dataProvider.getPreviousFontName();
@@ -405,6 +423,15 @@ public class ShowPreferencesSubmitAction extends AbstractAction {
                 }
             }
 */
+	    if (messagingServersHasChanged) {
+		// TODO: Maybe something here so messaging servers are updated and go live immediately?
+		// Currently servers are set here in class SendRequest:
+		/*
+		        public void setMessage(CoinSparkMessagePart [] MessageParts,String [] DeliveryServers)
+		*/
+
+	    }
+	    
             if (fontHasChanged) {
                 wantToFireDataStructureChanged = true;
             }

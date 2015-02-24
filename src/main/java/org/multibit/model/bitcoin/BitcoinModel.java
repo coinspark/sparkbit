@@ -86,10 +86,12 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
     public static final String HTTPS_TRUST_ALL_CERTS = "httpsTrustAllCerts";
     
     // Send bitcoin and send bitcoin confirm.
+    public static final String SEND_MESSAGE = "sendMessage";    
     public static final String SEND_SPARK_ADDRESS = "sendSparkAddress";
     public static final String SEND_ADDRESS = "sendAddress";
     public static final String SEND_LABEL = "sendLabel";
     public static final String SEND_AMOUNT = "sendAmount";
+    public static final String SEND_ASSET_AMOUNT = "sendAssetAmount";
     public static final String SEND_FEE = "sendFee";
     public static final String SEND_PERFORM_PASTE_NOW = "sendPerformPasteNow";
     public static final String SHOW_SIDE_PANEL = "showSidePanel";
@@ -630,7 +632,14 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
 		    }
 		}
 		if (hasAssets) {
-		    addressString = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(addressString);
+		    // Use address from sent txid map if it exists, else convert BTC to Spark address.
+		    String txid = tx.getHashAsString();
+		    String s = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(txid);
+		    if (s!=null) {
+			addressString = s;
+		    } else {
+			addressString = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(addressString);
+		    }
 		}
 
                 if (label != null && !label.equals("")) {
@@ -658,10 +667,7 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
 
 		    // First let's see if we have stored the recipient in our map
 		    try {
-			Map<String, String> m = SparkBitMapDB.INSTANCE.getSendTransactionToCoinSparkAddressMap();
-			if (m != null) {
-			    addressString = m.get(tx.getHashAsString());
-			}
+			addressString = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(tx.getHashAsString());
 		    } catch (Exception e) {
 		    }
 
