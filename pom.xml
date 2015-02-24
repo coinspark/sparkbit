@@ -260,10 +260,7 @@
                     <urn>org.slf4j:slf4j-api:1.6.2:jar:null:compile:8619e95939167fb37245b5670135e4feb0ec7d50</urn>
 					
                     <urn>org.coinspark.library:coinspark-library:2.1:jar:null:compile:a5361b7b731bca19a55fed9e9aaa23f565a5ee1b</urn>
- 				 	
-					<!--
-					<urn>com.google:bitcoinj:0.3-CS-0.11.2-MB-ALICE:jar:null:compile:c8e2f33eefcad366954eb7f39180b18c9b802666</urn>
-					-->
+					<urn>com.google:bitcoinj:0.3-CS-0.11.2-MB-ALICE:jar:null:compile:b99f6a785889a64bc3b3dc873ac47a210925355a</urn>
 					<!-- A check for the rules themselves -->
                     <urn>uk.co.froot.maven.enforcer:digest-enforcer-rules:0.0.1:jar:null:runtime:16a9e04f3fe4bb143c42782d07d5faf65b32106f</urn>
                   </urns>
