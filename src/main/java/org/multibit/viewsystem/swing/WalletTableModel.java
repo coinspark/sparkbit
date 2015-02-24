@@ -272,8 +272,13 @@ public class WalletTableModel extends AbstractTableModel {
 				    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.server_error);
 				    break;
 				case CSMessage.CSMessageState.ENCRYPTED_KEY:
-				    tip = "Cannot open encrypted message";
-				    icon = ImageLoader.fatCow16(ImageLoader.FATCOW.lock);
+				    if (message.hasAesKey()) {
+					tip = "Message is pending retrieval";
+					icon = ImageLoader.fatCow16(ImageLoader.FATCOW.hourglass);
+				    } else {
+					tip = "Unlock wallet to retrieve message";
+					icon = ImageLoader.fatCow16(ImageLoader.FATCOW.lock);
+				    }
 				    break;
 //			    case CSMessage.CSMessageState.SELF:
 //			    case CSMessage.CSMessageState.VALID:
@@ -444,4 +449,4 @@ public class WalletTableModel extends AbstractTableModel {
 //            headers.add(header);
 //        }
     }
-}
+	}
