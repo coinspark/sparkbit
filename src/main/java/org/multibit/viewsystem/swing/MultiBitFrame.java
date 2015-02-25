@@ -124,7 +124,10 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
 
     private static final double PROPORTION_OF_VERTICAL_SCREEN_TO_FILL = 0.80D; //0.75D;
     private static final double PROPORTION_OF_HORIZONTAL_SCREEN_TO_FILL = 0.80D; //0.82D;
-
+    
+    public static final int WINDOW_MINIMUM_WIDTH = 700;
+    public static final int WINDOW_MINIMUM_HEIGHT = 400;
+    
     public static final String EXAMPLE_LONG_FIELD_TEXT = "1JiM1UyTGqpLqgayxTPbWbcdVeoepmY6pK++++____________123456789012345678";
     public static final String EXAMPLE_MEDIUM_FIELD_TEXT = "Typical text 00.12345678 BTC (000.01 XYZ)";
     public static final String EXAMPLE_COINSPARK_FIELD_TEXT = "s6GUHy69HWkwFqzFhJCY49seL8EFv";
@@ -393,6 +396,9 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
         double startVerticalPositionRatio = (1 - PROPORTION_OF_VERTICAL_SCREEN_TO_FILL) / 2;
         double startHorizontalPositionRatio = (1 - PROPORTION_OF_HORIZONTAL_SCREEN_TO_FILL) / 2;
         setLocation((int) (width * startHorizontalPositionRatio), (int) (height * startVerticalPositionRatio));
+	
+	// Set the minimum jframe size
+	setMinimumSize(new Dimension(Math.min(WINDOW_MINIMUM_WIDTH,width),Math.min(WINDOW_MINIMUM_HEIGHT,height)));
     }
     
     private void initUI(View initialView) {
