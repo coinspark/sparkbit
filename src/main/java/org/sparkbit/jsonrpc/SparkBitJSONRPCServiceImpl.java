@@ -854,6 +854,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    ArrayList<JSONRPCTransactionAmount> amounts = getAssetTransactionAmounts(w, tx, true, false);
 	    JSONRPCTransactionAmount[] amountsArray = amounts.toArray(new JSONRPCTransactionAmount[0]);
 
+	    String message = CSMiscUtils.getShortTextMessage(w, txid);
+
 //	    int size = amounts.size();
 //	    AssetTransactionAmountEntry[] entries = new AssetTransactionAmountEntry[size];
 //	    int index = 0;
@@ -885,6 +887,8 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    // If this transaction was sent from addresses belonging to the same wallet
 	    boolean toMyself = myOutput!=null && theirOutput==null;	    
 	    boolean hasAssets = amounts.size()>1;
+	    boolean hasMessage = (message != null);
+	    boolean showCoinSparkAddress = hasAssets || hasMessage;
 	    String myReceiveAddress = null;
 	    String theirAddress = null;
 	    
@@ -894,7 +898,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 			Address toAddress = new Address(this.controller.getModel().getNetworkParameters(), myOutput.getScriptPubKey().getPubKeyHash());
 			myReceiveAddress = toAddress.toString();
 		    }
-		    if (myReceiveAddress != null && hasAssets) {
+		    if (myReceiveAddress != null && showCoinSparkAddress) {
 			String s = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(myReceiveAddress);
 			if (s != null) {
 			    myReceiveAddress = s;
@@ -923,7 +927,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 			     theirAddress = theirOutput.getScriptPubKey().getToAddress(controller.getModel().getNetworkParameters()).toString();
 			 } catch (ScriptException se) {
 			 }
-			 if (theirAddress != null & hasAssets) {
+			 if (theirAddress != null & showCoinSparkAddress) {
 			     String s = CSMiscUtils.convertBitcoinAddressToCoinSparkAddress(theirAddress);
 			     if (s != null) {
 				 theirAddress = s;
@@ -944,9 +948,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    String category = (incoming) ? "receive" : "send";
 
 	    long paymentRef = CSMiscUtils.getPaymentRefFromTx(w, txid);
-	    
-	    String message = CSMiscUtils.getShortTextMessage(w, txid);
-	    
+	    	    
 	    JSONRPCTransaction atx = new JSONRPCTransaction(unixtime, confirmations, category, amountsArray, fee, txid, address, paymentRef, message);
 	    resultList.add(atx);
 	}
