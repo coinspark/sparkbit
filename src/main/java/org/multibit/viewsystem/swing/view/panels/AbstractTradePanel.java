@@ -314,6 +314,7 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
 	    sendScrollPane.setBorder(BorderFactory.createEmptyBorder());
 	    sendScrollPane.setMinimumSize(this.minimumSize());
 	    sendScrollPane.getViewport().setBackground(ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR);
+	    sendScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 	}
 	
         constraints.fill = GridBagConstraints.BOTH;
@@ -414,16 +415,16 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
                 MultiBitTitledPanel.createStent(MultiBitTitledPanel.SEPARATION_BETWEEN_NAME_VALUE_PAIRS, separatorSize),
                 constraints);
 
-        constraints.fill = GridBagConstraints.BOTH;
-        constraints.gridx = 2;
-        constraints.gridy = 2;
-        constraints.weightx = 0.1;
-        constraints.weighty = 0.1;
-        constraints.gridwidth = 1;
-        constraints.gridheight = 1;
-        constraints.anchor = GridBagConstraints.CENTER;
-        panel.add(MultiBitTitledPanel.createStent(fontMetrics.stringWidth(MultiBitFrame.EXAMPLE_LONG_FIELD_TEXT), separatorSize),
-                constraints);
+//        constraints.fill = GridBagConstraints.BOTH;
+//        constraints.gridx = 2;
+//        constraints.gridy = 2;
+//        constraints.weightx = 0.1;
+//        constraints.weighty = 0.1;
+//        constraints.gridwidth = 1;
+//        constraints.gridheight = 1;
+//        constraints.anchor = GridBagConstraints.CENTER;
+//        panel.add(MultiBitTitledPanel.createStent(fontMetrics.stringWidth(MultiBitFrame.EXAMPLE_LONG_FIELD_TEXT), separatorSize),
+//                constraints);
 
 
         constraints.fill = GridBagConstraints.HORIZONTAL;

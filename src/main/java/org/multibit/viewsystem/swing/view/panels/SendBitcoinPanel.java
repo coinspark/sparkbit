@@ -366,7 +366,8 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	constraints.fill = GridBagConstraints.HORIZONTAL;
 	constraints.gridx = 2;
 	constraints.gridy = yGridPosition;
-	constraints.weightx = 1000; //1.0;
+	constraints.weightx = 10000;
+	// This keeps labels on left and send button right pinned back to their miniumum/preferred sizes
 	constraints.weighty = 0.2;
 	constraints.gridwidth = 3;
 	constraints.anchor = GridBagConstraints.LINE_START;
@@ -512,17 +513,18 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	
 	yGridPosition++;
 	
-	// Move the paste button stent to gridx 10 to act as a buffer area on the right hand side.
-	JPanel myStent1 = MultiBitTitledPanel.createStent((int)labelScrollPane.getPreferredSize().getWidth(), 16 );
-        constraints.fill = GridBagConstraints.BOTH;
+	
+	// Add a vertical gap between widgets above this row, and those below
+	JPanel verticalStent1 = MultiBitTitledPanel.createStent(100, 10 );
+        constraints.fill = GridBagConstraints.VERTICAL;
         constraints.gridx = 0;
         constraints.gridy = yGridPosition;
-        constraints.weightx = 1.0; //10.0;
+        constraints.weightx = 1.0;
         constraints.weighty = 0.2;
-        constraints.gridwidth = 4;
+        constraints.gridwidth = 2;
         constraints.gridheight = 1;
         constraints.anchor = GridBagConstraints.LINE_START;
-        formPanel.add(myStent1, constraints);
+        formPanel.add(verticalStent1, constraints);
 	
 
 	yGridPosition++;
@@ -637,6 +639,9 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	sendAssetConfirmAction.setEnabled(enableSendButton);
 	/* CoinSpark END */
 
+	sendButton.setPreferredSize(sendButton.getPreferredSize());
+	sendButton.setMinimumSize(sendButton.getPreferredSize());
+	sendButton.setMaximumSize(sendButton.getPreferredSize());
 	
 	constraints.fill = GridBagConstraints.HORIZONTAL;
 	constraints.gridx = 6;
@@ -669,6 +674,11 @@ public class SendBitcoinPanel extends AbstractTradePanel implements Viewable, As
 	
 	
 	messageSendPanel = new CSMessageSendPanel();
+	// Make sure the preferred size of the panel doesn't stop us resizing send panel widgets
+	Dimension messageSendPanelSize = messageSendPanel.getPreferredSize();
+	messageSendPanelSize.width = addressSize.width;
+	messageSendPanelSize.height = (fontMetrics.getHeight() * 5) + messageSendPanel.getInsets().bottom + messageSendPanel.getInsets().top + 6;
+	messageSendPanel.setPreferredSize(messageSendPanelSize);
 	messageSendPanel.getMessageTextArea().addKeyListener(new MessageKeyListener());
 	
 	constraints.fill = GridBagConstraints.BOTH; //HORIZONTAL;
