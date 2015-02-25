@@ -290,7 +290,7 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
     }
 
     protected void initUI() {
-        setMinimumSize(new Dimension(550, 220));
+        //setMinimumSize(new Dimension(550, 220));
         setLayout(new GridBagLayout());
         setBackground(ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR);
 
@@ -322,7 +322,7 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
         constraints.gridwidth = 1;
         constraints.gridheight = 1;
         constraints.weightx = 1.0;
-        constraints.weighty = 0.5;
+        constraints.weighty = 0.75;
         constraints.anchor = GridBagConstraints.LINE_START;
 	if (!isReceiveBitcoin()) {
 	    add(sendScrollPane, constraints);
@@ -336,7 +336,7 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
         constraints.gridwidth = 1;
         constraints.gridheight = 1;
         constraints.weightx = 1.0;
-        constraints.weighty = 2.0;
+        constraints.weighty = 0.25;
         constraints.anchor = GridBagConstraints.LINE_START;
         add(createAddressesPanel(), constraints);
         

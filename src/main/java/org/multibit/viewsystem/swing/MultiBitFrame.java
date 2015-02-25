@@ -1982,6 +1982,13 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
 	}
 */    
 	int desiredHeight = ASSET_SUMMARY_TABLE_NUMBER_OF_ROWS * assetTable.getRowHeight()+ FUDGE_HEADER_PANEL_AND_ASSET_TABLE_HEIGHT;
+	
+	// UI Hack: Let's give more real-estate when only bitcoin and no assets present
+	int n = assetSummaryTableModel.getRowCount();
+	if (n==1) {
+	    desiredHeight = 2 * assetTable.getRowHeight()+ FUDGE_HEADER_PANEL_AND_ASSET_TABLE_HEIGHT;
+	}
+	
 	if (size.height != desiredHeight) {
 	    size.height = desiredHeight;
 	    assetTableScrollPane.setSize(size);
