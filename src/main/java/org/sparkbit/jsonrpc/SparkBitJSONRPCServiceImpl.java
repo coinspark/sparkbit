@@ -1346,7 +1346,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 	if (rawSpendableSatoshi != null) {
 	    BigDecimal rawSpendableBTC = new BigDecimal(rawSpendableSatoshi).divide(new BigDecimal(Utils.COIN));
-	    String rawSpendableDisplay = Utils.bitcoinValueToFriendlyString(rawBalanceSatoshi) + " BTC";
+	    String rawSpendableDisplay = Utils.bitcoinValueToFriendlyString(rawSpendableSatoshi) + " BTC";
 	    JSONRPCBalanceAmount bitcoinSpendableAmount = new JSONRPCBalanceAmount(rawSpendableSatoshi.longValue(), rawSpendableBTC.doubleValue(), rawSpendableDisplay);
 	    balance.setTotal(bitcoinBalanceAmount);
 	    balance.setSpendable(bitcoinSpendableAmount);
