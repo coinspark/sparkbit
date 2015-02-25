@@ -309,13 +309,13 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
 
 	// Wrap send panel in scrollpane
 	JScrollPane sendScrollPane = null;
-	if (!isReceiveBitcoin()) {
+//	if (!isReceiveBitcoin()) {
 	    sendScrollPane = new JScrollPane(upperPanel);
 	    sendScrollPane.setBorder(BorderFactory.createEmptyBorder());
 	    sendScrollPane.setMinimumSize(this.minimumSize());
 	    sendScrollPane.getViewport().setBackground(ColorAndFontConstants.VERY_LIGHT_BACKGROUND_COLOR);
 	    sendScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-	}
+//	}
 	
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 0;
@@ -325,11 +325,11 @@ public abstract class AbstractTradePanel extends JPanel implements Viewable, Cop
         constraints.weightx = 1.0;
         constraints.weighty = 0.75;
         constraints.anchor = GridBagConstraints.LINE_START;
-	if (!isReceiveBitcoin()) {
+//	if (!isReceiveBitcoin()) {
 	    add(sendScrollPane, constraints);
-	} else {
-	    add(upperPanel, constraints);
-	}
+//	} else {
+//	    add(upperPanel, constraints);
+//	}
 
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridx = 0;
