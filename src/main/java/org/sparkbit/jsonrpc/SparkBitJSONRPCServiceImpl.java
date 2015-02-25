@@ -1252,11 +1252,11 @@ WalletInfoData winfo = wd.getWalletInfo();
 		// Handle Bitcoin specially
 		if (assetID==0) {
 		    JSONRPCBalance bal = null;
-		    if (isSelectable) {
+//		    if (isSelectable) {
+//			bal = createBitcoinBalance(w, qty, null);
+//		    } else {
 			bal = createBitcoinBalance(w, qty, null);
-		    } else {
-			bal = createBitcoinBalance(w, qty, null);
-		    }
+//		    }
 		    balancesList.add(bal);
 		    continue;
 		}
@@ -1325,7 +1325,7 @@ WalletInfoData winfo = wd.getWalletInfo();
     private JSONRPCBalance createBitcoinBalance(Wallet w) {
 	BigInteger rawBalanceSatoshi = w.getBalance(Wallet.BalanceType.ESTIMATED);
 	BigInteger rawSpendableSatoshi = w.getBalance(Wallet.BalanceType.AVAILABLE);
-	return createBitcoinBalance(w, rawSpendableSatoshi, rawBalanceSatoshi);
+	return createBitcoinBalance(w, rawBalanceSatoshi, rawSpendableSatoshi);
     }
     
     /**
