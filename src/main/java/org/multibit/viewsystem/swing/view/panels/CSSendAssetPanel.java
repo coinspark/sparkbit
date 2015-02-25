@@ -101,6 +101,9 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
 	String transferAmount = Utils.bitcoinValueToPlainString(BitcoinModel.COINSPARK_SEND_MINIMUM_AMOUNT);
 	//btcFeeLabel.setText("Transfer amount (" + transferAmount + " BTC) and mining fee (" + miningFee + " BTC) applies.");
 	btcFeeLabel.setText("Bitcoin transfer amount (" + transferAmount + " BTC) and transaction fee (" + miningFee + " BTC) applies.");
+
+	// We need to set a small preferred size to allow the panel to resize and the label to be truncated.
+	btcFeeLabel.setPreferredSize(new Dimension(100,30));
     }
     
 
@@ -325,6 +328,8 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
         amountFmtLeftLabel = new javax.swing.JLabel();
         amountFmtRightLabel = new javax.swing.JLabel();
 
+        setMinimumSize(new java.awt.Dimension(0, 0));
+        setPreferredSize(new java.awt.Dimension(100, 106));
         java.awt.GridBagLayout layout = new java.awt.GridBagLayout();
         layout.columnWidths = new int[] {0, 10, 0, 10, 0, 10, 0, 10, 0};
         layout.rowHeights = new int[] {0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0};
@@ -333,13 +338,13 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
         amountAssetTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("##################.############"))));
         amountAssetTextField.setFont(FontSizer.INSTANCE.getAdjustedDefaultFont());
         amountAssetTextField.setMinimumSize(new java.awt.Dimension(100, 30));
-        amountAssetTextField.setPreferredSize(new java.awt.Dimension(150, 30));
+        amountAssetTextField.setPreferredSize(new java.awt.Dimension(100, 30));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.gridwidth = 5;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.weightx = 10000.0;
+        gridBagConstraints.weightx = 100.0;
         add(amountAssetTextField, gridBagConstraints);
 
         paymentChargeButtonGroup.add(senderPaysRadioButton);
@@ -349,7 +354,7 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 8;
-        gridBagConstraints.gridwidth = 5;
+        gridBagConstraints.gridwidth = 9;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         add(senderPaysRadioButton, gridBagConstraints);
 
@@ -359,7 +364,7 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 10;
-        gridBagConstraints.gridwidth = 5;
+        gridBagConstraints.gridwidth = 9;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         add(recipientPaysRadioButton, gridBagConstraints);
 
@@ -368,7 +373,8 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 6;
-        gridBagConstraints.gridwidth = 5;
+        gridBagConstraints.gridwidth = 9;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         add(chargeLabel, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -390,6 +396,7 @@ public class CSSendAssetPanel extends javax.swing.JPanel {
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 4;
         gridBagConstraints.gridwidth = 9;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         add(btcFeeLabel, gridBagConstraints);
 
