@@ -122,8 +122,8 @@ public class MultiBitFrame extends JFrame implements ViewSystem, ApplicationList
     
     private static final Logger log = LoggerFactory.getLogger(MultiBitFrame.class);
 
-    private static final double PROPORTION_OF_VERTICAL_SCREEN_TO_FILL = 0.75D;
-    private static final double PROPORTION_OF_HORIZONTAL_SCREEN_TO_FILL = 0.82D;
+    private static final double PROPORTION_OF_VERTICAL_SCREEN_TO_FILL = 0.80D; //0.75D;
+    private static final double PROPORTION_OF_HORIZONTAL_SCREEN_TO_FILL = 0.80D; //0.82D;
 
     public static final String EXAMPLE_LONG_FIELD_TEXT = "1JiM1UyTGqpLqgayxTPbWbcdVeoepmY6pK++++____________123456789012345678";
     public static final String EXAMPLE_MEDIUM_FIELD_TEXT = "Typical text 00.12345678 BTC (000.01 XYZ)";
