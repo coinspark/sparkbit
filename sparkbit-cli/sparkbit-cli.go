@@ -109,7 +109,7 @@ func NewSparkbitProxy(url string) sparkbit.Sparkbit {
 func printVersion() {
 	_, file := path.Split(os.Args[0])
 	fmt.Printf("%s %s\n", file, versionString)
-	fmt.Println("Copyright (C) 2014 Coin Sciences Ltd.")
+	fmt.Println("Copyright (C) 2014-2015 Coin Sciences Ltd.")
 	fmt.Println("Licensed under the MIT license <http://opensource.org/licenses/mit-license.php>.")
 	fmt.Println("This is open source sofware; see the source for copying conditions.")
 	fmt.Println("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.")
