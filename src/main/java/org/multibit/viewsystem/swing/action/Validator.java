@@ -21,7 +21,7 @@ package org.multibit.viewsystem.swing.action;
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.Transaction;
-import com.google.bitcoin.core.Utils;
+import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.Wallet.BalanceType;
 import org.multibit.controller.Controller;
 import org.multibit.controller.bitcoin.BitcoinController;
@@ -35,7 +35,7 @@ import java.math.BigInteger;
 
 /* CoinSpark START */
 import org.multibit.utils.CSMiscUtils;
-import java.math.BigDecimal;
+import org.coinspark.wallet.CSAsset;
 /* CoinSpark END */
 
 /**
@@ -132,10 +132,21 @@ public class Validator {
                     }
 
 		      /* CoinSpark START */
-		    // http://coinspark.org/developers/wallet-implementation-guide/interface-additions/#migrating-assets
-// http://coinspark.org/developers/wallet-implementation-guide/interface-changes/
-		      // Divide this number by 5, then round up to the nearest integer. This gives an upper limit on the number of KB required to send out a migration transaction. Multiply this number of KB by 11,000 satoshis (5.5 US cents at $500 per bitcoin)
-		    if (amountValidatesOk.booleanValue()) {
+		    // If the amount is valid, if there are any assets in the wallet, let's see if it's migration safe.
+		    boolean anAssetExists = false;
+		    Wallet wallet = this.bitcoinController.getModel().getActiveWallet();
+		    int[] assetIDs = wallet.CS.getAssetIDs();
+		    if (assetIDs!=null) {
+			for (int id : assetIDs) {
+			    if (id==0) continue;
+			    CSAsset asset = wallet.CS.getAsset(id);
+			    if (asset!=null) {
+				anAssetExists = true;
+				break;
+			    };
+			}
+		    }
+		    if (amountValidatesOk.booleanValue() && anAssetExists) {
 			boolean b = CSMiscUtils.canSafelySpendWhileRespectingMigrationFee(this.bitcoinController, this.bitcoinController.getModel().getActiveWallet(), amountBigInteger);
 			if (!b) {
 			    amountValidatesOk = Boolean.FALSE;
