@@ -817,6 +817,9 @@ public class CSMiscUtils {
 	//other methos i could use.
 	//CSMessagePart part = w.CS.getMessageDB().getMessagePart(txid, 1);
 
+	if (txid==null) return null;
+	if (w.CS.getMessageDB()==null) return null;
+	
 	// We are probably here because the message sender was not using SparkBit
 	CSMessage message = w.CS.getMessageDB().getMessage(txid);
 	if (message==null || message.getMessageState()==CSMessage.CSMessageState.PAYMENTREF_ONLY) {
