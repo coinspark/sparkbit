@@ -1336,7 +1336,11 @@ constraints.fill = GridBagConstraints.BOTH;
 	    assetComboBox.setEnabled(false);
 	} else if (validBitcoinAddress) {
 	    assetComboBox.setEnabled(true);
-	    if (assetsAvailable) message = "To send assets or messages, please ask the recipient for their CoinSpark address.";
+	    if (assetsAvailable) {
+		message = "To send assets or messages, please ask the recipient for their CoinSpark address.";
+	    } else {
+		message = "To send messages, please ask the recipient for their CoinSpark address.";
+	    }
 	    if (showingAssets) {
 		assetComboBox.getModel().setSelectedItem(assetComboBox.getModel().getElementAt(0));
 	    }
