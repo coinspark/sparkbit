@@ -932,8 +932,8 @@ public class CSTransactionDetailsPanel extends JPanel {
      */
     private void showMsgWidgets() {
 	GridBagConstraints constraints = new GridBagConstraints();
-	boolean showMessageFlag = false;
-	boolean showErrorFlag = false;
+	boolean showMessageRowFlag = false;
+	boolean showErrorRowFlag = false;
 
 	// Show message error code if it exists
 	Integer errorCode = null;
@@ -945,7 +945,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 	}
 
 	if (errorCode != null && errorCode != 0) {
-	    showErrorFlag = true;
+	    showErrorRowFlag = true;
 
 	    messageErrorTextLabel.setText("Failed to retrieve message. " + CSUtils.getHumanReadableServerError(errorCode) + " (" + errorCode + ").");
 	    
@@ -966,11 +966,21 @@ public class CSTransactionDetailsPanel extends JPanel {
 	CSMessage message = wallet.CS.getMessageDB().getMessage(txid);
 	if (message != null) {
 	    String msg = CSMiscUtils.getShortTextMessage(wallet, txid);
-	    boolean getPassword = (message!=null && !message.hasAesKey(txid) && message.getMessageState()==CSMessage.CSMessageState.ENCRYPTED_KEY) ;
-	    // if msg is null and message state is ENCRYPT error then show button
-	    if (msg==null && getPassword) {
-		showMessageFlag = true;
+	    boolean getPassword = (!message.hasAesKey(txid) && message.getMessageState()==CSMessage.CSMessageState.ENCRYPTED_KEY) ;
 
+	    // If previously getPassword was showing, remove it
+	    if (!getPassword && detailPanel.isAncestorOf(msgGetPasswordButton)) {
+		detailPanel.remove(msgGetPasswordButton);
+	    }
+	    
+	    if (getPassword) {
+		showMessageRowFlag = true;
+
+		// If previously showing message textarea, remove it.
+		if (detailPanel.isAncestorOf(msgScrollPane)) {
+		    detailPanel.remove(msgScrollPane);
+		}
+				
 		if (!detailPanel.isAncestorOf(msgGetPasswordButton)) {
 		    constraints.fill = GridBagConstraints.NONE;
 		    constraints.gridx = 2;
@@ -983,9 +993,9 @@ public class CSTransactionDetailsPanel extends JPanel {
 		}	    
 	    } else if (msg==null) {
 		// maybe retrieving, or error, so do nothing for now
-		showMessageFlag = false;
+		showMessageRowFlag = false;
 	    } else if (msg != null) {
-		showMessageFlag = true;
+		showMessageRowFlag = true;
 
 		// Add widget to detail panel if not already added
 		if (!detailPanel.isAncestorOf(msgScrollPane)) {
@@ -1011,7 +1021,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 	}
 
 
-	if (showErrorFlag) {
+	if (showErrorRowFlag) {
 	    // Add widget to detail panel if not already added
 	    if (!detailPanel.isAncestorOf(messageErrorLabel)) {
 		constraints.fill = GridBagConstraints.NONE;
@@ -1028,7 +1038,7 @@ public class CSTransactionDetailsPanel extends JPanel {
 	}
 	
 	
-	if (showMessageFlag) {
+	if (showMessageRowFlag) {
 	    // Add widget to detail panel if not already added
 	    if (!detailPanel.isAncestorOf(msgLabel)) {
 		constraints.fill = GridBagConstraints.NONE;
