@@ -922,4 +922,24 @@ public class CSMiscUtils {
 	dialog.setLocationRelativeTo(mainFrame);
 	return dialog;
     }
+    
+    
+    public static boolean walletHasAnyAssets(Wallet wallet) {
+	// If the amount is valid, if there are any assets in the wallet, let's see if it's migration safe.
+	boolean anAssetExists = false;
+	int[] assetIDs = wallet.CS.getAssetIDs();
+	if (assetIDs != null) {
+	    for (int id : assetIDs) {
+		if (id == 0) {
+		    continue;
+		}
+		CSAsset asset = wallet.CS.getAsset(id);
+		if (asset != null) {
+		    anAssetExists = true;
+		    break;
+		};
+	    }
+	}
+	return anAssetExists;
+    }
 }
