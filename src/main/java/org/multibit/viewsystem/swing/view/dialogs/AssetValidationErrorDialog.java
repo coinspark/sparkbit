@@ -542,12 +542,10 @@ public class AssetValidationErrorDialog extends MultiBitDialog {
         optionPane.setOpaque(true);
         FontMetrics fontMetrics = optionPane.getFontMetrics(FontSizer.INSTANCE.getAdjustedDefaultFont());
 
-	rows += 1; // single error, dialog not tall enough
-
 	// FUDGE: The validation dialog is a bit of a mess and needs to be fixed.  This is a temporary hack
 	// to make it look nicer instead of stretching across the screen.
         String[] lines = completeMessage.toString().split("\\n");
-	rows = lines.length;
+	rows = lines.length + 2;  // single error message, dialog not tall enough
 	longestRow = "";
 	for (String line : lines) {
 	    if (line.length() > longestRow.length()) {
