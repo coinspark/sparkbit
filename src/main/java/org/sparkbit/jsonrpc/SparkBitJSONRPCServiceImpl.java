@@ -1703,6 +1703,28 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    JSONRPCError.SEND_BITCOIN_AMOUNT_TOO_LOW.raiseRpcException();
 	}
 	
+	
+	BigInteger bitcoinAmountSatoshis = Utils.toNanoCoins(amount.toString());
+	
+	
+	// Is the BTC amount more than what is in the wallet?
+	BigInteger totalSpend = bitcoinAmountSatoshis.add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
+        BigInteger availableBalance = w.getBalance(Wallet.BalanceType.AVAILABLE);
+	if (totalSpend.compareTo(availableBalance) > 0) {
+	    JSONRPCError.SEND_BITCOIN_INSUFFICIENT_MONEY.raiseRpcException();
+	}
+	
+	// Does the BTC amount respect the migration fees of any assets?
+	boolean walletHasAnyAssets = CSMiscUtils.walletHasAnyAssets(w);
+	if (walletHasAnyAssets) {
+	    boolean migrationSafe = CSMiscUtils.canSafelySpendWhileRespectingMigrationFee(this.controller, w, bitcoinAmountSatoshis);
+	    if (!migrationSafe) {
+		BigInteger migrationFee = CSMiscUtils.calcMigrationFeeSatoshis(controller, w);
+		JSONRPCError.SEND_INSUFFICIENT_MONEY_MIGRATION.raiseRpcException("Need to keep at least " + Utils.bitcoinValueToFriendlyString(migrationFee) + " BTC.");
+	    }
+	}
+	
+	
 	// Check send with txid and vout
 	Sha256Hash sendWithTxidHash = null;
 	boolean canSpendSendWithTxOut = false;
@@ -1954,6 +1976,22 @@ WalletInfoData winfo = wd.getWalletInfo();
 	    }
 	    sendAmount = btcAmount.toString();
 	}
+	BigInteger bitcoinAmountSatoshis = Utils.toNanoCoins(sendAmount);
+
+	// Is the BTC amount more than what is in the wallet?
+	BigInteger totalSpend = bitcoinAmountSatoshis.add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
+        BigInteger availableBalance = w.getBalance(Wallet.BalanceType.AVAILABLE);
+	if (totalSpend.compareTo(availableBalance) > 0) {
+	    JSONRPCError.SEND_BITCOIN_INSUFFICIENT_MONEY.raiseRpcException();
+	}
+	
+	// Does the BTC amount respect the migration fees of any assets?
+	boolean migrationSafe = CSMiscUtils.canSafelySpendWhileRespectingMigrationFee(this.controller, w, bitcoinAmountSatoshis);
+	if (!migrationSafe) {
+	    BigInteger migrationFee = CSMiscUtils.calcMigrationFeeSatoshis(controller, w);
+	    JSONRPCError.SEND_INSUFFICIENT_MONEY_MIGRATION.raiseRpcException("Need to keep at least " + Utils.bitcoinValueToFriendlyString(migrationFee) + " BTC.");
+	}
+	
 	
 	CoinSparkPaymentRef paymentRef = null;
 	String bitcoinAddress = address;
@@ -2074,7 +2112,7 @@ WalletInfoData winfo = wd.getWalletInfo();
 
 		//public static SendRequest to(Address destination,BigInteger value,int assetID, BigInteger assetValue,int split) {
 		//BigInteger assetAmountRawUnits = new BigInteger(assetAmount);
-		BigInteger bitcoinAmountSatoshis = Utils.toNanoCoins(sendAmount);
+//		BigInteger bitcoinAmountSatoshis = Utils.toNanoCoins(sendAmount);
 		
 		Wallet.SendRequest sendRequest = Wallet.SendRequest.to(sendAddressObject, bitcoinAmountSatoshis, assetID, assetAmountRawUnits, 1);
                 sendRequest.ensureMinRequiredFee = true;

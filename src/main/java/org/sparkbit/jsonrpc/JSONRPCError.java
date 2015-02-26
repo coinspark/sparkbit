@@ -65,6 +65,7 @@ public enum JSONRPCError {
   SEND_MESSAGE_CANNOT_ENCODE(35, "Could not prepare message for sending"),
   COINSPARK_ADDRESS_MISSING_TEXT_MESSAGE_FLAG(36, "CoinSpark address does not have text message flag set"),
   SEND_MESSAGE_MUST_BE_COINSPARK_ADDRESS(37, "Can only send message to a CoinSpark address"),
+  SEND_INSUFFICIENT_MONEY_MIGRATION(38, "Cannot complete transaction as remaining bitcoin balance would be insufficient to retain assets and ability to migrate assets to another wallet."),
 
   THROW_EXCEPTION(99999, ""); // RESERVED. For wrapping up a general exception and throwing it.
   
