@@ -35,6 +35,7 @@ import org.coinspark.protocol.CoinSparkGenesis;
 import org.coinspark.wallet.CSAsset;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.Transaction;
+import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Utils;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -490,43 +491,38 @@ public class CSMiscUtils {
 	return assetRef.encode(); // if null, it failed
     }
     
-    // Return number of satoshis required to migrate wallet
-    // Note: This shouldn't matter if there are no assets.
-    // Return null if there is no migration fee necessary, i.e. you have no balance of assets.
+    /**
+     * Return number of satoshis required to migrate wallet.
+     * http://coinspark.org/developers/wallet-implementation-guide/interface-additions/#migrating-assets
+     * http://coinspark.org/developers/wallet-implementation-guide/interface-changes/
+     * Divide this number by 5, then round up to the nearest integer. This gives an upper limit on the number of KB required to send out a migration transaction. Multiply this number of KB by 11,000 satoshis (5.5 US cents at $500 per bitcoin)
+     * @param bitcoinController
+     * @param wallet
+     * @return 
+     */
     public static BigInteger calcMigrationFeeSatoshis(BitcoinController bitcoinController, Wallet wallet) {
-	BigInteger migrationFee = null;
-	Address sendAddressObject;
-        try {
-	    /* We allow calculation of the migration fee even if there is no send address specified,
-	    so we could generate an address from utxo, or just use a dummy address.
-	    TODO: Get transc
-	    */
-	    String address = null;
-	    NetworkParameters params = bitcoinController.getModel().getNetworkParameters();
-	    if (params.getId().equals(NetworkParameters.ID_MAINNET)) {
-		address = "1LLBoY7gp4B9WUtBdgJQLyNVS7doskFQcn"; //production
-	    } else {
-		address = "mzc55AvWnAmk48UfN74ktw4pxkiKfscNgU"; //testnet3
-	    }
-
-	    // TODO: Instead of this dummy address, use a parameter
-            sendAddressObject = new Address(bitcoinController.getModel().getNetworkParameters(), address);
-            SendRequest sendRequest = SendRequest.emptyWallet(sendAddressObject);
-            sendRequest.ensureMinRequiredFee = true;
-            sendRequest.fee = BigInteger.ZERO;
-            wallet.completeTx(sendRequest, false);
-	    migrationFee = sendRequest.fee;
-        } catch (Exception ex) {
-        }
-	return migrationFee;
+	int n = wallet.CS.getNumberUTXO();
+	int numKb = (int) Math.ceil((double) n / 5.0);
+	if (numKb == 0) {
+	    numKb = 1; // shouldn't need this as wallet should have at least one utxo!
+	}
+	return BigInteger.valueOf(numKb * 11000);
     }
     
-    
+    /**
+     * Can we spend amount based upon estimated available balance, and still have enough funds left over to cover migration fee?
+     * @param bitcoinController
+     * @param wallet
+     * @param amountSatoshis
+     * @return 
+     */
     public static boolean canSafelySpendWhileRespectingMigrationFee(BitcoinController bitcoinController, Wallet wallet, BigInteger amountSatoshis) {
 	BigInteger migrationFee = calcMigrationFeeSatoshis(bitcoinController, wallet);
-	if (migrationFee==null) return false;
 	
-	BigInteger availableBalance = wallet.getBalance(Wallet.BalanceType.AVAILABLE);
+	BigInteger availableBalance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
+	// We could be conservative and use AVAILABLE, but the migration fee is based upon
+	// both unspent transactions and pending transactions, so we should do the same here.
+	
 	BigInteger spendingLimit = availableBalance.subtract(migrationFee);
 	
 //	System.out.println(">>>> Available     = "+availableBalance);
