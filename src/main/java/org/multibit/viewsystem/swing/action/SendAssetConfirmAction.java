@@ -263,7 +263,7 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 
 		    public void onFailure(Throwable thrown) {
 			final String failureReason = thrown.getMessage();
-			final boolean isCSException = thrown instanceof org.coinspark.core.CSExceptions.CannotEncode;			
+			final boolean isCSException = thrown instanceof org.coinspark.core.CSExceptions.CannotEncode;			     final boolean isInsufficientMoney = thrown instanceof com.google.bitcoin.core.InsufficientMoneyException;			
 			// There is not enough money.
 			// TODO setup validation parameters accordingly so that it displays ok.
 			SwingUtilities.invokeLater(new Runnable() {
@@ -273,6 +273,16 @@ public class SendAssetConfirmAction extends MultiBitSubmitAction {
 
 				if (isCSException) {
 				    JOptionPane.showMessageDialog(mainFrame, "SparkBit is unable to proceed with this transaction:\n\n"+failureReason, "SparkBit Error", JOptionPane.ERROR_MESSAGE);
+				} else if (isInsufficientMoney) {
+				    // Try to show a human friendly message, need to pass the missing satoshis from failure reason.
+				    try {
+					String numberOnly = failureReason.replaceAll("[^0-9]", "");
+					BigInteger needed = new BigInteger(numberOnly);
+					JOptionPane.showMessageDialog(mainFrame, "SparkBit is unable to proceed with this transaction.\n\nInsufficient money in wallet, require " + Utils.bitcoinValueToFriendlyString(needed) + " BTC more.", "SparkBit Error", JOptionPane.ERROR_MESSAGE);
+				    } catch (NumberFormatException e) {
+					AssetValidationErrorDialog myValidationErrorDialog = new AssetValidationErrorDialog(bitcoinController, mainFrame, sendRequest, true, validator);
+					myValidationErrorDialog.setVisible(true);
+				    }
 				} else {
 
 				    AssetValidationErrorDialog myValidationErrorDialog = new AssetValidationErrorDialog(bitcoinController, mainFrame, sendRequest, true, validator);
