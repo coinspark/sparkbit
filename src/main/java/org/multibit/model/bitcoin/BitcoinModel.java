@@ -631,9 +631,14 @@ public class BitcoinModel extends AbstractModel<CoreModel> {
 			break;
 		    }
 		}
-		if (hasAssets) {
+
+		String txid = tx.getHashAsString();
+		String message = CSMiscUtils.getShortTextMessage(wallet, txid);
+		boolean hasMessage = (message != null);
+		boolean showCoinSparkAddress = hasAssets || hasMessage;
+
+		if (showCoinSparkAddress) {
 		    // Use address from sent txid map if it exists, else convert BTC to Spark address.
-		    String txid = tx.getHashAsString();
 		    String s = SparkBitMapDB.INSTANCE.getSendCoinSparkAddressForTxid(txid);
 		    if (s!=null) {
 			addressString = s;
