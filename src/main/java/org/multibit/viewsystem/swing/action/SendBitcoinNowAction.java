@@ -87,6 +87,8 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
   private String assetify(String key) {
       return this.isAsset ? key+".asset" : key;
   }
+  
+  private boolean registeredForCSEvents;
   /* CoinSpark END */
 
   /**
@@ -118,6 +120,7 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
     // Listen for event updates if sending a message
     if (sendRequest.getMessageParts() != null) {
 	CSEventBus.INSTANCE.registerAsyncSubscriber(this);
+	registeredForCSEvents = true;
     }
   }
   
@@ -141,7 +144,9 @@ public class SendBitcoinNowAction extends AbstractAction implements WalletBusyLi
     }
     
     public void cleanUp() {
-	CSEventBus.INSTANCE.unsubscribe(this);
+	if (registeredForCSEvents) {
+	    CSEventBus.INSTANCE.unsubscribe(this);
+	}
     }
     
     private void showSendingMessageText(String urlString) {
